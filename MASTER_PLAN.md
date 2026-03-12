@@ -435,7 +435,7 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 | 0 | Planning & Architecture | COMPLETE |
 | 1 | Foundation | COMPLETE |
 | 2 | Libraries | COMPLETE |
-| 3 | Documents | NOT STARTED |
+| 3 | Documents | COMPLETE |
 | 4 | Safety Program | NOT STARTED |
 | 5 | Utilities & Integrations | NOT STARTED |
 | 6 | Project Management | NOT STARTED |
@@ -471,12 +471,12 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 ---
 
 ### Phase 3: Documents (Policies, Procedures, FHAs)
-- [ ] Database schema for documents (content as markdown)
-- [ ] Markdown editor component (in-app editing)
-- [ ] Amendment table embedded in document content
-- [ ] Auto-append amendment row on save (with change summary prompt)
-- [ ] Document list view with search
-- [ ] Add / Edit / Archive / Delete controls
+- [x] Database schema for documents (content as markdown)
+- [x] Markdown editor component (in-app editing)
+- [x] Amendment table embedded in document content
+- [x] Auto-append amendment row on save (with change summary prompt)
+- [x] Document list view with search
+- [x] Add / Edit / Archive / Delete controls
 
 **Deliverable:** Editable document library with version history in each document
 
@@ -539,6 +539,7 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 | 2026-03-11 | Defined equipment declarations approach | Manual 922.XX SAD entry per drone; auto-suggests TMPR in SORA |
 | 2026-03-11 | Phase 1 complete | React + Vite + Tailwind + Supabase auth + Vercel deployment |
 | 2026-03-11 | Phase 2 complete | Libraries built: Operators, Equipment, Services with full CRUD |
+| 2026-03-11 | Phase 3 complete | Documents with markdown editor, amendment tracking, type filtering |
 | | | |
 
 ---
@@ -559,11 +560,13 @@ C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
     ├── lib/
     │   ├── supabase.js (Supabase client)
     │   ├── api.js (CRUD functions for all tables)
-    │   └── database.sql (PostgreSQL schema)
+    │   ├── database.sql (PostgreSQL schema - all phases)
+    │   └── database-phase3.sql (Phase 3 documents table - run separately)
     ├── pages/
     │   ├── Operators.jsx (operators library with certifications, roles, rates)
     │   ├── Equipment.jsx (equipment with 922.XX declarations, rate calculator)
-    │   └── Services.jsx (services with complex rates, modifiers tab)
+    │   ├── Services.jsx (services with complex rates, modifiers tab)
+    │   └── Documents.jsx (policies, procedures, FHAs with markdown editor)
     └── contexts/
         └── AuthContext.jsx (Supabase auth wrapper)
 ```

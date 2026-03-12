@@ -35,6 +35,7 @@ const navigation = [
     name: 'Documents',
     icon: FileText,
     children: [
+      { name: 'All Documents', href: '/documents', icon: FileText },
       { name: 'Policies', href: '/policies', icon: FileText },
       { name: 'Procedures', href: '/procedures', icon: FileText },
       { name: 'Hazard Assessments', href: '/fha', icon: Shield },

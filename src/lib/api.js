@@ -247,6 +247,77 @@ export async function deleteModifier(id) {
 }
 
 // ============================================
+// DOCUMENTS
+// ============================================
+
+export async function getDocuments(docType = null, includeArchived = false) {
+  let query = supabase
+    .from('documents')
+    .select('*')
+    .order('doc_type')
+    .order('title')
+
+  if (docType) {
+    query = query.eq('doc_type', docType)
+  }
+
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getDocument(id) {
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createDocument(document) {
+  const { data, error } = await supabase
+    .from('documents')
+    .insert(document)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateDocument(id, updates) {
+  const { data, error } = await supabase
+    .from('documents')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function archiveDocument(id) {
+  return updateDocument(id, { status: 'archived' })
+}
+
+export async function deleteDocument(id) {
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
 // AMENDMENTS
 // ============================================
 

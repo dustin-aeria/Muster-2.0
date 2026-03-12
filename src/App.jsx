@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Operators from './pages/Operators'
 import Equipment from './pages/Equipment'
 import Services from './pages/Services'
+import Documents from './pages/Documents'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -71,9 +72,10 @@ function AppRoutes() {
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
 
       {/* Documents */}
-      <Route path="/policies" element={<ProtectedRoute><ComingSoon title="Policies" /></ProtectedRoute>} />
-      <Route path="/procedures" element={<ProtectedRoute><ComingSoon title="Procedures" /></ProtectedRoute>} />
-      <Route path="/fha" element={<ProtectedRoute><ComingSoon title="Hazard Assessments" /></ProtectedRoute>} />
+      <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+      <Route path="/policies" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+      <Route path="/procedures" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+      <Route path="/fha" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
 
       {/* Projects */}
       <Route path="/projects" element={<ProtectedRoute><ComingSoon title="Projects" /></ProtectedRoute>} />
