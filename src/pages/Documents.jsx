@@ -582,11 +582,31 @@ function DocumentViewer({ document, onClose, onEdit }) {
       </html>
     `)
 
-    // Process markdown for print
-    const content = document.content
+    // Process markdown for print - normalize line endings first
+    let content = document.content.replace(/\r\n/g, '\n')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
+
+    // Process TABLES FIRST before anything else breaks them
+    const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
+    content = content.replace(tableRegex, (match, headerRow, bodyRows) => {
+      const headers = headerRow.split('|').filter(h => h.trim())
+      const rows = bodyRows.trim().split('\n').map(row => row.split('|').filter(c => c.trim()))
+      let table = '<table><thead><tr>'
+      headers.forEach(h => { table += '<th>' + h.trim() + '</th>' })
+      table += '</tr></thead><tbody>'
+      rows.forEach(row => {
+        table += '<tr>'
+        row.forEach(cell => { table += '<td>' + cell.trim() + '</td>' })
+        table += '</tr>'
+      })
+      table += '</tbody></table>'
+      return table
+    })
+
+    // Now process other markdown
+    content = content
       .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
@@ -608,6 +628,14 @@ function DocumentViewer({ document, onClose, onEdit }) {
     let olCounter = 1
 
     for (const line of lines) {
+      // Skip lines that are already HTML
+      if (line.trim().startsWith('<table') || line.trim().startsWith('<tr') || line.trim().startsWith('<td') || line.trim().startsWith('<th') || line.trim().startsWith('</')) {
+        if (inUl) { result.push('</ul>'); inUl = false }
+        if (inOl) { result.push('</ol>'); inOl = false; olCounter = 1 }
+        result.push(line)
+        continue
+      }
+
       const ulMatch = line.match(/^[\-\*]\s+(.+)$/)
       const olMatch = line.match(/^\d+\.\s+(.+)$/)
 
@@ -633,24 +661,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
     if (inUl) result.push('</ul>')
     if (inOl) result.push('</ol>')
 
-    // Process tables
-    let finalContent = result.join('\n')
-    const tableRegex = /\|(.+)\|\n\|[\-\s|:]+\|\n((?:\|.+\|\n?)+)/g
-    finalContent = finalContent.replace(tableRegex, (match, headerRow, bodyRows) => {
-      const headers = headerRow.split('|').filter(h => h.trim())
-      const rows = bodyRows.trim().split('\n').map(row => row.split('|').filter(c => c.trim()))
-      let table = '<table><thead><tr>'
-      headers.forEach(h => { table += '<th>' + h.trim() + '</th>' })
-      table += '</tr></thead><tbody>'
-      rows.forEach(row => {
-        table += '<tr>'
-        row.forEach(cell => { table += '<td>' + cell.trim() + '</td>' })
-        table += '</tr>'
-      })
-      table += '</tbody></table>'
-      return table
-    })
-
+    const finalContent = result.join('\n')
     printWindow.document.getElementById('content').innerHTML = finalContent
     printWindow.document.close()
     setTimeout(() => printWindow.print(), 250)

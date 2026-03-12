@@ -175,7 +175,8 @@ export function MarkdownPreview({ content }) {
   }
 
   const parseMarkdown = (md) => {
-    let html = md
+    // Normalize line endings
+    let html = md.replace(/\r\n/g, '\n')
 
     // Escape HTML first
     html = html
@@ -186,6 +187,37 @@ export function MarkdownPreview({ content }) {
     // Code blocks (before other processing)
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
       return `<pre style="background: #1a1a2e; color: #e2e8f0; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 20px 0; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; border-left: 3px solid #131CD0;"><code>${code.trim()}</code></pre>`
+    })
+
+    // TABLES - Process BEFORE lists to prevent interference
+    // Match tables with optional alignment colons
+    const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
+    html = html.replace(tableRegex, (match, headerRow, bodyRows) => {
+      const headers = headerRow.split('|').filter(h => h.trim())
+      const rows = bodyRows.trim().split('\n').map(row =>
+        row.split('|').filter(c => c.trim())
+      )
+
+      let table = '<div style="margin: 24px 0; overflow-x: auto;">'
+      table += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">'
+      table += '<thead>'
+      table += '<tr style="background: #132163;">'
+      headers.forEach(h => {
+        table += `<th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #132163;">${h.trim()}</th>`
+      })
+      table += '</tr></thead>'
+      table += '<tbody>'
+      rows.forEach((row, i) => {
+        const bgColor = i % 2 === 0 ? '#ffffff' : '#f8fafc'
+        table += `<tr style="background: ${bgColor};">`
+        row.forEach((cell, j) => {
+          const fontWeight = j === 0 ? '500' : '400'
+          table += `<td style="padding: 10px 16px; border: 1px solid #e2e8f0; color: #374151; font-weight: ${fontWeight};">${cell.trim()}</td>`
+        })
+        table += '</tr>'
+      })
+      table += '</tbody></table></div>'
+      return table
     })
 
     // Inline code
@@ -225,6 +257,21 @@ export function MarkdownPreview({ content }) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
       const trimmed = line.trim()
+
+      // Skip lines that are already HTML (tables, etc.)
+      if (trimmed.startsWith('<div') || trimmed.startsWith('<table') || trimmed.startsWith('</')) {
+        if (inUnorderedList) {
+          processedLines.push('</ul>')
+          inUnorderedList = false
+        }
+        if (inOrderedList) {
+          processedLines.push('</ol>')
+          inOrderedList = false
+          orderedCounter = 1
+        }
+        processedLines.push(line)
+        continue
+      }
 
       const unorderedMatch = trimmed.match(/^[\-\*]\s+(.+)$/)
       const orderedMatch = trimmed.match(/^\d+\.\s+(.+)$/)
@@ -270,36 +317,6 @@ export function MarkdownPreview({ content }) {
     if (inOrderedList) processedLines.push('</ol>')
 
     html = processedLines.join('\n')
-
-    // Tables - clean, minimal styling like SSARRPAS
-    const tableRegex = /\|(.+)\|\n\|[\-\s|:]+\|\n((?:\|.+\|\n?)+)/g
-    html = html.replace(tableRegex, (match, headerRow, bodyRows) => {
-      const headers = headerRow.split('|').filter(h => h.trim())
-      const rows = bodyRows.trim().split('\n').map(row =>
-        row.split('|').filter(c => c.trim())
-      )
-
-      let table = '<div style="margin: 24px 0; overflow-x: auto;">'
-      table += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">'
-      table += '<thead>'
-      table += '<tr style="background: #132163;">'
-      headers.forEach(h => {
-        table += `<th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #132163;">${h.trim()}</th>`
-      })
-      table += '</tr></thead>'
-      table += '<tbody>'
-      rows.forEach((row, i) => {
-        const bgColor = i % 2 === 0 ? '#ffffff' : '#f8fafc'
-        table += `<tr style="background: ${bgColor};">`
-        row.forEach((cell, j) => {
-          const fontWeight = j === 0 ? '500' : '400'
-          table += `<td style="padding: 10px 16px; border: 1px solid #e2e8f0; color: #374151; font-weight: ${fontWeight};">${cell.trim()}</td>`
-        })
-        table += '</tr>'
-      })
-      table += '</tbody></table></div>'
-      return table
-    })
 
     // Paragraphs
     const finalLines = html.split('\n')
