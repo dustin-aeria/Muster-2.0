@@ -14,15 +14,14 @@ import {
   ChevronDown,
   ChevronUp,
   Save,
-  Eye,
   Clock,
-  Tag,
   Calendar
 } from 'lucide-react'
 import {
   getDocuments, getDocument, createDocument, updateDocument, archiveDocument, deleteDocument
 } from '../lib/api'
 import { format, parseISO } from 'date-fns'
+import MarkdownEditor, { MarkdownPreview } from '../components/MarkdownEditor'
 
 const DOC_TYPES = [
   { value: 'policy', label: 'Policy', icon: BookOpen, prefix: 'POL' },
@@ -34,15 +33,17 @@ const DOC_TYPES = [
 ]
 
 const DOC_CATEGORIES = [
-  'Safety',
-  'Operations',
+  'Governance',
   'Flight Operations',
+  'Safety',
   'Maintenance',
   'Training',
-  'HR',
-  'Equipment',
-  'Emergency',
-  'Quality',
+  'Operations',
+  'Administrative',
+  'Forms',
+  'Quick Reference',
+  'Hazard Assessment',
+  'Regulatory',
   'Other'
 ]
 
@@ -129,7 +130,6 @@ function DocumentModal({ document, onClose, onSave }) {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [showPreview, setShowPreview] = useState(false)
   const [amendmentSummary, setAmendmentSummary] = useState('')
   const [showAmendmentPrompt, setShowAmendmentPrompt] = useState(false)
   const [newTag, setNewTag] = useState('')
@@ -232,24 +232,14 @@ function DocumentModal({ document, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
             {document ? 'Edit Document' : 'New Document'}
           </h2>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowPreview(!showPreview)}
-              className={`p-2 rounded-lg ${showPreview ? 'bg-brand-100 text-brand-700' : 'hover:bg-gray-100'}`}
-              title={showPreview ? 'Edit' : 'Preview'}
-            >
-              <Eye className="w-5 h-5" />
-            </button>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
               <X className="w-5 h-5" />
             </button>
-          </div>
         </div>
 
         {showAmendmentPrompt ? (
@@ -454,21 +444,13 @@ function DocumentModal({ document, onClose, onSave }) {
               {/* Content Editor */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Content (Markdown)
+                  Content
                 </label>
-                {showPreview ? (
-                  <div className="prose prose-sm max-w-none p-4 border border-gray-300 rounded-lg bg-gray-50 min-h-[400px] overflow-auto">
-                    <MarkdownPreview content={formData.content} />
-                  </div>
-                ) : (
-                  <textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                    rows={20}
-                    placeholder="Document content in Markdown..."
-                  />
-                )}
+                <MarkdownEditor
+                  value={formData.content}
+                  onChange={(content) => setFormData({ ...formData, content })}
+                  minHeight="450px"
+                />
               </div>
 
               {/* Notes */}
@@ -508,62 +490,6 @@ function DocumentModal({ document, onClose, onSave }) {
         )}
       </div>
     </div>
-  )
-}
-
-// Simple markdown preview component
-function MarkdownPreview({ content }) {
-  // Basic markdown parsing for preview
-  const parseMarkdown = (md) => {
-    if (!md) return ''
-
-    let html = md
-      // Headers
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      // Bold and italic
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      // Horizontal rule
-      .replace(/^---$/gm, '<hr />')
-      // Line breaks
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/\n/g, '<br />')
-
-    // Handle tables
-    const tableRegex = /\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)+)/g
-    html = html.replace(tableRegex, (match, header, body) => {
-      const headers = header.split('|').filter(h => h.trim())
-      const rows = body.trim().split('\n').map(row =>
-        row.split('|').filter(c => c.trim())
-      )
-
-      let table = '<table class="min-w-full border-collapse border border-gray-300 my-4">'
-      table += '<thead><tr>'
-      headers.forEach(h => {
-        table += `<th class="border border-gray-300 px-3 py-2 bg-gray-100 text-left text-sm font-medium">${h.trim()}</th>`
-      })
-      table += '</tr></thead><tbody>'
-      rows.forEach(row => {
-        table += '<tr>'
-        row.forEach(cell => {
-          table += `<td class="border border-gray-300 px-3 py-2 text-sm">${cell.trim()}</td>`
-        })
-        table += '</tr>'
-      })
-      table += '</tbody></table>'
-      return table
-    })
-
-    return `<p>${html}</p>`
-  }
-
-  return (
-    <div
-      className="markdown-preview"
-      dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
-    />
   )
 }
 
