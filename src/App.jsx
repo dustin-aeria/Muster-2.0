@@ -8,6 +8,11 @@ import Equipment from './pages/Equipment'
 import Services from './pages/Services'
 import Documents from './pages/Documents'
 import Forms from './pages/Forms'
+import FillForm from './pages/FillForm'
+import FormSubmissions from './pages/FormSubmissions'
+import WorkflowTasks from './pages/WorkflowTasks'
+import Workflows from './pages/Workflows'
+import WorkflowTemplates from './pages/WorkflowTemplates'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -78,6 +83,13 @@ function AppRoutes() {
       <Route path="/procedures" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/fha" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/forms" element={<ProtectedRoute><Forms /></ProtectedRoute>} />
+      <Route path="/forms/:formId/fill" element={<ProtectedRoute><FillForm /></ProtectedRoute>} />
+      <Route path="/form-submissions" element={<ProtectedRoute><FormSubmissions /></ProtectedRoute>} />
+
+      {/* Workflows */}
+      <Route path="/workflow-tasks" element={<ProtectedRoute><WorkflowTasks /></ProtectedRoute>} />
+      <Route path="/workflows" element={<ProtectedRoute><Workflows /></ProtectedRoute>} />
+      <Route path="/workflow-templates" element={<ProtectedRoute><WorkflowTemplates /></ProtectedRoute>} />
 
       {/* Projects */}
       <Route path="/projects" element={<ProtectedRoute><ComingSoon title="Projects" /></ProtectedRoute>} />

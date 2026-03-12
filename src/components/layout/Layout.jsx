@@ -17,7 +17,10 @@ import {
   Menu,
   X,
   ChevronDown,
-  ClipboardList
+  ClipboardList,
+  GitBranch,
+  CheckSquare,
+  Send
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -41,6 +44,16 @@ const navigation = [
       { name: 'Procedures', href: '/procedures', icon: FileText },
       { name: 'Hazard Assessments', href: '/fha', icon: Shield },
       { name: 'Forms', href: '/forms', icon: ClipboardList },
+      { name: 'Form Submissions', href: '/form-submissions', icon: Send },
+    ]
+  },
+  {
+    name: 'Workflows',
+    icon: GitBranch,
+    children: [
+      { name: 'My Tasks', href: '/workflow-tasks', icon: CheckSquare },
+      { name: 'All Workflows', href: '/workflows', icon: GitBranch },
+      { name: 'Templates', href: '/workflow-templates', icon: FileText },
     ]
   },
   { name: 'Projects', href: '/projects', icon: FolderOpen },
