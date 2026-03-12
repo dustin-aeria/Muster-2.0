@@ -1,11 +1,10 @@
 /**
  * formParser.js
- * Parses markdown form content into structured fillable fields
- * and generates filled markdown from field values
+ * Utilities for parsing markdown forms and generating filled content
  */
 
 /**
- * Field types detected from markdown
+ * Field types
  */
 export const FIELD_TYPES = {
   TEXT: 'text',
@@ -21,175 +20,28 @@ export const FIELD_TYPES = {
 }
 
 /**
- * Generate a unique field ID from label
+ * Check if a cell should be editable
  */
-function generateFieldId(label, index) {
-  const base = label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .substring(0, 30)
-  return `${base}_${index}`
-}
+function isEditableCell(content) {
+  const trimmed = content.trim()
 
-/**
- * Detect field type based on label and value patterns
- */
-function detectFieldType(label, value) {
-  const labelLower = label.toLowerCase()
-  const valueLower = (value || '').toLowerCase()
+  // Empty cells
+  if (!trimmed) return true
 
-  // Checkbox detection
-  if (valueLower.includes('☐') || valueLower.includes('☑') || valueLower.includes('[ ]') || valueLower.includes('[x]')) {
-    return FIELD_TYPES.CHECKBOX
-  }
+  // Checkbox placeholders
+  if (trimmed === '☐' || trimmed === '☑' || trimmed === '[ ]' || trimmed === '[x]') return true
 
-  // Signature detection
-  if (labelLower.includes('signature')) {
-    return FIELD_TYPES.SIGNATURE
-  }
+  // Placeholder patterns
+  if (trimmed.match(/^_{2,}$/)) return true
+  if (trimmed.match(/^\.{2,}$/)) return true
 
-  // Date detection
-  if (labelLower.includes('date') || /\d{4}-\d{2}-\d{2}/.test(value)) {
-    return FIELD_TYPES.DATE
-  }
-
-  // Time detection
-  if (labelLower.includes('time') && !labelLower.includes('datetime')) {
-    return FIELD_TYPES.TIME
-  }
-
-  // Email detection
-  if (labelLower.includes('email')) {
-    return FIELD_TYPES.EMAIL
-  }
-
-  // Phone detection
-  if (labelLower.includes('phone') || labelLower.includes('tel') || labelLower.includes('mobile')) {
-    return FIELD_TYPES.PHONE
-  }
-
-  // Number detection
-  if (labelLower.includes('quantity') || labelLower.includes('count') || labelLower.includes('number of') || labelLower.includes('amount')) {
-    return FIELD_TYPES.NUMBER
-  }
-
-  // Textarea for longer fields
-  if (labelLower.includes('description') || labelLower.includes('notes') || labelLower.includes('comments') || labelLower.includes('details')) {
-    return FIELD_TYPES.TEXTAREA
-  }
-
-  // Default to text
-  return FIELD_TYPES.TEXT
-}
-
-/**
- * Parse a markdown table into field definitions
- */
-function parseTable(tableContent, startIndex) {
-  const fields = []
-  const lines = tableContent.trim().split('\n')
-
-  if (lines.length < 2) return fields
-
-  // Parse header row
-  const headerRow = lines[0]
-  const headers = headerRow.split('|').map(h => h.trim()).filter(h => h)
-
-  // Skip separator row (line 1)
-  // Parse data rows
-  for (let i = 2; i < lines.length; i++) {
-    const row = lines[i]
-    const cells = row.split('|').map(c => c.trim()).filter(c => c !== '')
-
-    if (cells.length >= 2) {
-      const label = cells[0]
-      const value = cells[1] || ''
-
-      // Skip header-like rows
-      if (label.toLowerCase() === 'field' || label.toLowerCase() === 'item') continue
-
-      const fieldType = detectFieldType(label, value)
-      const fieldId = generateFieldId(label, startIndex + fields.length)
-
-      fields.push({
-        id: fieldId,
-        label: label,
-        type: fieldType,
-        value: fieldType === FIELD_TYPES.CHECKBOX ? (value.includes('☑') || value.includes('[x]')) : value.trim(),
-        required: label.includes('*'),
-        placeholder: `Enter ${label.toLowerCase()}`,
-        tableRow: i,
-        originalValue: value
-      })
-    }
-  }
-
-  return fields
-}
-
-/**
- * Parse checkbox items from content
- */
-function parseCheckboxes(content, startIndex) {
-  const fields = []
-  const checkboxRegex = /^[\s]*[-*]?\s*[☐☑\[\]xX\s]*\s*(.+)$/gm
-  let match
-
-  while ((match = checkboxRegex.exec(content)) !== null) {
-    const line = match[0]
-    const label = match[1].trim()
-
-    // Check if it's actually a checkbox line
-    if (line.includes('☐') || line.includes('☑') || /\[\s*[xX]?\s*\]/.test(line)) {
-      const isChecked = line.includes('☑') || /\[\s*[xX]\s*\]/.test(line)
-      const fieldId = generateFieldId(label, startIndex + fields.length)
-
-      fields.push({
-        id: fieldId,
-        label: label,
-        type: FIELD_TYPES.CHECKBOX,
-        value: isChecked,
-        required: false,
-        lineIndex: match.index
-      })
-    }
-  }
-
-  return fields
-}
-
-/**
- * Main function to parse markdown form content into structured fields
- * @param {string} markdownContent - The markdown content of the form
- * @returns {Array} Array of field objects
- */
-export function parseFormToFields(markdownContent) {
-  if (!markdownContent) return []
-
-  const fields = []
-  let fieldIndex = 0
-
-  // Find all tables in the content
-  const tableRegex = /\|[^\n]+\|\n\|[\s:-]+\|\n(?:\|[^\n]+\|\n?)*/g
-  let tableMatch
-
-  while ((tableMatch = tableRegex.exec(markdownContent)) !== null) {
-    const tableFields = parseTable(tableMatch[0], fieldIndex)
-    fields.push(...tableFields)
-    fieldIndex += tableFields.length
-  }
-
-  // Find standalone checkboxes (outside tables)
-  const nonTableContent = markdownContent.replace(tableRegex, '')
-  const checkboxFields = parseCheckboxes(nonTableContent, fieldIndex)
-  fields.push(...checkboxFields)
-
-  return fields
+  return false
 }
 
 /**
  * Generate filled markdown from template and field values
+ * Field IDs are in format: field_tableIndex_rowIndex_colIndex
+ *
  * @param {string} template - Original markdown template
  * @param {Object} fieldValues - Object mapping field IDs to values
  * @returns {string} Filled markdown content
@@ -198,57 +50,129 @@ export function generateFilledMarkdown(template, fieldValues) {
   if (!template || !fieldValues) return template
 
   let content = template
+  let tableIndex = 0
 
-  // Replace table cell values
-  const tableRegex = /(\|[^\n]+\|\n\|[\s:-]+\|\n)((?:\|[^\n]+\|\n?)*)/g
+  // Process tables
+  const tableRegex = /(\|.+\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n)((?:\|.+\|\n?)+)/g
+
   content = content.replace(tableRegex, (match, header, body) => {
+    const currentTableIndex = tableIndex++
+
     const bodyLines = body.trim().split('\n')
-    const filledLines = bodyLines.map(line => {
-      const cells = line.split('|').filter(c => c !== '')
-      if (cells.length >= 2) {
-        const label = cells[0].trim()
-        const fieldId = Object.keys(fieldValues).find(id => {
-          const fieldLabel = id.replace(/_\d+$/, '').replace(/_/g, ' ')
-          return label.toLowerCase().replace(/[^a-z0-9]/g, '') === fieldLabel.replace(/[^a-z0-9]/g, '')
-        })
+    const filledLines = bodyLines.map((line, rowIndex) => {
+      const cells = line.split('|')
 
-        if (fieldId && fieldValues[fieldId] !== undefined) {
+      // Reconstruct the row, filling in values for editable cells
+      const filledCells = cells.map((cell, cellIndex) => {
+        // Skip empty boundary cells (before first | and after last |)
+        if (cellIndex === 0 || cellIndex === cells.length - 1) return cell
+
+        const colIndex = cellIndex - 1 // Adjust for leading empty cell
+        const trimmedCell = cell.trim()
+
+        // Only fill cells that are editable (non-label cells)
+        if (colIndex > 0 && isEditableCell(trimmedCell)) {
+          const fieldId = `field_${currentTableIndex}_${rowIndex}_${colIndex}`
           const value = fieldValues[fieldId]
-          const displayValue = typeof value === 'boolean'
-            ? (value ? '☑' : '☐')
-            : value || ''
 
-          // Reconstruct the row with the filled value
-          cells[1] = ` ${displayValue} `
-          return '|' + cells.join('|') + '|'
+          if (value !== undefined && value !== null && value !== '') {
+            // Handle checkbox values
+            if (typeof value === 'boolean') {
+              return ` ${value ? '☑ Yes' : '☐ No'} `
+            }
+            return ` ${value} `
+          }
         }
-      }
-      return line
+
+        return cell
+      })
+
+      return filledCells.join('|')
     })
+
     return header + filledLines.join('\n') + '\n'
-  })
-
-  // Replace standalone checkboxes
-  content = content.replace(/[☐☑](\s*[^\n]+)/g, (match, label) => {
-    const fieldId = Object.keys(fieldValues).find(id => {
-      const fieldLabel = id.replace(/_\d+$/, '').replace(/_/g, ' ')
-      return label.trim().toLowerCase().includes(fieldLabel)
-    })
-
-    if (fieldId !== undefined && typeof fieldValues[fieldId] === 'boolean') {
-      return (fieldValues[fieldId] ? '☑' : '☐') + label
-    }
-    return match
   })
 
   return content
 }
 
 /**
- * Validate field values against field definitions
- * @param {Array} fields - Field definitions
- * @param {Object} values - Field values
- * @returns {Object} { valid: boolean, errors: { fieldId: errorMessage } }
+ * Parse markdown form content into structured fields (legacy support)
+ * @param {string} markdownContent - The markdown content of the form
+ * @returns {Array} Array of field objects
+ */
+export function parseFormToFields(markdownContent) {
+  if (!markdownContent) return []
+
+  const fields = []
+  let tableIndex = 0
+
+  const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
+  let match
+
+  while ((match = tableRegex.exec(markdownContent)) !== null) {
+    const headerRow = match[1]
+    const bodyRows = match[2].trim()
+
+    const headers = headerRow.split('|').filter(h => h.trim()).map(h => h.trim())
+    const rows = bodyRows.split('\n').map(row =>
+      row.split('|').filter(c => c !== '').map(c => c.trim())
+    )
+
+    rows.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        if (colIndex > 0 && isEditableCell(cell)) {
+          const headerLabel = headers[colIndex] || ''
+          const rowLabel = row[0] || ''
+
+          fields.push({
+            id: `field_${tableIndex}_${rowIndex}_${colIndex}`,
+            label: rowLabel || headerLabel,
+            type: detectFieldType(headerLabel, cell),
+            required: false
+          })
+        }
+      })
+    })
+
+    tableIndex++
+  }
+
+  return fields
+}
+
+/**
+ * Detect field type from label and value
+ */
+function detectFieldType(label, value) {
+  const labelLower = label.toLowerCase()
+  const valueTrimmed = (value || '').trim()
+
+  // Checkbox
+  if (valueTrimmed === '☐' || valueTrimmed === '☑' || valueTrimmed === '[ ]' || valueTrimmed === '[x]') {
+    return FIELD_TYPES.CHECKBOX
+  }
+
+  // Signature
+  if (labelLower.includes('signature')) return FIELD_TYPES.SIGNATURE
+
+  // Date
+  if (labelLower.includes('date')) return FIELD_TYPES.DATE
+
+  // Time
+  if (labelLower.includes('time') && !labelLower.includes('datetime')) return FIELD_TYPES.TIME
+
+  // Email
+  if (labelLower.includes('email')) return FIELD_TYPES.EMAIL
+
+  // Phone
+  if (labelLower.includes('phone') || labelLower.includes('tel')) return FIELD_TYPES.PHONE
+
+  return FIELD_TYPES.TEXT
+}
+
+/**
+ * Validate field values
  */
 export function validateFieldValues(fields, values) {
   const errors = {}
@@ -259,33 +183,6 @@ export function validateFieldValues(fields, values) {
     if (field.required) {
       if (value === undefined || value === null || value === '') {
         errors[field.id] = `${field.label} is required`
-        continue
-      }
-    }
-
-    // Type-specific validation
-    if (value) {
-      switch (field.type) {
-        case FIELD_TYPES.EMAIL:
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            errors[field.id] = 'Invalid email format'
-          }
-          break
-        case FIELD_TYPES.DATE:
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            errors[field.id] = 'Invalid date format (YYYY-MM-DD)'
-          }
-          break
-        case FIELD_TYPES.PHONE:
-          if (!/^[\d\s\-\+\(\)]+$/.test(value)) {
-            errors[field.id] = 'Invalid phone format'
-          }
-          break
-        case FIELD_TYPES.NUMBER:
-          if (isNaN(Number(value))) {
-            errors[field.id] = 'Must be a number'
-          }
-          break
       }
     }
   }
@@ -294,31 +191,4 @@ export function validateFieldValues(fields, values) {
     valid: Object.keys(errors).length === 0,
     errors
   }
-}
-
-/**
- * Extract form metadata from markdown content
- * @param {string} content - Markdown content
- * @returns {Object} Metadata like form number, version, effective date
- */
-export function extractFormMetadata(content) {
-  const metadata = {}
-
-  // Form Number
-  const formNumMatch = content.match(/\*\*Form Number:\*\*\s*([^\n*]+)/i)
-  if (formNumMatch) metadata.formNumber = formNumMatch[1].trim()
-
-  // Version
-  const versionMatch = content.match(/\*\*Version:\*\*\s*([^\n*]+)/i)
-  if (versionMatch) metadata.version = versionMatch[1].trim()
-
-  // Effective Date
-  const effectiveDateMatch = content.match(/\*\*Effective Date:\*\*\s*([^\n*]+)/i)
-  if (effectiveDateMatch) metadata.effectiveDate = effectiveDateMatch[1].trim()
-
-  // Title (first h1)
-  const titleMatch = content.match(/^#\s+(.+)$/m)
-  if (titleMatch) metadata.title = titleMatch[1].trim()
-
-  return metadata
 }
