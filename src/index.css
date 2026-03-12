@@ -18,3 +18,34 @@
 body {
   @apply bg-gray-50 text-gray-900 antialiased;
 }
+
+/* Document content styles */
+.document-content {
+  @apply text-gray-700;
+}
+
+.document-content h1:first-child {
+  @apply mt-0;
+}
+
+/* Smooth scrolling for document viewer */
+.document-content {
+  scroll-behavior: smooth;
+}
+
+/* Print styles */
+@media print {
+  .document-content {
+    @apply text-black;
+  }
+
+  .document-content h1,
+  .document-content h2,
+  .document-content h3 {
+    page-break-after: avoid;
+  }
+
+  .document-content table {
+    page-break-inside: avoid;
+  }
+}
