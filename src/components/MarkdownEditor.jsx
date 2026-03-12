@@ -168,8 +168,8 @@ export default function MarkdownEditor({ value, onChange, minHeight = '400px' })
   )
 }
 
-// Professional markdown preview with enhanced typography and styling
-export function MarkdownPreview({ content, showLogo = false }) {
+// Professional markdown preview with clean typography
+export function MarkdownPreview({ content }) {
   if (!content) {
     return <p className="text-gray-400 italic">No content</p>
   }
@@ -185,38 +185,37 @@ export function MarkdownPreview({ content, showLogo = false }) {
 
     // Code blocks (before other processing)
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre class="bg-gray-900 text-gray-100 rounded-xl p-5 overflow-x-auto my-6 text-sm font-mono shadow-lg border border-gray-800"><code>${code.trim()}</code></pre>`
+      return `<pre style="background: #1a1a2e; color: #e2e8f0; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 20px 0; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; border-left: 3px solid #131CD0;"><code>${code.trim()}</code></pre>`
     })
 
     // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code class="bg-brand-50 text-brand-700 px-2 py-1 rounded-md text-sm font-mono border border-brand-100">$1</code>')
+    html = html.replace(/`([^`]+)`/g, '<code style="background: #f1f5f9; color: #132163; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: monospace;">$1</code>')
 
-    // Headers (must be at start of line) - with brand colors and better styling
-    html = html.replace(/^#### (.+)$/gm, '<h4 class="text-base font-semibold text-gray-800 mt-6 mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-brand-400 rounded-full"></span>$1</h4>')
-    html = html.replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-gray-900 mt-8 mb-4 flex items-center gap-2"><span class="w-1.5 h-5 bg-brand-500 rounded-full"></span>$1</h3>')
-    html = html.replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-brand-700 mt-10 mb-5 pb-3 border-b-2 border-brand-200">$1</h2>')
-    html = html.replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-brand-500">$1</h1>')
+    // Headers with navy/blue styling
+    html = html.replace(/^#### (.+)$/gm, '<h4 style="font-size: 15px; font-weight: 600; color: #132163; margin: 24px 0 12px 0;">$1</h4>')
+    html = html.replace(/^### (.+)$/gm, '<h3 style="font-size: 17px; font-weight: 600; color: #132163; margin: 28px 0 14px 0;">$1</h3>')
+    html = html.replace(/^## (.+)$/gm, '<h2 style="font-size: 20px; font-weight: 700; color: #132163; margin: 32px 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #131CD0;">$1</h2>')
+    html = html.replace(/^# (.+)$/gm, '<h1 style="font-size: 24px; font-weight: 700; color: #132163; margin: 0 0 20px 0; padding-bottom: 12px; border-bottom: 3px solid #131CD0;">$1</h1>')
 
     // Bold and italic
-    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong class="font-bold"><em class="italic">$1</em></strong>')
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
-    html = html.replace(/\*(.+?)\*/g, '<em class="italic text-gray-700">$1</em>')
-    html = html.replace(/___(.+?)___/g, '<strong class="font-bold"><em class="italic">$1</em></strong>')
-    html = html.replace(/__(.+?)__/g, '<strong class="font-semibold text-gray-900">$1</strong>')
-    html = html.replace(/_(.+?)_/g, '<em class="italic text-gray-700">$1</em>')
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: 600; color: #1f2937;">$1</strong>')
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+    html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>')
+    html = html.replace(/__(.+?)__/g, '<strong style="font-weight: 600; color: #1f2937;">$1</strong>')
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>')
 
     // Links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-brand-600 hover:text-brand-700 underline decoration-brand-300 hover:decoration-brand-500 transition-colors font-medium" target="_blank" rel="noopener">$1</a>')
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #131CD0; text-decoration: underline;" target="_blank" rel="noopener">$1</a>')
 
-    // Horizontal rule - styled divider
-    html = html.replace(/^---$/gm, '<div class="my-10 flex items-center gap-4"><div class="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div><div class="w-2 h-2 rounded-full bg-brand-400"></div><div class="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div></div>')
-    html = html.replace(/^\*\*\*$/gm, '<div class="my-10 flex items-center gap-4"><div class="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div><div class="w-2 h-2 rounded-full bg-brand-400"></div><div class="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div></div>')
+    // Horizontal rule
+    html = html.replace(/^---$/gm, '<hr style="border: none; height: 1px; background: #e5e7eb; margin: 32px 0;" />')
+    html = html.replace(/^\*\*\*$/gm, '<hr style="border: none; height: 1px; background: #e5e7eb; margin: 32px 0;" />')
 
-    // Blockquotes - professional callout style
-    html = html.replace(/^&gt; (.+)$/gm, '<blockquote class="relative pl-6 pr-4 py-4 my-6 bg-brand-50 border-l-4 border-brand-500 rounded-r-lg text-gray-700 italic shadow-sm"><span class="absolute left-2 top-2 text-brand-300 text-2xl font-serif">"</span>$1</blockquote>')
+    // Blockquotes
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote style="border-left: 3px solid #131CD0; padding-left: 16px; margin: 16px 0; color: #4b5563; font-style: italic;">$1</blockquote>')
 
-    // Process lists properly - collect consecutive items and wrap them
-    // First, mark list items with special tokens
+    // Process lists properly
     const lines = html.split('\n')
     const processedLines = []
     let inUnorderedList = false
@@ -227,9 +226,7 @@ export function MarkdownPreview({ content, showLogo = false }) {
       const line = lines[i]
       const trimmed = line.trim()
 
-      // Check for unordered list item (- or *)
       const unorderedMatch = trimmed.match(/^[\-\*]\s+(.+)$/)
-      // Check for ordered list item (any number followed by .)
       const orderedMatch = trimmed.match(/^\d+\.\s+(.+)$/)
 
       if (unorderedMatch) {
@@ -239,24 +236,23 @@ export function MarkdownPreview({ content, showLogo = false }) {
           orderedCounter = 1
         }
         if (!inUnorderedList) {
-          processedLines.push('<ul class="my-6 space-y-2 list-none">')
+          processedLines.push('<ul style="margin: 16px 0; padding-left: 0; list-style: none;">')
           inUnorderedList = true
         }
-        processedLines.push(`<li class="flex items-start gap-3 text-gray-700 leading-relaxed"><span class="w-2 h-2 mt-2 rounded-full bg-brand-500 flex-shrink-0"></span><span>${unorderedMatch[1]}</span></li>`)
+        processedLines.push(`<li style="display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; color: #374151; line-height: 1.6;"><span style="width: 6px; height: 6px; margin-top: 8px; border-radius: 50%; background: #131CD0; flex-shrink: 0;"></span><span>${unorderedMatch[1]}</span></li>`)
       } else if (orderedMatch) {
         if (inUnorderedList) {
           processedLines.push('</ul>')
           inUnorderedList = false
         }
         if (!inOrderedList) {
-          processedLines.push('<ol class="my-6 space-y-2 list-none counter-reset-list">')
+          processedLines.push('<ol style="margin: 16px 0; padding-left: 0; list-style: none;">')
           inOrderedList = true
           orderedCounter = 1
         }
-        processedLines.push(`<li class="flex items-start gap-3 text-gray-700 leading-relaxed"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold flex items-center justify-center">${orderedCounter}</span><span>${orderedMatch[1]}</span></li>`)
+        processedLines.push(`<li style="display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; color: #374151; line-height: 1.6;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #132163; color: white; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${orderedCounter}</span><span>${orderedMatch[1]}</span></li>`)
         orderedCounter++
       } else {
-        // Not a list item - close any open lists
         if (inUnorderedList) {
           processedLines.push('</ul>')
           inUnorderedList = false
@@ -270,13 +266,12 @@ export function MarkdownPreview({ content, showLogo = false }) {
       }
     }
 
-    // Close any remaining open lists
     if (inUnorderedList) processedLines.push('</ul>')
     if (inOrderedList) processedLines.push('</ol>')
 
     html = processedLines.join('\n')
 
-    // Tables - professional styling with borders, shadows, hover effects
+    // Tables - clean, minimal styling like SSARRPAS
     const tableRegex = /\|(.+)\|\n\|[\-\s|:]+\|\n((?:\|.+\|\n?)+)/g
     html = html.replace(tableRegex, (match, headerRow, bodyRows) => {
       const headers = headerRow.split('|').filter(h => h.trim())
@@ -284,20 +279,21 @@ export function MarkdownPreview({ content, showLogo = false }) {
         row.split('|').filter(c => c.trim())
       )
 
-      let table = '<div class="my-8 overflow-hidden rounded-xl border border-gray-200 shadow-sm">'
-      table += '<table class="min-w-full divide-y divide-gray-200">'
-      table += '<thead class="bg-gradient-to-r from-brand-600 to-brand-700">'
-      table += '<tr>'
+      let table = '<div style="margin: 24px 0; overflow-x: auto;">'
+      table += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">'
+      table += '<thead>'
+      table += '<tr style="background: #132163;">'
       headers.forEach(h => {
-        table += `<th class="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">${h.trim()}</th>`
+        table += `<th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #132163;">${h.trim()}</th>`
       })
       table += '</tr></thead>'
-      table += '<tbody class="bg-white divide-y divide-gray-100">'
+      table += '<tbody>'
       rows.forEach((row, i) => {
-        table += `<tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-brand-50 transition-colors">`
+        const bgColor = i % 2 === 0 ? '#ffffff' : '#f8fafc'
+        table += `<tr style="background: ${bgColor};">`
         row.forEach((cell, j) => {
-          const isFirstCol = j === 0
-          table += `<td class="px-5 py-4 text-sm ${isFirstCol ? 'font-medium text-gray-900' : 'text-gray-600'}">${cell.trim()}</td>`
+          const fontWeight = j === 0 ? '500' : '400'
+          table += `<td style="padding: 10px 16px; border: 1px solid #e2e8f0; color: #374151; font-weight: ${fontWeight};">${cell.trim()}</td>`
         })
         table += '</tr>'
       })
@@ -305,7 +301,7 @@ export function MarkdownPreview({ content, showLogo = false }) {
       return table
     })
 
-    // Paragraphs - wrap loose text with better typography
+    // Paragraphs
     const finalLines = html.split('\n')
     const finalProcessed = []
     let inParagraph = false
@@ -314,7 +310,6 @@ export function MarkdownPreview({ content, showLogo = false }) {
       const line = finalLines[i]
       const trimmed = line.trim()
 
-      // Skip if it's already an HTML element or empty
       if (trimmed.startsWith('<') || trimmed === '') {
         if (inParagraph) {
           finalProcessed.push('</p>')
@@ -327,7 +322,7 @@ export function MarkdownPreview({ content, showLogo = false }) {
         }
       } else {
         if (!inParagraph) {
-          finalProcessed.push('<p class="text-gray-700 leading-relaxed my-4 text-base">')
+          finalProcessed.push('<p style="color: #374151; line-height: 1.7; margin: 14px 0;">')
           inParagraph = true
         } else {
           finalProcessed.push('<br />')
@@ -345,7 +340,8 @@ export function MarkdownPreview({ content, showLogo = false }) {
 
   return (
     <div
-      className="prose prose-gray max-w-none document-content"
+      className="document-content"
+      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
       dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
     />
   )

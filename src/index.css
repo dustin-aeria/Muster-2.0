@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
-/* Custom brand color */
+/* AERIA brand colors */
 @theme {
-  --color-brand-50: #f0f9ff;
-  --color-brand-100: #e0f2fe;
-  --color-brand-200: #bae6fd;
-  --color-brand-300: #7dd3fc;
-  --color-brand-400: #38bdf8;
-  --color-brand-500: #0ea5e9;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
-  --color-brand-800: #075985;
-  --color-brand-900: #0c4a6e;
+  --color-brand-50: #e8e9f4;
+  --color-brand-100: #d1d3e9;
+  --color-brand-200: #a3a7d3;
+  --color-brand-300: #757abd;
+  --color-brand-400: #474ea7;
+  --color-brand-500: #131CD0;
+  --color-brand-600: #132163;
+  --color-brand-700: #101a4f;
+  --color-brand-800: #0c143b;
+  --color-brand-900: #080d27;
 }
 
 /* Base styles */

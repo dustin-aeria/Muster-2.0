@@ -21,7 +21,8 @@ import {
 } from '../lib/api'
 import { format, parseISO } from 'date-fns'
 import MarkdownEditor, { MarkdownPreview } from '../components/MarkdownEditor'
-import aeriaLogo from '../assets/aeria-logo.png'
+import aeriaIcon from '../assets/aeria-icon.png'
+import aeriaLogoFull from '../assets/aeria-logo-full.png'
 
 const DOC_TYPES = [
   { value: 'policy', label: 'Policy', icon: BookOpen, prefix: 'POL' },
@@ -509,45 +510,44 @@ function DocumentViewer({ document, onClose, onEdit }) {
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; line-height: 1.7; color: #1f2937; }
 
             /* Header */
-            .doc-header { display: flex; align-items: flex-start; gap: 24px; padding-bottom: 24px; border-bottom: 3px solid #0284c7; margin-bottom: 32px; }
-            .doc-header img { width: 60px; height: auto; }
+            .doc-header { display: flex; align-items: flex-start; gap: 24px; padding-bottom: 24px; border-bottom: 3px solid #131CD0; margin-bottom: 32px; }
+            .doc-header img { height: 50px; width: auto; }
             .doc-header-content { flex: 1; }
-            .doc-number { color: #0284c7; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-            .doc-title { font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+            .doc-number { color: #131CD0; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+            .doc-title { font-size: 26px; font-weight: 700; color: #132163; margin-bottom: 8px; }
             .doc-meta { color: #6b7280; font-size: 13px; display: flex; flex-wrap: wrap; gap: 16px; }
             .doc-meta-item { display: flex; align-items: center; gap: 6px; }
 
             /* Content */
-            h1 { font-size: 24px; font-weight: 700; color: #111827; margin: 32px 0 16px; padding-bottom: 12px; border-bottom: 2px solid #0284c7; }
-            h2 { font-size: 20px; font-weight: 700; color: #0369a1; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
-            h3 { font-size: 16px; font-weight: 600; color: #374151; margin: 24px 0 10px; }
-            h4 { font-size: 14px; font-weight: 600; color: #4b5563; margin: 20px 0 8px; }
+            h1 { font-size: 24px; font-weight: 700; color: #132163; margin: 32px 0 16px; padding-bottom: 12px; border-bottom: 3px solid #131CD0; }
+            h2 { font-size: 20px; font-weight: 700; color: #132163; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #131CD0; }
+            h3 { font-size: 17px; font-weight: 600; color: #132163; margin: 24px 0 10px; }
+            h4 { font-size: 15px; font-weight: 600; color: #132163; margin: 20px 0 8px; }
             p { margin: 12px 0; color: #374151; }
 
             /* Lists */
             ul, ol { margin: 16px 0; padding-left: 0; list-style: none; }
-            li { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0; color: #374151; }
-            ul li::before { content: ''; width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; background: #0284c7; flex-shrink: 0; }
+            li { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; color: #374151; }
+            ul li::before { content: ''; width: 6px; height: 6px; margin-top: 8px; border-radius: 50%; background: #131CD0; flex-shrink: 0; }
             ol { counter-reset: list-counter; }
             ol li { counter-increment: list-counter; }
-            ol li::before { content: counter(list-counter); width: 24px; height: 24px; border-radius: 50%; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+            ol li::before { content: counter(list-counter); width: 22px; height: 22px; border-radius: 50%; background: #132163; color: white; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-            /* Tables */
-            table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
-            th { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-            td { border-bottom: 1px solid #f3f4f6; padding: 12px 16px; font-size: 14px; color: #374151; }
-            tr:nth-child(even) { background: #f9fafb; }
-            tr:hover { background: #f0f9ff; }
+            /* Tables - clean minimal style */
+            table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+            th { background: #132163; color: white; padding: 12px 16px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #132163; }
+            td { border: 1px solid #e2e8f0; padding: 10px 16px; color: #374151; }
+            tr:nth-child(even) { background: #f8fafc; }
 
             /* Other elements */
-            hr { border: none; height: 1px; background: linear-gradient(to right, transparent, #d1d5db, transparent); margin: 32px 0; }
-            blockquote { border-left: 4px solid #0284c7; background: #f0f9ff; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; color: #374151; font-style: italic; }
-            code { background: #f0f9ff; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; }
-            pre { background: #1f2937; color: #f3f4f6; padding: 20px; border-radius: 8px; overflow-x: auto; margin: 20px 0; }
+            hr { border: none; height: 1px; background: #e5e7eb; margin: 32px 0; }
+            blockquote { border-left: 3px solid #131CD0; padding-left: 16px; margin: 20px 0; color: #4b5563; font-style: italic; }
+            code { background: #f1f5f9; color: #132163; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; }
+            pre { background: #1a1a2e; color: #e2e8f0; padding: 16px; border-radius: 6px; overflow-x: auto; margin: 20px 0; border-left: 3px solid #131CD0; }
             pre code { background: none; color: inherit; padding: 0; }
-            strong { font-weight: 600; color: #111827; }
+            strong { font-weight: 600; color: #1f2937; }
             em { font-style: italic; }
-            a { color: #0284c7; text-decoration: underline; }
+            a { color: #131CD0; text-decoration: underline; }
 
             /* Footer */
             .doc-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 12px; }
@@ -562,7 +562,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
         </head>
         <body>
           <div class="doc-header">
-            <img src="${aeriaLogo}" alt="AERIA" />
+            <img src="${aeriaLogoFull}" alt="AERIA Solutions Ltd." />
             <div class="doc-header-content">
               ${document.doc_number ? `<div class="doc-number">${document.doc_number}</div>` : ''}
               <div class="doc-title">${document.title}</div>
@@ -659,10 +659,10 @@ function DocumentViewer({ document, onClose, onEdit }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={aeriaLogo} alt="AERIA" className="w-10 h-10 rounded-lg bg-white p-1" />
+        {/* Header with logo */}
+        <div className="sticky top-0 bg-[#132163] px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={aeriaIcon} alt="AERIA" className="h-10 w-auto" />
             <div className={`px-2 py-1 rounded text-xs font-medium ${document.status === 'active' ? 'bg-green-400/20 text-green-100' : document.status === 'draft' ? 'bg-gray-400/20 text-gray-100' : 'bg-yellow-400/20 text-yellow-100'}`}>
               {statusConfig?.label || document.status}
             </div>
@@ -678,7 +678,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
             </button>
             <button
               onClick={onEdit}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-brand-700 rounded-lg hover:bg-brand-50 font-medium transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#131CD0] text-white rounded-lg hover:bg-[#1020a0] font-medium transition-colors"
             >
               <Edit2 className="w-4 h-4" />
               Edit
@@ -689,16 +689,16 @@ function DocumentViewer({ document, onClose, onEdit }) {
           </div>
         </div>
 
-        {/* Document Header */}
-        <div className="px-8 pt-8 pb-6 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
-          <div className="flex items-start gap-4">
+        {/* Document Header with full logo */}
+        <div className="px-8 pt-6 pb-6 bg-white border-b border-gray-200">
+          <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
               {document.doc_number && (
-                <p className="text-sm font-bold text-brand-600 mb-2 tracking-wide">{document.doc_number}</p>
+                <p className="text-sm font-bold text-[#131CD0] mb-2 tracking-wide">{document.doc_number}</p>
               )}
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">{document.title}</h1>
+              <h1 className="text-2xl font-bold text-[#132163] mb-3">{document.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 text-brand-700 rounded-full font-medium">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#132163]/10 text-[#132163] rounded-full font-medium">
                   {typeConfig?.label || document.doc_type}
                 </span>
                 {document.category && (
@@ -723,6 +723,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
                 </div>
               )}
             </div>
+            <img src={aeriaLogoFull} alt="AERIA Solutions Ltd." className="h-14 w-auto hidden sm:block" />
           </div>
         </div>
 
