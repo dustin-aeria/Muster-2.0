@@ -105,16 +105,17 @@ export default function GoogleForms() {
     setMessage({ type: '', text: '' })
 
     try {
+      console.log('Creating form:', template.name)
       const form = await template.create()
+      console.log('Form created:', form)
       setMessage({
         type: 'success',
-        text: `${template.name} created successfully!`
+        text: `${template.name} created! Form ID: ${form.formId}`
       })
       // Refresh list
       await loadForms()
-      // Open form in new tab
-      window.open(form.editUrl, '_blank')
     } catch (err) {
+      console.error('Form creation error:', err)
       setMessage({ type: 'error', text: err.message })
     } finally {
       setCreating(null)
