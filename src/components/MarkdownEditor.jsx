@@ -37,7 +37,7 @@ function Divider() {
 }
 
 export default function MarkdownEditor({ value, onChange, minHeight = '400px' }) {
-  const [viewMode, setViewMode] = useState('split') // 'edit', 'preview', 'split'
+  const [viewMode, setViewMode] = useState('edit') // 'edit', 'preview', 'split'
   const textareaRef = useRef(null)
 
   // Insert text at cursor position

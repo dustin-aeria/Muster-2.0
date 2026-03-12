@@ -1,0 +1,203 @@
+# AERIA SOLUTIONS LTD
+
+# SITE SURVEY FORM
+
+---
+
+| Field | Value |
+|:------|:------|
+| **Form Number** | FRM-SITESURVEY |
+| **Version** | v5.0 |
+| **Effective Date** | March 11, 2026 |
+
+---
+
+## Survey Information
+
+| Field | Entry |
+|:------|:------|
+| **Date** | |
+| **Surveyed By** | |
+| **Project/Client** | |
+| **Location Name** | |
+| **Address/Description** | |
+| **Coordinates** | Lat: _______ Long: _______ |
+
+---
+
+## Site Access
+
+| Item | Details |
+|:-----|:--------|
+| Access route | |
+| Gate/security | ☐ None ☐ Gate code: ___ ☐ Contact required |
+| Vehicle access | ☐ Yes ☐ No ☐ Partial |
+| Parking location | |
+| Walking distance to ops area | |
+| Site contact | Name: _______ Phone: _______ |
+
+---
+
+## Airspace Assessment
+
+| Item | Entry |
+|:-----|:------|
+| Controlled airspace | ☐ No ☐ Yes - Class: ___ |
+| Distance to aerodrome | ___ NM |
+| Distance to heliport | ___ NM |
+| NAV CANADA zone | ☐ No ☐ Yes |
+| Authorization required | ☐ No ☐ Yes |
+| NOTAMs affecting area | ☐ None ☐ Yes - Details: ___ |
+| Other restrictions | |
+
+---
+
+## Terrain & Obstacles
+
+### Terrain
+
+| Feature | Present? | Details |
+|:--------|:---------|:--------|
+| Flat terrain | ☐ | |
+| Hills/slopes | ☐ | |
+| Water bodies | ☐ | |
+| Vegetation | ☐ | |
+| Buildings | ☐ | |
+
+### Obstacles
+
+| Obstacle | Height AGL | Location | Marked? |
+|:---------|:-----------|:---------|:--------|
+| Power lines | | | ☐ |
+| Towers | | | ☐ |
+| Trees | | | |
+| Buildings | | | |
+| Other: | | | |
+
+---
+
+## Operations Area
+
+| Item | Entry |
+|:-----|:------|
+| Proposed takeoff location | Coords: _______ |
+| Proposed landing location | ☐ Same ☐ Different: _______ |
+| Alternate landing options | |
+| Operations area dimensions | ___ m x ___ m |
+| Maximum required altitude | ___ m AGL |
+
+---
+
+## People & Property
+
+| Item | Entry |
+|:-----|:------|
+| Bystanders expected | ☐ None ☐ Few ☐ Many |
+| Ability to control access | ☐ Full ☐ Partial ☐ Limited |
+| Nearby buildings | ☐ None ☐ Occupied ☐ Unoccupied |
+| Critical infrastructure | ☐ None ☐ Present: ___ |
+| Sensitive areas | ☐ None ☐ Present: ___ |
+
+---
+
+## Communication
+
+| Item | Entry |
+|:-----|:------|
+| Cell coverage | ☐ Good ☐ Partial ☐ None |
+| Radio coverage | ☐ Yes ☐ No ☐ Unknown |
+| Emergency services access | ☐ Good ☐ Limited |
+| Nearest hospital | Name: ___ Distance: ___ |
+
+---
+
+## Environmental Factors
+
+| Factor | Notes |
+|:-------|:------|
+| Typical wind patterns | |
+| Sun position issues | |
+| Noise concerns | |
+| Wildlife observed | |
+| Environmental sensitivities | |
+
+---
+
+## Hazards Identified
+
+| Hazard | Risk | Mitigation |
+|:-------|:-----|:-----------|
+| | | |
+| | | |
+| | | |
+| | | |
+
+---
+
+## Photos/Sketches
+
+| Item | Taken? | Description |
+|:-----|:-------|:------------|
+| Overview photo | ☐ | |
+| Takeoff area | ☐ | |
+| Obstacles | ☐ | |
+| Access route | ☐ | |
+| Site sketch | ☐ | |
+
+---
+
+## Operations Suitability
+
+| Operation Type | Suitable? | Notes |
+|:---------------|:----------|:------|
+| Basic operations | ☐ Yes ☐ No | |
+| Advanced operations | ☐ Yes ☐ No | |
+| BVLOS | ☐ Yes ☐ No | |
+| Night operations | ☐ Yes ☐ No | |
+
+---
+
+## Recommendations
+
+| Category | Recommendation |
+|:---------|:---------------|
+| Authorization | |
+| Crew | |
+| Equipment | |
+| Timing | |
+| Other | |
+
+---
+
+## Site Approved for Operations
+
+☐ **Yes** - Site approved with conditions below
+
+☐ **No** - Site not suitable for operations
+
+Conditions/Restrictions:
+
+| Conditions |
+|:-----------|
+| |
+| |
+
+---
+
+## Sign-Off
+
+| Field | Entry |
+|:------|:------|
+| Surveyed By | |
+| Signature | |
+| Date | |
+
+| Field | Entry |
+|:------|:------|
+| Reviewed By | |
+| Signature | |
+| Date | |
+
+---
+
+**Document Control:** FRM-SITESURVEY v5.0 | Aeria Solutions Ltd

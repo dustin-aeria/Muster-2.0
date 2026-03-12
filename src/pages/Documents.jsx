@@ -11,11 +11,10 @@ import {
   BookOpen,
   AlertTriangle,
   File,
-  ChevronDown,
-  ChevronUp,
   Save,
-  Clock,
-  Calendar
+  Calendar,
+  Eye,
+  Printer
 } from 'lucide-react'
 import {
   getDocuments, getDocument, createDocument, updateDocument, archiveDocument, deleteDocument
@@ -493,6 +492,143 @@ function DocumentModal({ document, onClose, onSave }) {
   )
 }
 
+// Read-only document viewer
+function DocumentViewer({ document, onClose, onEdit }) {
+  const typeConfig = DOC_TYPES.find(t => t.value === document.doc_type)
+  const statusConfig = DOC_STATUSES.find(s => s.value === document.status)
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${document.title}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+            h1 { font-size: 24px; margin-bottom: 8px; }
+            h2 { font-size: 20px; margin-top: 32px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+            h3 { font-size: 16px; margin-top: 24px; }
+            table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+            th, td { border: 1px solid #d1d5db; padding: 8px 12px; text-align: left; font-size: 14px; }
+            th { background: #f3f4f6; }
+            .meta { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+            hr { border: none; border-top: 1px solid #e5e7eb; margin: 32px 0; }
+            ul, ol { padding-left: 24px; }
+            blockquote { border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; color: #4b5563; font-style: italic; }
+          </style>
+        </head>
+        <body>
+          <h1>${document.title}</h1>
+          <div class="meta">
+            ${document.doc_number ? `<strong>${document.doc_number}</strong> · ` : ''}
+            Version ${document.version} ·
+            ${typeConfig?.label || document.doc_type}
+            ${document.category ? ` · ${document.category}` : ''}
+          </div>
+          <div id="content"></div>
+          <script>
+            document.getElementById('content').innerHTML = \`${document.content
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+              .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+              .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+              .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\*(.+?)\*/g, '<em>$1</em>')
+              .replace(/^---$/gm, '<hr />')
+              .replace(/^- (.+)$/gm, '<li>$1</li>')
+              .replace(/\n\n/g, '</p><p>')
+            }\`;
+          <\/script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`px-2 py-1 rounded text-xs font-medium ${statusConfig?.color || 'bg-gray-100 text-gray-700'}`}>
+              {statusConfig?.label || document.status}
+            </div>
+            <span className="text-sm text-gray-500">v{document.version}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"
+              title="Print"
+            >
+              <Printer className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onEdit}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+            >
+              <Edit2 className="w-4 h-4" />
+              Edit
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Document Header */}
+        <div className="px-8 pt-8 pb-4 border-b border-gray-100">
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              {document.doc_number && (
+                <p className="text-sm font-medium text-brand-600 mb-1">{document.doc_number}</p>
+              )}
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{document.title}</h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                <span className="inline-flex items-center gap-1">
+                  {typeConfig?.label || document.doc_type}
+                </span>
+                {document.category && (
+                  <>
+                    <span>·</span>
+                    <span>{document.category}</span>
+                  </>
+                )}
+                {document.effective_date && (
+                  <>
+                    <span>·</span>
+                    <span>Effective: {format(parseISO(document.effective_date), 'MMM d, yyyy')}</span>
+                  </>
+                )}
+              </div>
+              {document.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-3">
+                  {document.tags.map(tag => (
+                    <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Document Content */}
+        <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div className="prose prose-gray max-w-none">
+            <MarkdownPreview content={document.content} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function getDocIcon(type) {
   const typeConfig = DOC_TYPES.find(t => t.value === type)
   return typeConfig?.icon || File
@@ -522,8 +658,9 @@ export default function Documents() {
   const [filterType, setFilterType] = useState(() => PATH_TO_TYPE[location.pathname] || '')
   const [showArchived, setShowArchived] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [viewerOpen, setViewerOpen] = useState(false)
   const [editingDocument, setEditingDocument] = useState(null)
-  const [expandedId, setExpandedId] = useState(null)
+  const [viewingDocument, setViewingDocument] = useState(null)
 
   // Update filter when URL changes
   useEffect(() => {
@@ -667,26 +804,19 @@ export default function Documents() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {docs.map((doc) => {
-                      const DocIcon = getDocIcon(doc.doc_type)
-                      return (
-                        <>
+                    {docs.map((doc) => (
                           <tr
                             key={doc.id}
-                            className={`hover:bg-gray-50 ${doc.status === 'archived' ? 'opacity-50' : ''}`}
+                            className={`hover:bg-gray-50 cursor-pointer ${doc.status === 'archived' ? 'opacity-50' : ''}`}
                           >
                             <td className="px-4 py-3">
                               <button
-                                onClick={() => setExpandedId(expandedId === doc.id ? null : doc.id)}
-                                className="flex items-center gap-3 text-left"
+                                onClick={() => { setViewingDocument(doc); setViewerOpen(true) }}
+                                className="flex items-center gap-3 text-left group"
                               >
-                                {expandedId === doc.id ? (
-                                  <ChevronUp className="w-4 h-4 text-gray-400" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                                )}
+                                <Eye className="w-4 h-4 text-gray-300 group-hover:text-brand-500" />
                                 <div>
-                                  <p className="font-medium text-gray-900">{doc.title}</p>
+                                  <p className="font-medium text-gray-900 group-hover:text-brand-600">{doc.title}</p>
                                   {doc.doc_number && (
                                     <p className="text-sm text-gray-500">{doc.doc_number}</p>
                                   )}
@@ -734,69 +864,7 @@ export default function Documents() {
                               </div>
                             </td>
                           </tr>
-                          {expandedId === doc.id && (
-                            <tr>
-                              <td colSpan={5} className="px-4 py-4 bg-gray-50">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                  <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Details</h4>
-                                    <div className="space-y-1 text-sm">
-                                      <p className="flex items-center gap-2 text-gray-600">
-                                        <Clock className="w-4 h-4" />
-                                        Version {doc.version}
-                                      </p>
-                                      {doc.effective_date && (
-                                        <p className="flex items-center gap-2 text-gray-600">
-                                          <Calendar className="w-4 h-4" />
-                                          Effective: {format(parseISO(doc.effective_date), 'MMM d, yyyy')}
-                                        </p>
-                                      )}
-                                      {doc.review_date && (
-                                        <p className="flex items-center gap-2 text-gray-600">
-                                          <Calendar className="w-4 h-4" />
-                                          Review: {format(parseISO(doc.review_date), 'MMM d, yyyy')}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Tags</h4>
-                                    <div className="flex flex-wrap gap-1">
-                                      {doc.tags?.length > 0 ? (
-                                        doc.tags.map(tag => (
-                                          <span
-                                            key={tag}
-                                            className="px-2 py-0.5 bg-brand-100 text-brand-700 rounded text-xs"
-                                          >
-                                            {tag}
-                                          </span>
-                                        ))
-                                      ) : (
-                                        <span className="text-sm text-gray-400 italic">No tags</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Metadata</h4>
-                                    <div className="text-sm text-gray-600 space-y-1">
-                                      {doc.author && <p>Author: {doc.author}</p>}
-                                      {doc.approver && <p>Approver: {doc.approver}</p>}
-                                      <p>Updated: {format(parseISO(doc.updated_at), 'MMM d, yyyy')}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                                {doc.notes && (
-                                  <div className="pt-4 border-t border-gray-200">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-1">Notes</h4>
-                                    <p className="text-sm text-gray-600">{doc.notes}</p>
-                                  </div>
-                                )}
-                              </td>
-                            </tr>
-                          )}
-                        </>
-                      )
-                    })}
+                        ))}
                   </tbody>
                 </table>
               </div>
@@ -805,7 +873,21 @@ export default function Documents() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Viewer Modal */}
+      {viewerOpen && viewingDocument && (
+        <DocumentViewer
+          document={viewingDocument}
+          onClose={() => { setViewerOpen(false); setViewingDocument(null) }}
+          onEdit={() => {
+            setViewerOpen(false)
+            setEditingDocument(viewingDocument)
+            setViewingDocument(null)
+            setModalOpen(true)
+          }}
+        />
+      )}
+
+      {/* Editor Modal */}
       {modalOpen && (
         <DocumentModal
           document={editingDocument}
