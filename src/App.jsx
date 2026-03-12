@@ -3,6 +3,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Operators from './pages/Operators'
+import Equipment from './pages/Equipment'
+import Services from './pages/Services'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -63,9 +66,9 @@ function AppRoutes() {
       />
 
       {/* Libraries */}
-      <Route path="/operators" element={<ProtectedRoute><ComingSoon title="Operators" /></ProtectedRoute>} />
-      <Route path="/equipment" element={<ProtectedRoute><ComingSoon title="Equipment" /></ProtectedRoute>} />
-      <Route path="/services" element={<ProtectedRoute><ComingSoon title="Services" /></ProtectedRoute>} />
+      <Route path="/operators" element={<ProtectedRoute><Operators /></ProtectedRoute>} />
+      <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+      <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
 
       {/* Documents */}
       <Route path="/policies" element={<ProtectedRoute><ComingSoon title="Policies" /></ProtectedRoute>} />
