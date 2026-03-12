@@ -21,7 +21,7 @@ import {
 } from '../lib/api'
 import { format, parseISO } from 'date-fns'
 import MarkdownEditor, { MarkdownPreview } from '../components/MarkdownEditor'
-import aeriaIcon from '../assets/aeria-icon.png'
+import aeriaIconWhite from '../assets/aeria-icon-white.png'
 import aeriaLogoFull from '../assets/aeria-logo-full.png'
 
 const DOC_TYPES = [
@@ -673,7 +673,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
         {/* Header with logo */}
         <div className="sticky top-0 bg-[#132163] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={aeriaIcon} alt="AERIA" className="h-10 w-auto" />
+            <img src={aeriaIconWhite} alt="AERIA" className="h-10 w-auto" />
             <div className={`px-2 py-1 rounded text-xs font-medium ${document.status === 'active' ? 'bg-green-400/20 text-green-100' : document.status === 'draft' ? 'bg-gray-400/20 text-gray-100' : 'bg-yellow-400/20 text-yellow-100'}`}>
               {statusConfig?.label || document.status}
             </div>
@@ -776,6 +776,7 @@ export default function Documents() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState(() => PATH_TO_TYPE[location.pathname] || '')
+  const [filterCategory, setFilterCategory] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [viewerOpen, setViewerOpen] = useState(false)
@@ -822,12 +823,22 @@ export default function Documents() {
     }
   }
 
-  const filteredDocuments = documents.filter(doc =>
-    doc.title.toLowerCase().includes(search.toLowerCase()) ||
-    doc.doc_number?.toLowerCase().includes(search.toLowerCase()) ||
-    doc.category?.toLowerCase().includes(search.toLowerCase()) ||
-    doc.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()))
-  )
+  const filteredDocuments = documents.filter(doc => {
+    // Category filter
+    if (filterCategory && doc.category !== filterCategory) return false
+
+    // Search filter
+    if (search) {
+      const searchLower = search.toLowerCase()
+      return (
+        doc.title.toLowerCase().includes(searchLower) ||
+        doc.doc_number?.toLowerCase().includes(searchLower) ||
+        doc.category?.toLowerCase().includes(searchLower) ||
+        doc.tags?.some(t => t.toLowerCase().includes(searchLower))
+      )
+    }
+    return true
+  })
 
   // Group documents by type
   const documentsByType = filteredDocuments.reduce((acc, doc) => {
@@ -874,6 +885,16 @@ export default function Documents() {
           <option value="">All Types</option>
           {DOC_TYPES.map(t => (
             <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        >
+          <option value="">All Categories</option>
+          {DOC_CATEGORIES.map(c => (
+            <option key={c} value={c}>{c}</option>
           ))}
         </select>
         <label className="inline-flex items-center gap-2 text-sm text-gray-600">
