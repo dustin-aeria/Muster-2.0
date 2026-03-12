@@ -20,7 +20,8 @@ import {
   ClipboardList,
   GitBranch,
   CheckSquare,
-  Send
+  Send,
+  FormInput
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -45,6 +46,7 @@ const navigation = [
       { name: 'Hazard Assessments', href: '/fha', icon: Shield },
       { name: 'Forms', href: '/forms', icon: ClipboardList },
       { name: 'Form Submissions', href: '/form-submissions', icon: Send },
+      { name: 'Google Forms', href: '/google-forms', icon: FormInput },
     ]
   },
   {

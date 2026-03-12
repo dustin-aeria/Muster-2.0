@@ -13,6 +13,8 @@ import FormSubmissions from './pages/FormSubmissions'
 import WorkflowTasks from './pages/WorkflowTasks'
 import Workflows from './pages/Workflows'
 import WorkflowTemplates from './pages/WorkflowTemplates'
+import GoogleForms from './pages/GoogleForms'
+import GoogleCallback from './pages/GoogleCallback'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -90,6 +92,10 @@ function AppRoutes() {
       <Route path="/workflow-tasks" element={<ProtectedRoute><WorkflowTasks /></ProtectedRoute>} />
       <Route path="/workflows" element={<ProtectedRoute><Workflows /></ProtectedRoute>} />
       <Route path="/workflow-templates" element={<ProtectedRoute><WorkflowTemplates /></ProtectedRoute>} />
+
+      {/* Google Forms */}
+      <Route path="/google-forms" element={<ProtectedRoute><GoogleForms /></ProtectedRoute>} />
+      <Route path="/auth/google/callback" element={<GoogleCallback />} />
 
       {/* Projects */}
       <Route path="/projects" element={<ProtectedRoute><ComingSoon title="Projects" /></ProtectedRoute>} />
