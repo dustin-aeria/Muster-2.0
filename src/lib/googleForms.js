@@ -14,6 +14,8 @@ const DRIVE_API = 'https://www.googleapis.com/drive/v3'
 async function googleFetch(url, options = {}) {
   const accessToken = await getValidAccessToken()
 
+  console.log('Google API Request:', url, options.method || 'GET')
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -23,12 +25,18 @@ async function googleFetch(url, options = {}) {
     },
   })
 
+  const responseText = await response.text()
+  console.log('Google API Response:', response.status, responseText.substring(0, 500))
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || `API Error: ${response.status}`)
+    let error = {}
+    try {
+      error = JSON.parse(responseText)
+    } catch (e) {}
+    throw new Error(error.error?.message || `API Error: ${response.status} - ${responseText.substring(0, 200)}`)
   }
 
-  return response.json()
+  return JSON.parse(responseText)
 }
 
 /**
