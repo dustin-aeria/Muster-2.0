@@ -16,7 +16,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  ClipboardList
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -39,6 +40,7 @@ const navigation = [
       { name: 'Policies', href: '/policies', icon: FileText },
       { name: 'Procedures', href: '/procedures', icon: FileText },
       { name: 'Hazard Assessments', href: '/fha', icon: Shield },
+      { name: 'Forms', href: '/forms', icon: ClipboardList },
     ]
   },
   { name: 'Projects', href: '/projects', icon: FolderOpen },

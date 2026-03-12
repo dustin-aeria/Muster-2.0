@@ -7,6 +7,7 @@ import Operators from './pages/Operators'
 import Equipment from './pages/Equipment'
 import Services from './pages/Services'
 import Documents from './pages/Documents'
+import Forms from './pages/Forms'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -76,6 +77,7 @@ function AppRoutes() {
       <Route path="/policies" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/procedures" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/fha" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+      <Route path="/forms" element={<ProtectedRoute><Forms /></ProtectedRoute>} />
 
       {/* Projects */}
       <Route path="/projects" element={<ProtectedRoute><ComingSoon title="Projects" /></ProtectedRoute>} />

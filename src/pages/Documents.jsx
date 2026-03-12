@@ -29,8 +29,8 @@ const DOC_TYPES = [
   { value: 'procedure', label: 'Procedure', icon: FileText, prefix: 'SOP' },
   { value: 'fha', label: 'Hazard Assessment', icon: AlertTriangle, prefix: 'FHA' },
   { value: 'guide', label: 'Guide', icon: File, prefix: 'GDE' },
-  { value: 'form', label: 'Form', icon: File, prefix: 'FRM' },
   { value: 'other', label: 'Other', icon: File, prefix: 'DOC' }
+  // Forms have their own section at /forms
 ]
 
 const DOC_CATEGORIES = [
@@ -824,6 +824,9 @@ export default function Documents() {
   }
 
   const filteredDocuments = documents.filter(doc => {
+    // Exclude forms - they have their own section
+    if (doc.doc_type === 'form') return false
+
     // Category filter
     if (filterCategory && doc.category !== filterCategory) return false
 
