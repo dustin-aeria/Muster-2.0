@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   Search,
@@ -12,8 +11,7 @@ import {
   Calendar,
   Eye,
   Printer,
-  ClipboardList,
-  PenLine
+  ClipboardList
 } from 'lucide-react'
 import {
   getDocuments, getDocument, createDocument, updateDocument, archiveDocument, deleteDocument
@@ -624,7 +622,6 @@ function getStatusBadge(status) {
 }
 
 export default function Forms() {
-  const navigate = useNavigate()
   const [forms, setForms] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -795,16 +792,13 @@ export default function Forms() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {form.status === 'active' && (
-                        <button
-                          onClick={() => navigate(`/forms/${form.id}/fill`)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-brand-600 hover:bg-brand-700 rounded-lg"
-                          title="Fill out this form"
-                        >
-                          <PenLine className="w-4 h-4" />
-                          Fill Out
-                        </button>
-                      )}
+                      <button
+                        onClick={() => { setViewingForm(form); setViewerOpen(true) }}
+                        className="p-2 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => { setEditingForm(form); setModalOpen(true) }}
                         className="p-2 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg"

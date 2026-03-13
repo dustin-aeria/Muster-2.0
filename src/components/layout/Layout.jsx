@@ -19,9 +19,7 @@ import {
   ChevronDown,
   ClipboardList,
   GitBranch,
-  CheckSquare,
-  Send,
-  FormInput
+  CheckSquare
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -45,8 +43,6 @@ const navigation = [
       { name: 'Procedures', href: '/procedures', icon: FileText },
       { name: 'Hazard Assessments', href: '/fha', icon: Shield },
       { name: 'Forms', href: '/forms', icon: ClipboardList },
-      { name: 'Form Submissions', href: '/form-submissions', icon: Send },
-      { name: 'Google Forms', href: '/google-forms', icon: FormInput },
     ]
   },
   {
