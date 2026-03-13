@@ -56,7 +56,7 @@ export async function createGoogleForm(title) {
   return {
     formId: form.formId,
     responderUri: form.responderUri,
-    editUrl: form.responderUri.replace('/viewform', '/edit'),
+    editUrl: `https://docs.google.com/forms/d/${form.formId}/edit`,
   }
 }
 
