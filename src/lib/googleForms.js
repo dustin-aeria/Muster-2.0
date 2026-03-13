@@ -190,6 +190,115 @@ export async function deleteGoogleForm(formId) {
 }
 
 // ============================================
+// CONVERT MUSTER FORMS TO GOOGLE FORMS
+// ============================================
+
+/**
+ * Parse markdown form content and extract fields
+ */
+function parseMarkdownToQuestions(content) {
+  const questions = []
+
+  // Find all tables in the markdown
+  const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
+  let match
+
+  while ((match = tableRegex.exec(content)) !== null) {
+    const headerRow = match[1]
+    const bodyRows = match[2].trim()
+
+    const headers = headerRow.split('|').filter(h => h.trim()).map(h => h.trim())
+    const rows = bodyRows.split('\n').map(row =>
+      row.split('|').filter((c, i, arr) => i > 0 && i < arr.length - 1).map(c => c.trim())
+    )
+
+    // Check if this is a field/value table (2 columns where second is empty)
+    if (headers.length === 2 && (headers[1].toLowerCase() === 'value' || headers[1] === '')) {
+      rows.forEach(row => {
+        if (row[0] && isEmptyCell(row[1])) {
+          questions.push({
+            title: row[0],
+            type: detectQuestionType(row[0]),
+            required: false
+          })
+        }
+      })
+    }
+    // Check for multi-column tables with empty cells
+    else {
+      rows.forEach(row => {
+        row.forEach((cell, colIndex) => {
+          if (colIndex > 0 && isEmptyCell(cell) && headers[colIndex]) {
+            const label = row[0] ? `${row[0]} - ${headers[colIndex]}` : headers[colIndex]
+            questions.push({
+              title: label,
+              type: detectQuestionType(label),
+              required: false
+            })
+          }
+        })
+      })
+    }
+  }
+
+  return questions
+}
+
+/**
+ * Check if a cell is meant to be filled in
+ */
+function isEmptyCell(content) {
+  if (!content) return true
+  const trimmed = content.trim()
+  if (!trimmed) return true
+  if (trimmed === '☐' || trimmed === '☑' || trimmed === '[ ]' || trimmed === '[x]') return true
+  if (trimmed.match(/^_{2,}$/)) return true
+  if (trimmed.match(/^\.{2,}$/)) return true
+  return false
+}
+
+/**
+ * Detect question type from label
+ */
+function detectQuestionType(label) {
+  const labelLower = label.toLowerCase()
+
+  if (labelLower.includes('date')) return 'date'
+  if (labelLower.includes('time') && !labelLower.includes('datetime')) return 'time'
+  if (labelLower.includes('signature')) return 'text'
+  if (labelLower.includes('notes') || labelLower.includes('comments') || labelLower.includes('description') || labelLower.includes('observations')) return 'paragraph'
+  if (labelLower.includes('yes') || labelLower.includes('no') || labelLower.includes('confirm')) return 'multipleChoice'
+
+  return 'text'
+}
+
+/**
+ * Create Google Form from Muster form content
+ */
+export async function createGoogleFormFromMuster(title, markdownContent) {
+  // Create the form
+  const form = await createGoogleForm(title)
+
+  // Parse questions from markdown
+  const questions = parseMarkdownToQuestions(markdownContent)
+
+  // Add yes/no options for choice questions
+  const processedQuestions = questions.map(q => {
+    if (q.type === 'multipleChoice') {
+      return { ...q, options: ['Yes', 'No', 'N/A'] }
+    }
+    return q
+  })
+
+  // Add questions if any were found
+  if (processedQuestions.length > 0) {
+    await addQuestionsToForm(form.formId, processedQuestions)
+  }
+
+  return form
+}
+
+// ============================================
 // FORM TEMPLATES
 // ============================================
 
