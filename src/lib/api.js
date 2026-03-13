@@ -802,3 +802,257 @@ export async function deleteExpense(id) {
 
   if (error) throw error
 }
+
+// ============================================
+// PROJECT STAGES
+// ============================================
+
+export async function getProjectStages() {
+  const { data, error } = await supabase
+    .from('project_stages')
+    .select('*')
+    .eq('status', 'active')
+    .order('sort_order')
+
+  if (error) throw error
+  return data
+}
+
+export async function createProjectStage(stage) {
+  const { data, error } = await supabase
+    .from('project_stages')
+    .insert(stage)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateProjectStage(id, updates) {
+  const { data, error } = await supabase
+    .from('project_stages')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteProjectStage(id) {
+  const { error } = await supabase
+    .from('project_stages')
+    .update({ status: 'archived' })
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// PROJECTS
+// ============================================
+
+export async function getProjects(includeArchived = false, filters = {}) {
+  let query = supabase
+    .from('projects')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
+  }
+  if (filters.stageId) {
+    query = query.eq('stage_id', filters.stageId)
+  }
+  if (filters.status) {
+    query = query.eq('status', filters.status)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getProject(id) {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createProject(project) {
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(project)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateProject(id, updates) {
+  const { data, error } = await supabase
+    .from('projects')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteProject(id) {
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// PROJECT RESOURCES
+// ============================================
+
+export async function getProjectResources(projectId) {
+  const { data, error } = await supabase
+    .from('project_resources')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('resource_type')
+    .order('resource_name')
+
+  if (error) throw error
+  return data
+}
+
+export async function createProjectResource(resource) {
+  const { data, error } = await supabase
+    .from('project_resources')
+    .insert(resource)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateProjectResource(id, updates) {
+  const { data, error } = await supabase
+    .from('project_resources')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteProjectResource(id) {
+  const { error } = await supabase
+    .from('project_resources')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// TAILGATE MEETINGS
+// ============================================
+
+export async function getTailgateMeetings(projectId = null) {
+  let query = supabase
+    .from('tailgate_meetings')
+    .select('*')
+    .order('meeting_date', { ascending: false })
+
+  if (projectId) {
+    query = query.eq('project_id', projectId)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getTailgateMeeting(id) {
+  const { data, error } = await supabase
+    .from('tailgate_meetings')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createTailgateMeeting(meeting) {
+  const { data, error } = await supabase
+    .from('tailgate_meetings')
+    .insert(meeting)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTailgateMeeting(id, updates) {
+  const { data, error } = await supabase
+    .from('tailgate_meetings')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteTailgateMeeting(id) {
+  const { error } = await supabase
+    .from('tailgate_meetings')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// NOTIFICATION LOG
+// ============================================
+
+export async function logNotification(notification) {
+  const { data, error } = await supabase
+    .from('notification_log')
+    .insert(notification)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getNotificationLog(sourceType = null, sourceId = null) {
+  let query = supabase
+    .from('notification_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (sourceType) query = query.eq('source_type', sourceType)
+  if (sourceId) query = query.eq('source_id', sourceId)
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
