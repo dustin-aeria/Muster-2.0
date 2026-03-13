@@ -348,21 +348,17 @@ export async function getAmendments(tableName, recordId) {
 }
 
 // ============================================
-// FORM SUBMISSIONS
+// INCIDENTS
 // ============================================
 
-export async function getFormSubmissions(formId = null, status = null) {
+export async function getIncidents(includeArchived = false) {
   let query = supabase
-    .from('form_submissions')
+    .from('incidents')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('incident_date', { ascending: false })
 
-  if (formId) {
-    query = query.eq('form_id', formId)
-  }
-
-  if (status) {
-    query = query.eq('status', status)
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
   }
 
   const { data, error } = await query
@@ -370,9 +366,9 @@ export async function getFormSubmissions(formId = null, status = null) {
   return data
 }
 
-export async function getFormSubmission(id) {
+export async function getIncident(id) {
   const { data, error } = await supabase
-    .from('form_submissions')
+    .from('incidents')
     .select('*')
     .eq('id', id)
     .single()
@@ -381,15 +377,10 @@ export async function getFormSubmission(id) {
   return data
 }
 
-export async function createFormSubmission(submission) {
-  const { data: { user } } = await supabase.auth.getUser()
-
+export async function createIncident(incident) {
   const { data, error } = await supabase
-    .from('form_submissions')
-    .insert({
-      ...submission,
-      created_by: user?.id
-    })
+    .from('incidents')
+    .insert(incident)
     .select()
     .single()
 
@@ -397,13 +388,10 @@ export async function createFormSubmission(submission) {
   return data
 }
 
-export async function updateFormSubmission(id, updates) {
+export async function updateIncident(id, updates) {
   const { data, error } = await supabase
-    .from('form_submissions')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
+    .from('incidents')
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
@@ -412,28 +400,9 @@ export async function updateFormSubmission(id, updates) {
   return data
 }
 
-export async function submitFormSubmission(id) {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data, error } = await supabase
-    .from('form_submissions')
-    .update({
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      submitted_by: user?.id,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-export async function deleteFormSubmission(id) {
+export async function deleteIncident(id) {
   const { error } = await supabase
-    .from('form_submissions')
+    .from('incidents')
     .delete()
     .eq('id', id)
 
@@ -441,17 +410,17 @@ export async function deleteFormSubmission(id) {
 }
 
 // ============================================
-// WORKFLOW TEMPLATES
+// CAPAS (Corrective and Preventive Actions)
 // ============================================
 
-export async function getWorkflowTemplates(includeInactive = false) {
+export async function getCAPAs(includeArchived = false) {
   let query = supabase
-    .from('workflow_templates')
+    .from('capas')
     .select('*')
-    .order('name')
+    .order('due_date', { ascending: true })
 
-  if (!includeInactive) {
-    query = query.eq('status', 'active')
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
   }
 
   const { data, error } = await query
@@ -459,9 +428,9 @@ export async function getWorkflowTemplates(includeInactive = false) {
   return data
 }
 
-export async function getWorkflowTemplate(id) {
+export async function getCAPA(id) {
   const { data, error } = await supabase
-    .from('workflow_templates')
+    .from('capas')
     .select('*')
     .eq('id', id)
     .single()
@@ -470,15 +439,10 @@ export async function getWorkflowTemplate(id) {
   return data
 }
 
-export async function createWorkflowTemplate(template) {
-  const { data: { user } } = await supabase.auth.getUser()
-
+export async function createCAPA(capa) {
   const { data, error } = await supabase
-    .from('workflow_templates')
-    .insert({
-      ...template,
-      created_by: user?.id
-    })
+    .from('capas')
+    .insert(capa)
     .select()
     .single()
 
@@ -486,13 +450,10 @@ export async function createWorkflowTemplate(template) {
   return data
 }
 
-export async function updateWorkflowTemplate(id, updates) {
+export async function updateCAPA(id, updates) {
   const { data, error } = await supabase
-    .from('workflow_templates')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
+    .from('capas')
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
@@ -501,9 +462,9 @@ export async function updateWorkflowTemplate(id, updates) {
   return data
 }
 
-export async function deleteWorkflowTemplate(id) {
+export async function deleteCAPA(id) {
   const { error } = await supabase
-    .from('workflow_templates')
+    .from('capas')
     .delete()
     .eq('id', id)
 
@@ -511,17 +472,17 @@ export async function deleteWorkflowTemplate(id) {
 }
 
 // ============================================
-// WORKFLOW INSTANCES
+// JHSC (Joint Health & Safety Committee)
 // ============================================
 
-export async function getWorkflowInstances(status = null) {
+export async function getJHSCMeetings(includeArchived = false) {
   let query = supabase
-    .from('workflow_instances')
+    .from('jhsc_meetings')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('meeting_date', { ascending: false })
 
-  if (status) {
-    query = query.eq('status', status)
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
   }
 
   const { data, error } = await query
@@ -529,9 +490,9 @@ export async function getWorkflowInstances(status = null) {
   return data
 }
 
-export async function getWorkflowInstance(id) {
+export async function getJHSCMeeting(id) {
   const { data, error } = await supabase
-    .from('workflow_instances')
+    .from('jhsc_meetings')
     .select('*')
     .eq('id', id)
     .single()
@@ -540,39 +501,10 @@ export async function getWorkflowInstance(id) {
   return data
 }
 
-export async function startWorkflow(templateId, entityType, entityId, entityTitle) {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Get the template
-  const template = await getWorkflowTemplate(templateId)
-  if (!template) throw new Error('Workflow template not found')
-
-  const steps = template.steps || []
-  const firstStep = steps.find(s => s.order === 1) || steps[0]
-
-  if (!firstStep) throw new Error('Workflow template has no steps')
-
+export async function createJHSCMeeting(meeting) {
   const { data, error } = await supabase
-    .from('workflow_instances')
-    .insert({
-      template_id: templateId,
-      template_name: template.name,
-      entity_type: entityType,
-      entity_id: entityId,
-      entity_title: entityTitle,
-      current_step_id: firstStep.id,
-      current_step_name: firstStep.name,
-      status: 'active',
-      started_by: user?.id,
-      history: [{
-        step: firstStep.id,
-        action: 'started',
-        by: user?.id,
-        by_name: user?.email,
-        at: new Date().toISOString(),
-        comment: ''
-      }]
-    })
+    .from('jhsc_meetings')
+    .insert(meeting)
     .select()
     .single()
 
@@ -580,61 +512,11 @@ export async function startWorkflow(templateId, entityType, entityId, entityTitl
   return data
 }
 
-export async function advanceWorkflow(instanceId, action, comment = '') {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Get current instance
-  const instance = await getWorkflowInstance(instanceId)
-  if (!instance) throw new Error('Workflow instance not found')
-
-  // Get template to find next step
-  const template = await getWorkflowTemplate(instance.template_id)
-  const steps = template?.steps || []
-  const currentStepIndex = steps.findIndex(s => s.id === instance.current_step_id)
-  const currentStep = steps[currentStepIndex]
-  const nextStep = steps[currentStepIndex + 1]
-
-  // Update history
-  const newHistory = [
-    ...instance.history,
-    {
-      step: instance.current_step_id,
-      action: action,
-      by: user?.id,
-      by_name: user?.email,
-      at: new Date().toISOString(),
-      comment: comment
-    }
-  ]
-
-  // Determine new status and step
-  let updates = {
-    history: newHistory,
-    updated_at: new Date().toISOString()
-  }
-
-  if (action === 'approve' && nextStep) {
-    // Move to next step
-    updates.current_step_id = nextStep.id
-    updates.current_step_name = nextStep.name
-
-    if (nextStep.final) {
-      updates.status = 'completed'
-      updates.completed_at = new Date().toISOString()
-    }
-  } else if (action === 'reject') {
-    updates.status = 'cancelled'
-    updates.completed_at = new Date().toISOString()
-  } else if (action === 'approve' && !nextStep) {
-    // No next step, workflow is complete
-    updates.status = 'completed'
-    updates.completed_at = new Date().toISOString()
-  }
-
+export async function updateJHSCMeeting(id, updates) {
   const { data, error } = await supabase
-    .from('workflow_instances')
-    .update(updates)
-    .eq('id', instanceId)
+    .from('jhsc_meetings')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
     .select()
     .single()
 
@@ -642,35 +524,73 @@ export async function advanceWorkflow(instanceId, action, comment = '') {
   return data
 }
 
-export async function assignWorkflow(instanceId, userId, userName, userEmail) {
-  const { data, error } = await supabase
-    .from('workflow_instances')
-    .update({
-      assigned_to: userId,
-      assigned_to_name: userName,
-      assigned_to_email: userEmail,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', instanceId)
-    .select()
-    .single()
+export async function deleteJHSCMeeting(id) {
+  const { error } = await supabase
+    .from('jhsc_meetings')
+    .delete()
+    .eq('id', id)
 
   if (error) throw error
-  return data
 }
 
-export async function getMyWorkflowTasks() {
-  const { data: { user } } = await supabase.auth.getUser()
+// ============================================
+// INSPECTIONS
+// ============================================
 
-  if (!user) return []
-
-  const { data, error } = await supabase
-    .from('workflow_instances')
+export async function getInspections(includeArchived = false) {
+  let query = supabase
+    .from('inspections')
     .select('*')
-    .eq('assigned_to', user.id)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
+    .order('inspection_date', { ascending: false })
+
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getInspection(id) {
+  const { data, error } = await supabase
+    .from('inspections')
+    .select('*')
+    .eq('id', id)
+    .single()
 
   if (error) throw error
   return data
+}
+
+export async function createInspection(inspection) {
+  const { data, error } = await supabase
+    .from('inspections')
+    .insert(inspection)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateInspection(id, updates) {
+  const { data, error } = await supabase
+    .from('inspections')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteInspection(id) {
+  const { error } = await supabase
+    .from('inspections')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
 }

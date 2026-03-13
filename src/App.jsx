@@ -8,9 +8,10 @@ import Equipment from './pages/Equipment'
 import Services from './pages/Services'
 import Documents from './pages/Documents'
 import Forms from './pages/Forms'
-import WorkflowTasks from './pages/WorkflowTasks'
-import Workflows from './pages/Workflows'
-import WorkflowTemplates from './pages/WorkflowTemplates'
+import Incidents from './pages/Incidents'
+import CAPAs from './pages/CAPAs'
+import JHSC from './pages/JHSC'
+import Inspections from './pages/Inspections'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -82,19 +83,15 @@ function AppRoutes() {
       <Route path="/fha" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/forms" element={<ProtectedRoute><Forms /></ProtectedRoute>} />
 
-      {/* Workflows */}
-      <Route path="/workflow-tasks" element={<ProtectedRoute><WorkflowTasks /></ProtectedRoute>} />
-      <Route path="/workflows" element={<ProtectedRoute><Workflows /></ProtectedRoute>} />
-      <Route path="/workflow-templates" element={<ProtectedRoute><WorkflowTemplates /></ProtectedRoute>} />
 
       {/* Projects */}
       <Route path="/projects" element={<ProtectedRoute><ComingSoon title="Projects" /></ProtectedRoute>} />
 
       {/* Safety */}
-      <Route path="/incidents" element={<ProtectedRoute><ComingSoon title="Incidents" /></ProtectedRoute>} />
-      <Route path="/inspections" element={<ProtectedRoute><ComingSoon title="Inspections" /></ProtectedRoute>} />
-      <Route path="/capas" element={<ProtectedRoute><ComingSoon title="CAPAs" /></ProtectedRoute>} />
-      <Route path="/jhsc" element={<ProtectedRoute><ComingSoon title="JHSC" /></ProtectedRoute>} />
+      <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
+      <Route path="/inspections" element={<ProtectedRoute><Inspections /></ProtectedRoute>} />
+      <Route path="/capas" element={<ProtectedRoute><CAPAs /></ProtectedRoute>} />
+      <Route path="/jhsc" element={<ProtectedRoute><JHSC /></ProtectedRoute>} />
 
       {/* Utilities */}
       <Route path="/tasks" element={<ProtectedRoute><ComingSoon title="Tasks" /></ProtectedRoute>} />
