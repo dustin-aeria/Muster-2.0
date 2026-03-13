@@ -8,6 +8,17 @@ import { getValidAccessToken } from './googleAuth'
 const FORMS_API = 'https://forms.googleapis.com/v1'
 const DRIVE_API = 'https://www.googleapis.com/drive/v3'
 
+// Muster Forms folder in Google Drive
+const MUSTER_FORMS_FOLDER_ID = '1ik11bSsTVz6DW9vMEaNBXY1POmONaI8a'
+
+// Subfolder names
+const TEMPLATES_FOLDER_NAME = 'Form Templates'
+const SUBMISSIONS_FOLDER_NAME = 'Submissions'
+
+// Cache for subfolder IDs
+let templatesFolderId = null
+let submissionsFolderId = null
+
 /**
  * Make authenticated request to Google API
  */
@@ -37,6 +48,86 @@ async function googleFetch(url, options = {}) {
   }
 
   return JSON.parse(responseText)
+}
+
+/**
+ * Find or create a subfolder in the Muster Forms folder
+ */
+async function getOrCreateSubfolder(folderName, parentFolderId) {
+  const accessToken = await getValidAccessToken()
+
+  // Search for existing folder
+  const searchResponse = await fetch(
+    `${DRIVE_API}/files?q=name='${folderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`,
+    {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    }
+  )
+  const searchData = await searchResponse.json()
+
+  if (searchData.files && searchData.files.length > 0) {
+    console.log(`Found existing folder: ${folderName}`, searchData.files[0].id)
+    return searchData.files[0].id
+  }
+
+  // Create new folder
+  const createResponse = await fetch(`${DRIVE_API}/files`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [parentFolderId]
+    })
+  })
+  const createData = await createResponse.json()
+  console.log(`Created folder: ${folderName}`, createData.id)
+  return createData.id
+}
+
+/**
+ * Get the Templates folder ID (cached)
+ */
+async function getTemplatesFolderId() {
+  if (!templatesFolderId) {
+    templatesFolderId = await getOrCreateSubfolder(TEMPLATES_FOLDER_NAME, MUSTER_FORMS_FOLDER_ID)
+  }
+  return templatesFolderId
+}
+
+/**
+ * Get the Submissions folder ID (cached)
+ */
+async function getSubmissionsFolderId() {
+  if (!submissionsFolderId) {
+    submissionsFolderId = await getOrCreateSubfolder(SUBMISSIONS_FOLDER_NAME, MUSTER_FORMS_FOLDER_ID)
+  }
+  return submissionsFolderId
+}
+
+/**
+ * Move a file to a specific folder
+ */
+async function moveFileToFolder(fileId, folderId) {
+  const accessToken = await getValidAccessToken()
+
+  // Get current parents
+  const fileResponse = await fetch(`${DRIVE_API}/files/${fileId}?fields=parents`, {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  })
+  const fileData = await fileResponse.json()
+  const previousParents = fileData.parents ? fileData.parents.join(',') : ''
+
+  // Move to new folder
+  await fetch(`${DRIVE_API}/files/${fileId}?addParents=${folderId}&removeParents=${previousParents}`, {
+    method: 'PATCH',
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  })
+
+  console.log(`Moved file ${fileId} to folder ${folderId}`)
 }
 
 /**
@@ -323,8 +414,34 @@ export async function createGoogleFormFromMuster(title, markdownContent) {
     console.warn('No questions found in markdown content!')
   }
 
+  // Move form to Templates folder
+  try {
+    const templatesFolderId = await getTemplatesFolderId()
+    await moveFileToFolder(form.formId, templatesFolderId)
+    console.log('Form moved to Templates folder')
+  } catch (err) {
+    console.error('Could not move form to folder:', err.message)
+  }
+
   return form
 }
+
+/**
+ * Generate submission filename with consistent naming convention
+ * Format: FormName_YYYY-MM-DD_HHMMSS
+ */
+export function generateSubmissionFilename(formTitle) {
+  const now = new Date()
+  const date = now.toISOString().split('T')[0] // YYYY-MM-DD
+  const time = now.toTimeString().split(' ')[0].replace(/:/g, '') // HHMMSS
+  const safeName = formTitle.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50)
+  return `${safeName}_${date}_${time}`
+}
+
+/**
+ * Get the submissions folder ID (exported for use in submission handling)
+ */
+export { getSubmissionsFolderId }
 
 // ============================================
 // FORM TEMPLATES
