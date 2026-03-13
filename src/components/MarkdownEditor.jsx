@@ -194,9 +194,14 @@ export function MarkdownPreview({ content }) {
     const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
     html = html.replace(tableRegex, (match, headerRow, bodyRows) => {
       const headers = headerRow.split('|').filter(h => h.trim())
-      const rows = bodyRows.trim().split('\n').map(row =>
-        row.split('|').filter(c => c.trim())
-      )
+      const numCols = headers.length
+      const rows = bodyRows.trim().split('\n').map(row => {
+        // Split and keep all cells, including empty ones
+        const cells = row.split('|').slice(1, -1) // Remove first/last empty from |cell|cell|
+        // Pad to match header count if needed
+        while (cells.length < numCols) cells.push('')
+        return cells
+      })
 
       let table = '<div style="margin: 24px 0; overflow-x: auto;">'
       table += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">'
@@ -212,7 +217,8 @@ export function MarkdownPreview({ content }) {
         table += `<tr style="background: ${bgColor};">`
         row.forEach((cell, j) => {
           const fontWeight = j === 0 ? '500' : '400'
-          table += `<td style="padding: 10px 16px; border: 1px solid #e2e8f0; color: #374151; font-weight: ${fontWeight};">${cell.trim()}</td>`
+          const cellContent = cell.trim() || '&nbsp;' // Use non-breaking space for empty cells
+          table += `<td style="padding: 10px 16px; border: 1px solid #e2e8f0; color: #374151; font-weight: ${fontWeight}; min-width: 80px;">${cellContent}</td>`
         })
         table += '</tr>'
       })
