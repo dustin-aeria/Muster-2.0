@@ -161,15 +161,21 @@ export default function GoogleForms() {
 
     try {
       const formIdToDelete = googleForm?.id || musterForm.google_form_id
-      await deleteGoogleForm(formIdToDelete)
 
-      // Clear the link in Muster
+      // Try to delete from Google Drive
+      try {
+        await deleteGoogleForm(formIdToDelete)
+      } catch (deleteErr) {
+        console.log('Could not delete from Drive (may already be deleted):', deleteErr.message)
+      }
+
+      // Always clear the link in Muster
       await updateDocument(musterForm.id, {
         google_form_id: null,
         google_form_url: null
       })
 
-      setMessage({ type: 'success', text: 'Google Form deleted' })
+      setMessage({ type: 'success', text: 'Google Form unlinked' })
       await loadData()
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
