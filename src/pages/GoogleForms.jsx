@@ -14,15 +14,23 @@ import {
   Link2,
   Loader,
   ClipboardList,
-  Trash2
+  Trash2,
+  Sparkles,
+  Plane,
+  Shield,
+  Users,
+  Clipboard,
+  AlertCircle
 } from 'lucide-react'
 import { getGoogleAuthUrl, isGoogleConnected, clearGoogleTokens } from '../lib/googleAuth'
 import { getDocuments, updateDocument } from '../lib/api'
 import {
   listGoogleForms,
   createGoogleFormFromMuster,
+  createGoogleFormFromTemplate,
   deleteGoogleForm
 } from '../lib/googleForms'
+import { FORM_TEMPLATES } from '../lib/formTemplates'
 
 export default function GoogleForms() {
   const [connected, setConnected] = useState(false)
@@ -30,7 +38,20 @@ export default function GoogleForms() {
   const [googleForms, setGoogleForms] = useState([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(null) // Track which form is syncing
+  const [creatingTemplate, setCreatingTemplate] = useState(null)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [activeTab, setActiveTab] = useState('optimized') // 'optimized' or 'muster'
+
+  // Template icons mapping
+  const templateIcons = {
+    'IMSAFE': Shield,
+    'Pre-Flight': Plane,
+    'FLHA': AlertCircle,
+    'Incident Report': AlertTriangle,
+    'Worksite Inspection': Clipboard,
+    'Post-Flight': Plane,
+    'Tailgate Meeting': Users
+  }
 
   useEffect(() => {
     checkConnection()
@@ -152,6 +173,32 @@ export default function GoogleForms() {
     }
   }
 
+  // Create form from optimized template
+  const handleCreateFromTemplate = async (templateKey) => {
+    setCreatingTemplate(templateKey)
+    setMessage({ type: '', text: '' })
+
+    try {
+      const template = FORM_TEMPLATES[templateKey]
+      const form = await createGoogleFormFromTemplate(template)
+
+      setMessage({
+        type: 'success',
+        text: `Created optimized "${template.title}" form!`
+      })
+
+      // Refresh list
+      await loadData()
+
+      // Open form to review
+      window.open(`https://docs.google.com/forms/d/${form.formId}/edit`, '_blank')
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message })
+    } finally {
+      setCreatingTemplate(null)
+    }
+  }
+
   // Delete Google Form and unlink from Muster
   const handleDeleteGoogleForm = async (musterForm) => {
     const googleForm = findGoogleForm(musterForm)
@@ -218,17 +265,9 @@ export default function GoogleForms() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Google Forms</h1>
-          <p className="text-gray-500 mt-1">Fill out forms using Google Forms</p>
+          <p className="text-gray-500 mt-1">Mobile-friendly forms for field operations</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleSyncAll}
-            disabled={loading || syncing}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
-          >
-            <Link2 className="w-4 h-4" />
-            Sync All Forms
-          </button>
           <button
             onClick={loadData}
             disabled={loading}
@@ -258,81 +297,116 @@ export default function GoogleForms() {
         </div>
       )}
 
-      {/* Forms List */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="font-semibold text-gray-900">Your Forms</h2>
-          <p className="text-sm text-gray-500">Click a form to fill it out in Google Forms</p>
-        </div>
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('optimized')}
+            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'optimized'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Optimized Templates
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('muster')}
+            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'muster'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Muster Forms
+            </span>
+          </button>
+        </nav>
+      </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <RefreshCw className="w-6 h-6 text-gray-400 animate-spin" />
+      {/* Optimized Templates Tab */}
+      {activeTab === 'optimized' && (
+        <div className="space-y-6">
+          {/* Info Banner */}
+          <div className="bg-gradient-to-r from-brand-50 to-purple-50 rounded-xl p-6 border border-brand-100">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-brand-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Optimized for Field Use</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  These forms are redesigned for mobile, with grouped questions, progress bars, and 2-3 minute completion times.
+                  Perfect for operators in the field wearing gloves.
+                </p>
+              </div>
+            </div>
           </div>
-        ) : musterForms.length === 0 ? (
-          <div className="text-center py-12">
-            <ClipboardList className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No active forms in Muster</p>
-            <p className="text-sm text-gray-400 mt-1">Create forms in the Forms section first</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {musterForms.map(form => {
-              const googleForm = findGoogleForm(form)
-              const isLinked = !!googleForm || !!form.google_form_id
-              const isSyncing = syncing === form.id
+
+          {/* Template Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(FORM_TEMPLATES).map(([key, template]) => {
+              const Icon = templateIcons[key] || FileText
+              const isCreating = creatingTemplate === key
+              const existingForm = googleForms.find(gf => gf.name === template.title)
 
               return (
-                <div key={form.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      isLinked ? 'bg-green-100' : 'bg-gray-100'
-                    }`}>
-                      {isLinked ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <ClipboardList className="w-5 h-5 text-gray-400" />
-                      )}
+                <div
+                  key={key}
+                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-brand-600" />
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{form.title}</h3>
-                      <p className="text-sm text-gray-500">
-                        {form.doc_number && <span className="mr-2">{form.doc_number}</span>}
-                        {form.category && <span className="text-gray-400">{form.category}</span>}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900">{template.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{template.description}</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {template.sections.length} sections • ~{template.sections.reduce((acc, s) => acc + s.questions.length, 0)} questions
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {isSyncing ? (
-                      <span className="inline-flex items-center gap-2 px-4 py-2 text-gray-500">
-                        <Loader className="w-4 h-4 animate-spin" />
-                        Creating...
-                      </span>
-                    ) : isLinked ? (
+                  <div className="mt-4 flex gap-2">
+                    {existingForm ? (
                       <>
                         <button
-                          onClick={() => handleFillForm(form)}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+                          onClick={() => window.open(`https://docs.google.com/forms/d/${existingForm.id}/viewform`, '_blank')}
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-medium"
                         >
                           <ExternalLink className="w-4 h-4" />
-                          Fill Out Form
+                          Fill Out
                         </button>
                         <button
-                          onClick={() => handleDeleteGoogleForm(form)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                          title="Delete Google Form"
+                          onClick={() => window.open(`https://docs.google.com/forms/d/${existingForm.id}/edit`, '_blank')}
+                          className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          Edit
                         </button>
                       </>
                     ) : (
                       <button
-                        onClick={() => handleCreateGoogleForm(form)}
-                        className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        onClick={() => handleCreateFromTemplate(key)}
+                        disabled={isCreating}
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 text-sm font-medium"
                       >
-                        <Link2 className="w-4 h-4" />
-                        Create Google Form
+                        {isCreating ? (
+                          <>
+                            <Loader className="w-4 h-4 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            Create Form
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -340,8 +414,144 @@ export default function GoogleForms() {
               )
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Muster Forms Tab */}
+      {activeTab === 'muster' && (
+        <div className="space-y-4">
+          {/* Sync Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleSyncAll}
+              disabled={loading || syncing}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
+            >
+              <Link2 className="w-4 h-4" />
+              Sync All Forms
+            </button>
+          </div>
+
+          {/* Forms List */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h2 className="font-semibold text-gray-900">Your Muster Forms</h2>
+              <p className="text-sm text-gray-500">Convert your Muster markdown forms to Google Forms</p>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <RefreshCw className="w-6 h-6 text-gray-400 animate-spin" />
+              </div>
+            ) : musterForms.length === 0 ? (
+              <div className="text-center py-12">
+                <ClipboardList className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No active forms in Muster</p>
+                <p className="text-sm text-gray-400 mt-1">Create forms in the Forms section first</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {musterForms.map(form => {
+                  const googleForm = findGoogleForm(form)
+                  const isLinked = !!googleForm || !!form.google_form_id
+                  const isSyncing = syncing === form.id
+
+                  return (
+                    <div key={form.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          isLinked ? 'bg-green-100' : 'bg-gray-100'
+                        }`}>
+                          {isLinked ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <ClipboardList className="w-5 h-5 text-gray-400" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">{form.title}</h3>
+                          <p className="text-sm text-gray-500">
+                            {form.doc_number && <span className="mr-2">{form.doc_number}</span>}
+                            {form.category && <span className="text-gray-400">{form.category}</span>}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {isSyncing ? (
+                          <span className="inline-flex items-center gap-2 px-4 py-2 text-gray-500">
+                            <Loader className="w-4 h-4 animate-spin" />
+                            Creating...
+                          </span>
+                        ) : isLinked ? (
+                          <>
+                            <button
+                              onClick={() => handleFillForm(form)}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Fill Out Form
+                            </button>
+                            <button
+                              onClick={() => handleDeleteGoogleForm(form)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                              title="Delete Google Form"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleCreateGoogleForm(form)}
+                            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                          >
+                            <Link2 className="w-4 h-4" />
+                            Create Google Form
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Existing Google Forms */}
+      {googleForms.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 className="font-semibold text-gray-900">All Google Forms in Drive</h2>
+            <p className="text-sm text-gray-500">{googleForms.length} forms in your Muster Forms folder</p>
+          </div>
+          <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+            {googleForms.map(form => (
+              <div key={form.id} className="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-purple-500" />
+                  <span className="text-sm text-gray-700">{form.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.open(`https://docs.google.com/forms/d/${form.id}/viewform`, '_blank')}
+                    className="text-xs text-brand-600 hover:text-brand-700"
+                  >
+                    Fill
+                  </button>
+                  <button
+                    onClick={() => window.open(`https://docs.google.com/forms/d/${form.id}/edit`, '_blank')}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

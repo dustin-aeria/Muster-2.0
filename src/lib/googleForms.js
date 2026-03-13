@@ -427,6 +427,175 @@ export async function createGoogleFormFromMuster(title, markdownContent) {
 }
 
 /**
+ * Create Google Form from optimized template (with sections)
+ * This creates a well-structured, mobile-friendly form
+ */
+export async function createGoogleFormFromTemplate(template) {
+  console.log('Creating optimized form:', template.title)
+
+  // Create the form with description
+  const form = await createGoogleForm(template.title)
+
+  // Build all requests (sections + questions)
+  const requests = []
+  let itemIndex = 0
+
+  // Update form settings to show progress bar
+  requests.push({
+    updateSettings: {
+      settings: {
+        quizSettings: {
+          isQuiz: false
+        }
+      },
+      updateMask: 'quizSettings.isQuiz'
+    }
+  })
+
+  // Add form description
+  if (template.description) {
+    requests.push({
+      updateFormInfo: {
+        info: {
+          title: template.title,
+          description: template.description
+        },
+        updateMask: 'description'
+      }
+    })
+  }
+
+  // Process each section
+  for (const section of template.sections) {
+    // Add section header (page break with title)
+    if (itemIndex > 0) {
+      requests.push({
+        createItem: {
+          item: {
+            title: section.title,
+            description: section.description || '',
+            pageBreakItem: {}
+          },
+          location: { index: itemIndex++ }
+        }
+      })
+    } else {
+      // First section - just add a text item as header if needed
+      if (section.description) {
+        requests.push({
+          createItem: {
+            item: {
+              title: section.title,
+              description: section.description,
+              textItem: {}
+            },
+            location: { index: itemIndex++ }
+          }
+        })
+      }
+    }
+
+    // Add questions for this section
+    for (const q of section.questions) {
+      requests.push({
+        createItem: {
+          item: {
+            title: q.title,
+            description: q.description || '',
+            questionItem: {
+              question: buildQuestionFromTemplate(q)
+            }
+          },
+          location: { index: itemIndex++ }
+        }
+      })
+    }
+  }
+
+  // Send batch update
+  if (requests.length > 0) {
+    await googleFetch(`${FORMS_API}/forms/${form.formId}:batchUpdate`, {
+      method: 'POST',
+      body: JSON.stringify({ requests })
+    })
+    console.log(`Added ${itemIndex} items to form`)
+  }
+
+  // Move form to Templates folder
+  try {
+    const templatesFolderId = await getTemplatesFolderId()
+    await moveFileToFolder(form.formId, templatesFolderId)
+    console.log('Form moved to Templates folder')
+  } catch (err) {
+    console.error('Could not move form to folder:', err.message)
+  }
+
+  return form
+}
+
+/**
+ * Build question object from template format
+ */
+function buildQuestionFromTemplate(q) {
+  const base = { required: q.required || false }
+
+  switch (q.type) {
+    case 'text':
+      return { ...base, textQuestion: { paragraph: false } }
+
+    case 'paragraph':
+      return { ...base, textQuestion: { paragraph: true } }
+
+    case 'multipleChoice':
+      return {
+        ...base,
+        choiceQuestion: {
+          type: 'RADIO',
+          options: (q.options || ['Yes', 'No']).map(o => ({ value: o }))
+        }
+      }
+
+    case 'checkbox':
+      return {
+        ...base,
+        choiceQuestion: {
+          type: 'CHECKBOX',
+          options: (q.options || []).map(o => ({ value: o }))
+        }
+      }
+
+    case 'dropdown':
+      return {
+        ...base,
+        choiceQuestion: {
+          type: 'DROP_DOWN',
+          options: (q.options || []).map(o => ({ value: o }))
+        }
+      }
+
+    case 'date':
+      return { ...base, dateQuestion: { includeTime: false } }
+
+    case 'time':
+      return { ...base, timeQuestion: {} }
+
+    case 'scale':
+      return {
+        ...base,
+        scaleQuestion: {
+          low: q.low || 1,
+          high: q.high || 5,
+          lowLabel: q.lowLabel || '',
+          highLabel: q.highLabel || ''
+        }
+      }
+
+    default:
+      return { ...base, textQuestion: { paragraph: false } }
+  }
+}
+
+/**
  * Generate submission filename with consistent naming convention
  * Format: FormName_YYYY-MM-DD_HHMMSS
  */
