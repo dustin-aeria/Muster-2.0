@@ -199,23 +199,37 @@ export async function deleteGoogleForm(formId) {
 function parseMarkdownToQuestions(content) {
   const questions = []
 
-  // Find all tables in the markdown
-  const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
+  // Normalize line endings
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+
+  console.log('Parsing markdown content, length:', normalizedContent.length)
+
+  // Find all tables in the markdown - more flexible regex
+  const tableRegex = /\|(.+)\|\n\|[\s:\-|]+\|\n((?:\|.+\|\n?)+)/g
   let match
 
-  while ((match = tableRegex.exec(content)) !== null) {
+  while ((match = tableRegex.exec(normalizedContent)) !== null) {
     const headerRow = match[1]
     const bodyRows = match[2].trim()
+
+    console.log('Found table with headers:', headerRow)
 
     const headers = headerRow.split('|').filter(h => h.trim()).map(h => h.trim())
     const rows = bodyRows.split('\n').map(row =>
       row.split('|').filter((c, i, arr) => i > 0 && i < arr.length - 1).map(c => c.trim())
     )
 
-    // Check if this is a field/value table (2 columns where second is empty)
-    if (headers.length === 2 && (headers[1].toLowerCase() === 'value' || headers[1] === '')) {
+    console.log('Headers:', headers)
+    console.log('Rows count:', rows.length)
+
+    // Check if this is a field/value style table (first column is label, rest are values)
+    // Common patterns: "Field | Value", "Item | Details", or any 2-column table
+    const isFieldValueTable = headers.length === 2
+
+    if (isFieldValueTable) {
       rows.forEach(row => {
         if (row[0] && isEmptyCell(row[1])) {
+          console.log('Adding field from 2-col table:', row[0])
           questions.push({
             title: row[0],
             type: detectQuestionType(row[0]),
@@ -224,12 +238,18 @@ function parseMarkdownToQuestions(content) {
         }
       })
     }
-    // Check for multi-column tables with empty cells
+    // Multi-column tables - check each cell
     else {
       rows.forEach(row => {
+        // First column is usually the row label
+        const rowLabel = row[0] || ''
+
         row.forEach((cell, colIndex) => {
-          if (colIndex > 0 && isEmptyCell(cell) && headers[colIndex]) {
-            const label = row[0] ? `${row[0]} - ${headers[colIndex]}` : headers[colIndex]
+          // Skip first column (it's the label) and check if cell should be filled
+          if (colIndex > 0 && isEmptyCell(cell)) {
+            const headerLabel = headers[colIndex] || `Column ${colIndex + 1}`
+            const label = rowLabel ? `${rowLabel} - ${headerLabel}` : headerLabel
+            console.log('Adding field from multi-col table:', label)
             questions.push({
               title: label,
               type: detectQuestionType(label),
@@ -276,11 +296,16 @@ function detectQuestionType(label) {
  * Create Google Form from Muster form content
  */
 export async function createGoogleFormFromMuster(title, markdownContent) {
+  console.log('Creating Google Form from Muster:', title)
+  console.log('Content preview:', markdownContent?.substring(0, 200))
+
   // Create the form
   const form = await createGoogleForm(title)
 
   // Parse questions from markdown
-  const questions = parseMarkdownToQuestions(markdownContent)
+  const questions = parseMarkdownToQuestions(markdownContent || '')
+
+  console.log('Parsed questions:', questions.length, questions)
 
   // Add yes/no options for choice questions
   const processedQuestions = questions.map(q => {
@@ -292,7 +317,10 @@ export async function createGoogleFormFromMuster(title, markdownContent) {
 
   // Add questions if any were found
   if (processedQuestions.length > 0) {
+    console.log('Adding', processedQuestions.length, 'questions to form')
     await addQuestionsToForm(form.formId, processedQuestions)
+  } else {
+    console.warn('No questions found in markdown content!')
   }
 
   return form
