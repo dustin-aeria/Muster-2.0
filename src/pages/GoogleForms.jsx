@@ -13,13 +13,15 @@ import {
   LogOut,
   Link2,
   Loader,
-  ClipboardList
+  ClipboardList,
+  Trash2
 } from 'lucide-react'
 import { getGoogleAuthUrl, isGoogleConnected, clearGoogleTokens } from '../lib/googleAuth'
 import { getDocuments, updateDocument } from '../lib/api'
 import {
   listGoogleForms,
-  createGoogleFormFromMuster
+  createGoogleFormFromMuster,
+  deleteGoogleForm
 } from '../lib/googleForms'
 
 export default function GoogleForms() {
@@ -140,9 +142,37 @@ export default function GoogleForms() {
   const handleFillForm = (musterForm) => {
     const googleForm = findGoogleForm(musterForm)
     if (googleForm) {
-      window.open(googleForm.webViewLink.replace('/edit', '/viewform'), '_blank')
+      // Construct proper viewform URL from form ID
+      const formId = googleForm.id
+      const viewUrl = `https://docs.google.com/forms/d/${formId}/viewform`
+      console.log('Opening form:', viewUrl)
+      window.open(viewUrl, '_blank')
     } else if (musterForm.google_form_url) {
       window.open(musterForm.google_form_url, '_blank')
+    }
+  }
+
+  // Delete Google Form and unlink from Muster
+  const handleDeleteGoogleForm = async (musterForm) => {
+    const googleForm = findGoogleForm(musterForm)
+    if (!googleForm && !musterForm.google_form_id) return
+
+    if (!confirm(`Delete Google Form for "${musterForm.title}"?`)) return
+
+    try {
+      const formIdToDelete = googleForm?.id || musterForm.google_form_id
+      await deleteGoogleForm(formIdToDelete)
+
+      // Clear the link in Muster
+      await updateDocument(musterForm.id, {
+        google_form_id: null,
+        google_form_url: null
+      })
+
+      setMessage({ type: 'success', text: 'Google Form deleted' })
+      await loadData()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message })
     }
   }
 
@@ -274,13 +304,22 @@ export default function GoogleForms() {
                         Creating...
                       </span>
                     ) : isLinked ? (
-                      <button
-                        onClick={() => handleFillForm(form)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Fill Out Form
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleFillForm(form)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Fill Out Form
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGoogleForm(form)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                          title="Delete Google Form"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={() => handleCreateGoogleForm(form)}
