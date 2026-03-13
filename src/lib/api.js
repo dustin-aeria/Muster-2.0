@@ -594,3 +594,211 @@ export async function deleteInspection(id) {
 
   if (error) throw error
 }
+
+// ============================================
+// TASKS
+// ============================================
+
+export async function getTasks(includeArchived = false) {
+  let query = supabase
+    .from('tasks')
+    .select('*')
+    .order('due_date', { ascending: true, nullsFirst: false })
+    .order('priority', { ascending: false })
+
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getTask(id) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createTask(task) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert(task)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTask(id, updates) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteTask(id) {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// TIME ENTRIES
+// ============================================
+
+export async function getTimeEntries(filters = {}) {
+  let query = supabase
+    .from('time_entries')
+    .select('*')
+    .order('entry_date', { ascending: false })
+
+  if (filters.startDate) {
+    query = query.gte('entry_date', filters.startDate)
+  }
+  if (filters.endDate) {
+    query = query.lte('entry_date', filters.endDate)
+  }
+  if (filters.projectId) {
+    query = query.eq('project_id', filters.projectId)
+  }
+  if (filters.operatorId) {
+    query = query.eq('operator_id', filters.operatorId)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getTimeEntry(id) {
+  const { data, error } = await supabase
+    .from('time_entries')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createTimeEntry(entry) {
+  const { data, error } = await supabase
+    .from('time_entries')
+    .insert(entry)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTimeEntry(id, updates) {
+  const { data, error } = await supabase
+    .from('time_entries')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteTimeEntry(id) {
+  const { error } = await supabase
+    .from('time_entries')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// EXPENSES
+// ============================================
+
+export async function getExpenses(includeArchived = false, filters = {}) {
+  let query = supabase
+    .from('expenses')
+    .select('*')
+    .order('expense_date', { ascending: false })
+
+  if (!includeArchived) {
+    query = query.neq('status', 'archived')
+  }
+  if (filters.category) {
+    query = query.eq('category', filters.category)
+  }
+  if (filters.projectId) {
+    query = query.eq('project_id', filters.projectId)
+  }
+  if (filters.startDate) {
+    query = query.gte('expense_date', filters.startDate)
+  }
+  if (filters.endDate) {
+    query = query.lte('expense_date', filters.endDate)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getExpense(id) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createExpense(expense) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert(expense)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateExpense(id, updates) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteExpense(id) {
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}

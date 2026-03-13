@@ -12,6 +12,9 @@ import Incidents from './pages/Incidents'
 import CAPAs from './pages/CAPAs'
 import JHSC from './pages/JHSC'
 import Inspections from './pages/Inspections'
+import Tasks from './pages/Tasks'
+import TimeTracking from './pages/TimeTracking'
+import Expenses from './pages/Expenses'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -94,9 +97,9 @@ function AppRoutes() {
       <Route path="/jhsc" element={<ProtectedRoute><JHSC /></ProtectedRoute>} />
 
       {/* Utilities */}
-      <Route path="/tasks" element={<ProtectedRoute><ComingSoon title="Tasks" /></ProtectedRoute>} />
-      <Route path="/time" element={<ProtectedRoute><ComingSoon title="Time Tracking" /></ProtectedRoute>} />
-      <Route path="/expenses" element={<ProtectedRoute><ComingSoon title="Expenses" /></ProtectedRoute>} />
+      <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+      <Route path="/time" element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
+      <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute><ComingSoon title="Calendar" /></ProtectedRoute>} />
 
       {/* Settings */}
