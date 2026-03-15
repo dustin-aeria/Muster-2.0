@@ -15,6 +15,7 @@ import {
 } from '../lib/api'
 import SiteTab from '../components/SiteTab'
 import FieldDocsTab from '../components/FieldDocsTab'
+import CalendarSync from '../components/CalendarSync'
 
 // ============================================
 // CONSTANTS
@@ -1387,6 +1388,11 @@ function AdminTab({ project, onUpdate, operators, equipment, services }) {
       <ServicesSection project={project} onUpdate={onUpdate} services={services} />
       <CostSummarySection project={project} onUpdate={onUpdate} />
       <PostFieldSection project={project} onUpdate={onUpdate} />
+
+      {/* Calendar Sync */}
+      <Section title="Calendar Sync">
+        <CalendarSync project={project} />
+      </Section>
     </div>
   )
 }
