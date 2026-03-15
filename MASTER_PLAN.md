@@ -656,17 +656,21 @@ Database: Supabase (PostgreSQL) - NOT Firebase
 **Step 25: Final testing & bug fixes** - Map section rebuilt
 
 ### Recent Changes (2026-03-15)
-- **Map Section Completely Rebuilt:**
-  - 14 element types with semantic meaning (site boundary, flight area, no-go zone, flight path, evac route, pilot location, launch/land points, obstacles, GCPs, muster points, etc.)
+- **Map Section v2 - Major Improvements:**
+  - Fullscreen toggle button to expand map view
+  - All sites visible simultaneously (active site highlighted, others dimmed)
+  - Per-element colors now working correctly (using GeoJSON layers instead of MapboxDraw styling)
+  - Operational volume displays as dashed amber buffer polygon around flight areas/paths
+  - Buffer calculated from flight params: (speed × 10s) + (altitude 1:1)
+  - Added Turf.js for proper geospatial buffer calculations
+  - Click on points shows popup with element name and site
+  - 14 element types with semantic meaning
   - Element type toolbar with icons and categorized groups
   - Flight Parameters panel with altitude/speed inputs
-  - Auto-calculated operational volume (contingency = speed × 10s, ground risk buffer = 1:1 altitude)
   - Element tables grouped by category with type icons
-  - Color syncing between state and map features
-  - Proper MapboxDraw integration with custom styling
 
 ### Last Updated
-2026-03-15 - Map section rebuilt with proper element types and operational volume calculation
+2026-03-15 - Map v2 with fullscreen, multi-site view, and operational volume visualization
 
 ---
 

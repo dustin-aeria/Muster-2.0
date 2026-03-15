@@ -535,6 +535,14 @@ function ElementToolbar({ selectedType, onSelectType, onSelectTool, activeTool }
 
 function FlightParameters({ site, onUpdateSite }) {
   const params = site?.flightParams || {}
+  const elements = site?.elements || []
+
+  // Get flight areas and flight paths that can have buffers
+  const bufferableElements = useMemo(() => {
+    return elements.filter(el =>
+      el.elementType === 'flight_area' || el.elementType === 'flight_path'
+    )
+  }, [elements])
 
   const updateParams = (updates) => {
     onUpdateSite({ flightParams: { ...params, ...updates } })
@@ -545,6 +553,12 @@ function FlightParameters({ site, onUpdateSite }) {
   const speed = parseFloat(params.maxSpeed) || 0
   const contingencyBuffer = speed * 10 // meters (speed in m/s × 10 seconds)
   const groundRiskBuffer = altitude // 1:1 ratio to altitude
+  const totalBuffer = contingencyBuffer + groundRiskBuffer
+
+  // Selected element for buffer display
+  const selectedBufferElement = params.bufferElementId
+    ? bufferableElements.find(el => el.id === params.bufferElementId)
+    : null
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -580,44 +594,65 @@ function FlightParameters({ site, onUpdateSite }) {
         </div>
       </div>
 
-      {/* Operational Volume Display */}
+      {/* Operational Volume Calculation */}
       {(altitude > 0 || speed > 0) && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Ruler className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-semibold text-blue-900">Operational Volume</span>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-white rounded-lg p-3 border border-blue-100">
-              <div className="text-xs text-gray-500 mb-1">Contingency Buffer</div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-amber-600">{contingencyBuffer.toFixed(0)}</span>
-                <span className="text-gray-500">m</span>
-              </div>
-              <div className="text-xs text-gray-400 mt-1">Speed × 10 sec</div>
+          <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="bg-white rounded-lg p-2 border border-blue-100 text-center">
+              <div className="text-xs text-gray-500">Contingency</div>
+              <div className="text-lg font-bold text-amber-600">{contingencyBuffer.toFixed(0)}m</div>
             </div>
-            <div className="bg-white rounded-lg p-3 border border-blue-100">
-              <div className="text-xs text-gray-500 mb-1">Ground Risk Buffer</div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-orange-600">{groundRiskBuffer.toFixed(0)}</span>
-                <span className="text-gray-500">m</span>
-              </div>
-              <div className="text-xs text-gray-400 mt-1">1:1 to altitude</div>
+            <div className="bg-white rounded-lg p-2 border border-blue-100 text-center">
+              <div className="text-xs text-gray-500">Ground Risk</div>
+              <div className="text-lg font-bold text-orange-600">{groundRiskBuffer.toFixed(0)}m</div>
+            </div>
+            <div className="bg-white rounded-lg p-2 border border-blue-100 text-center">
+              <div className="text-xs text-gray-500">Total Buffer</div>
+              <div className="text-lg font-bold text-blue-700">{totalBuffer.toFixed(0)}m</div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-blue-100">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Total buffer from flight area:</span>
-              <span className="font-bold text-blue-700">
-                {(contingencyBuffer + groundRiskBuffer).toFixed(0)} m
-              </span>
+
+          {/* Element Selection for Buffer */}
+          {bufferableElements.length > 0 && totalBuffer > 0 && (
+            <div className="mt-3 pt-3 border-t border-blue-100">
+              <label className="block text-xs text-gray-600 mb-2">
+                Apply buffer to:
+              </label>
+              <select
+                value={params.bufferElementId || ''}
+                onChange={(e) => updateParams({ bufferElementId: e.target.value || null })}
+                className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm bg-white"
+              >
+                <option value="">-- Select element --</option>
+                {bufferableElements.map(el => (
+                  <option key={el.id} value={el.id}>
+                    {el.name} ({el.elementType === 'flight_area' ? 'Area' : 'Path'})
+                  </option>
+                ))}
+              </select>
+              {selectedBufferElement && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Buffer showing for: {selectedBufferElement.name}
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {bufferableElements.length === 0 && (
+            <div className="mt-3 pt-3 border-t border-blue-100 text-xs text-gray-500">
+              Add a Flight Area or Flight Path to apply buffer
+            </div>
+          )}
         </div>
       )}
 
       {/* Additional flight info */}
-      <div className="grid grid-cols-3 gap-3 mt-4">
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Operation Type</label>
           <select
@@ -723,6 +758,15 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
     ;(allSites || []).forEach((s) => {
       const isActiveSite = s.id === site?.id
 
+      // Calculate buffer distance for this specific site
+      const siteParams = s.flightParams || {}
+      const altitude = parseFloat(siteParams.altitude) || 0
+      const speed = parseFloat(siteParams.maxSpeed) || 0
+      const contingency = speed * 10 // meters
+      const groundRisk = altitude // meters (1:1 ratio)
+      const siteBufferDistance = (contingency + groundRisk) / 1000 // convert to km for turf
+      const selectedBufferElementId = siteParams.bufferElementId
+
       ;(s.elements || []).forEach(el => {
         const typeConfig = ELEMENT_TYPES[el.elementType] || ELEMENT_TYPES.poi
         const color = el.color || typeConfig.defaultColor
@@ -744,15 +788,15 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
           }
         })
 
-        // Generate buffer for flight areas and flight paths
-        if ((el.elementType === 'flight_area' || el.elementType === 'flight_path') && bufferDistance > 0) {
+        // Generate buffer ONLY for the selected element in this site
+        if (el.id === selectedBufferElementId && siteBufferDistance > 0) {
           try {
             const feature = {
               type: 'Feature',
               geometry: el.geometry,
               properties: {}
             }
-            const buffered = turf.buffer(feature, bufferDistance, { units: 'kilometers' })
+            const buffered = turf.buffer(feature, siteBufferDistance, { units: 'kilometers' })
             if (buffered) {
               bufferFeatures.push({
                 type: 'Feature',
@@ -776,7 +820,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       elements: { type: 'FeatureCollection', features },
       buffers: { type: 'FeatureCollection', features: bufferFeatures }
     }
-  }, [allSites, site?.id, bufferDistance])
+  }, [allSites, site?.id])
 
   // Update display layers
   const updateDisplayLayers = useCallback(() => {
@@ -1005,10 +1049,10 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Update display when sites or buffer changes
+  // Update display when sites change (including flightParams/bufferElementId)
   useEffect(() => {
     updateDisplayLayers()
-  }, [updateDisplayLayers, allSites, bufferDistance])
+  }, [updateDisplayLayers, allSites])
 
   // Load active site elements into draw for editing
   useEffect(() => {
