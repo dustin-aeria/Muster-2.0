@@ -546,6 +546,7 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 | 2026-03-13 | ProjectDetail v1 | Initial attempt - too stripped down, rejected |
 | 2026-03-13 | ProjectDetail v2 | Rebuilt with SORA, costs, safety, tailgate - still needs work |
 | 2026-03-13 | Created Questions_for_d.md | Comprehensive feature questionnaire for project detail page |
+| 2026-03-15 | Map Section Rebuilt | 14 element types, toolbar, flight params, operational volume calculation |
 | | | |
 
 ---
@@ -635,10 +636,10 @@ Database: Supabase (PostgreSQL) - NOT Firebase
 | 8 | Admin Tab - Cost Summary table | COMPLETE | Labour/Materials breakdown, overhead%, markup% |
 | 9 | Admin Tab - CSV Export | COMPLETE | QuickBooks-compatible format |
 | 10 | Admin Tab - Post-field notes | COMPLETE | Processing, QA/QC, additional notes |
-| 11 | Site Tab - Map canvas setup | COMPLETE | Mapbox GL JS with style switcher |
-| 12 | Site Tab - Drawing tools | COMPLETE | Polygon, line, point tools |
-| 13 | Site Tab - Element tables | COMPLETE | Grouped by type, editable |
-| 14 | Site Tab - Click-to-highlight | COMPLETE | Click row to highlight on map |
+| 11 | Site Tab - Map canvas setup | REBUILT | Mapbox GL JS with style switcher, better organization |
+| 12 | Site Tab - Drawing tools | REBUILT | Full element type toolbar (14 types: site boundary, flight area, no-go zone, flight path, evac route, pilot location, launch/land points, obstacles, GCPs, etc.) |
+| 13 | Site Tab - Element tables | REBUILT | Grouped by semantic category (Areas, Routes, Points, Hazards), type icons, color editing |
+| 14 | Site Tab - Flight Parameters | NEW | Altitude/speed inputs, auto-calculated operational volume (contingency buffer + ground risk buffer) |
 | 15 | Site Tab - SORA calculator | COMPLETE | Full iGRC/fGRC/SAIL flow, visual diagram |
 | 16 | Site Tab - Hazard table | COMPLETE | Single-line entry, risk scoring |
 | 17 | Site Tab - Emergency planning | COMPLETE | Contacts, facilities, PPE, comms |
@@ -649,13 +650,23 @@ Database: Supabase (PostgreSQL) - NOT Firebase
 | 22 | Field Docs Tab - IMSAFE reference | COMPLETE | Self-check reference card |
 | 23 | Integration - Auto-save | COMPLETE | 2-second debounce, subtle indicator |
 | 24 | Integration - Google Calendar sync | COMPLETE | OAuth, sync project dates/deliverables |
-| 25 | Final testing & bug fixes | NOT STARTED | |
+| 25 | Final testing & bug fixes | IN PROGRESS | Map rebuilt with proper element types, lint errors fixed |
 
 ### Current Task
-**Step 25: Final testing & bug fixes**
+**Step 25: Final testing & bug fixes** - Map section rebuilt
+
+### Recent Changes (2026-03-15)
+- **Map Section Completely Rebuilt:**
+  - 14 element types with semantic meaning (site boundary, flight area, no-go zone, flight path, evac route, pilot location, launch/land points, obstacles, GCPs, muster points, etc.)
+  - Element type toolbar with icons and categorized groups
+  - Flight Parameters panel with altitude/speed inputs
+  - Auto-calculated operational volume (contingency = speed × 10s, ground risk buffer = 1:1 altitude)
+  - Element tables grouped by category with type icons
+  - Color syncing between state and map features
+  - Proper MapboxDraw integration with custom styling
 
 ### Last Updated
-2026-03-15 - Google Calendar sync complete (Step 24), ready for final testing
+2026-03-15 - Map section rebuilt with proper element types and operational volume calculation
 
 ---
 
