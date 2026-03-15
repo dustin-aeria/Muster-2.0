@@ -6,10 +6,11 @@ import {
   Layers, Route, Circle, Square, Triangle, Crosshair, Flag,
   Hospital, Flame, ShieldAlert, PlaneTakeoff, PlaneLanding,
   Locate, Ban, Mountain, Milestone, Compass, Ruler, Zap,
-  MousePointer, Move, RotateCcw, ZoomIn
+  MousePointer, Move, RotateCcw, ZoomIn, Maximize2, Minimize2
 } from 'lucide-react'
 import mapboxgl from 'mapbox-gl'
 import MapboxDraw from '@mapbox/mapbox-gl-draw'
+import * as turf from '@turf/turf'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 
@@ -657,17 +658,17 @@ function FlightParameters({ site, onUpdateSite }) {
 }
 
 // ============================================
-// MAP COMPONENT (REBUILT)
+// MAP COMPONENT (REBUILT WITH ALL FEATURES)
 // ============================================
 
-function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
+function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, flightParams }) {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const draw = useRef(null)
   const [mapStyle, setMapStyle] = useState('satellite-streets-v12')
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [drawingMode, setDrawingMode] = useState(null)
-  const prevElementsRef = useRef(site?.elements || [])
   const selectedTypeRef = useRef(selectedType)
   const elementsRef = useRef(site?.elements || [])
   const onUpdateSiteRef = useRef(onUpdateSite)
@@ -692,11 +693,19 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
     { value: 'light-v11', label: 'Light' }
   ]
 
+  // Calculate buffer distance in kilometers
+  const bufferDistance = useMemo(() => {
+    const altitude = parseFloat(flightParams?.altitude) || 0
+    const speed = parseFloat(flightParams?.maxSpeed) || 0
+    const contingency = speed * 10 // meters
+    const groundRisk = altitude // meters (1:1 ratio)
+    return (contingency + groundRisk) / 1000 // convert to km for turf
+  }, [flightParams?.altitude, flightParams?.maxSpeed])
+
   // Get geometry type for selected element type
   const getDrawModeForType = useCallback((typeId) => {
     const type = ELEMENT_TYPES[typeId]
     if (!type) return null
-
     const geomType = type.geometryTypes[0]
     switch (geomType) {
       case 'Polygon': return 'draw_polygon'
@@ -706,38 +715,87 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
     }
   }, [])
 
-  // Load existing elements into draw
-  const loadElements = useCallback(() => {
-    if (!draw.current || !site?.elements?.length) return
+  // Generate GeoJSON for all sites with proper colors
+  const generateAllSitesGeoJSON = useCallback(() => {
+    const features = []
+    const bufferFeatures = []
 
-    const featureCollection = {
-      type: 'FeatureCollection',
-      features: site.elements.map(el => ({
-        type: 'Feature',
-        id: el.id,
-        geometry: el.geometry,
-        properties: {
-          elementType: el.elementType,
-          name: el.name,
-          color: el.color,
-          notes: el.notes,
-          ...el.properties
+    ;(allSites || []).forEach((s) => {
+      const isActiveSite = s.id === site?.id
+
+      ;(s.elements || []).forEach(el => {
+        const typeConfig = ELEMENT_TYPES[el.elementType] || ELEMENT_TYPES.poi
+        const color = el.color || typeConfig.defaultColor
+
+        features.push({
+          type: 'Feature',
+          id: el.id,
+          geometry: el.geometry,
+          properties: {
+            id: el.id,
+            siteId: s.id,
+            siteName: s.name,
+            isActiveSite,
+            elementType: el.elementType,
+            name: el.name,
+            color: color,
+            notes: el.notes,
+            category: typeConfig.category
+          }
+        })
+
+        // Generate buffer for flight areas and flight paths
+        if ((el.elementType === 'flight_area' || el.elementType === 'flight_path') && bufferDistance > 0) {
+          try {
+            const feature = {
+              type: 'Feature',
+              geometry: el.geometry,
+              properties: {}
+            }
+            const buffered = turf.buffer(feature, bufferDistance, { units: 'kilometers' })
+            if (buffered) {
+              bufferFeatures.push({
+                type: 'Feature',
+                geometry: buffered.geometry,
+                properties: {
+                  parentId: el.id,
+                  siteId: s.id,
+                  type: 'operational_volume',
+                  name: `${el.name} - Operational Volume`
+                }
+              })
+            }
+          } catch {
+            // Buffer calculation failed
+          }
         }
-      }))
-    }
-    draw.current.set(featureCollection)
-
-    // Also set the user properties for styling (MapboxDraw prefixes with user_)
-    site.elements.forEach(el => {
-      try {
-        draw.current.setFeatureProperty(el.id, 'color', el.color)
-        draw.current.setFeatureProperty(el.id, 'name', el.name)
-        draw.current.setFeatureProperty(el.id, 'elementType', el.elementType)
-      } catch {
-        // Feature might not exist yet
-      }
+      })
     })
-  }, [site?.elements])
+
+    return {
+      elements: { type: 'FeatureCollection', features },
+      buffers: { type: 'FeatureCollection', features: bufferFeatures }
+    }
+  }, [allSites, site?.id, bufferDistance])
+
+  // Update display layers
+  const updateDisplayLayers = useCallback(() => {
+    if (!map.current || !mapLoaded) return
+
+    const { elements, buffers } = generateAllSitesGeoJSON()
+
+    // Update elements source
+    const elementsSource = map.current.getSource('elements-source')
+    if (elementsSource) {
+      elementsSource.setData(elements)
+    }
+
+    // Update buffers source
+    const buffersSource = map.current.getSource('buffers-source')
+    if (buffersSource) {
+      buffersSource.setData(buffers)
+    }
+  }, [generateAllSitesGeoJSON, mapLoaded])
 
   // Initialize map
   useEffect(() => {
@@ -766,6 +824,112 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
     draw.current = drawInstance
 
     mapInstance.on('load', () => {
+      // Add sources for display layers
+      mapInstance.addSource('elements-source', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      })
+
+      mapInstance.addSource('buffers-source', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      })
+
+      // Buffer layer (operational volume) - render first (below elements)
+      mapInstance.addLayer({
+        id: 'buffers-fill',
+        type: 'fill',
+        source: 'buffers-source',
+        paint: {
+          'fill-color': '#F59E0B',
+          'fill-opacity': 0.15
+        }
+      })
+
+      mapInstance.addLayer({
+        id: 'buffers-line',
+        type: 'line',
+        source: 'buffers-source',
+        paint: {
+          'line-color': '#F59E0B',
+          'line-width': 2,
+          'line-dasharray': [4, 2]
+        }
+      })
+
+      // Polygon fill layer
+      mapInstance.addLayer({
+        id: 'elements-polygon-fill',
+        type: 'fill',
+        source: 'elements-source',
+        filter: ['==', '$type', 'Polygon'],
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': ['case', ['get', 'isActiveSite'], 0.3, 0.15]
+        }
+      })
+
+      // Polygon outline layer
+      mapInstance.addLayer({
+        id: 'elements-polygon-outline',
+        type: 'line',
+        source: 'elements-source',
+        filter: ['==', '$type', 'Polygon'],
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': ['case', ['get', 'isActiveSite'], 3, 2],
+          'line-opacity': ['case', ['get', 'isActiveSite'], 1, 0.6]
+        }
+      })
+
+      // Line layer
+      mapInstance.addLayer({
+        id: 'elements-line',
+        type: 'line',
+        source: 'elements-source',
+        filter: ['==', '$type', 'LineString'],
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': ['case', ['get', 'isActiveSite'], 4, 2],
+          'line-opacity': ['case', ['get', 'isActiveSite'], 1, 0.6]
+        }
+      })
+
+      // Point layer
+      mapInstance.addLayer({
+        id: 'elements-point',
+        type: 'circle',
+        source: 'elements-source',
+        filter: ['==', '$type', 'Point'],
+        paint: {
+          'circle-radius': ['case', ['get', 'isActiveSite'], 10, 6],
+          'circle-color': ['get', 'color'],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': ['case', ['get', 'isActiveSite'], 1, 0.6]
+        }
+      })
+
+      // Point labels
+      mapInstance.addLayer({
+        id: 'elements-point-label',
+        type: 'symbol',
+        source: 'elements-source',
+        filter: ['==', '$type', 'Point'],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 11,
+          'text-offset': [0, 1.8],
+          'text-anchor': 'top',
+          'text-optional': true
+        },
+        paint: {
+          'text-color': '#374151',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5
+        }
+      })
+
       setMapLoaded(true)
     })
 
@@ -778,15 +942,6 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
 
       const newElements = newFeatures.map(f => {
         const existingOfType = currentElements.filter(el => el.elementType === currentType).length
-        // Set the user properties on the draw feature for styling
-        try {
-          drawInstance.setFeatureProperty(f.id, 'color', typeConfig.defaultColor)
-          drawInstance.setFeatureProperty(f.id, 'name', `${typeConfig.label} ${existingOfType + 1}`)
-          drawInstance.setFeatureProperty(f.id, 'elementType', currentType || 'poi')
-        } catch {
-          // Feature properties will be set on next load
-        }
-
         return {
           id: f.id,
           elementType: currentType || 'poi',
@@ -826,33 +981,107 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
       onUpdateSiteRef.current({ center: [center.lng, center.lat], zoom })
     })
 
+    // Popup on click
+    mapInstance.on('click', 'elements-point', (e) => {
+      if (e.features?.length) {
+        const feature = e.features[0]
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`<strong>${feature.properties.name}</strong><br/>${feature.properties.siteName}`)
+          .addTo(mapInstance)
+      }
+    })
+
+    mapInstance.on('mouseenter', 'elements-point', () => {
+      mapInstance.getCanvas().style.cursor = 'pointer'
+    })
+    mapInstance.on('mouseleave', 'elements-point', () => {
+      mapInstance.getCanvas().style.cursor = ''
+    })
+
     return () => {
       mapInstance.remove()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Load elements when map is ready or site changes
+  // Update display when sites or buffer changes
   useEffect(() => {
-    if (mapLoaded && draw.current) {
-      draw.current.deleteAll()
-      loadElements()
+    updateDisplayLayers()
+  }, [updateDisplayLayers, allSites, bufferDistance])
+
+  // Load active site elements into draw for editing
+  useEffect(() => {
+    if (!draw.current || !mapLoaded) return
+
+    draw.current.deleteAll()
+
+    if (site?.elements?.length) {
+      const featureCollection = {
+        type: 'FeatureCollection',
+        features: site.elements.map(el => ({
+          type: 'Feature',
+          id: el.id,
+          geometry: el.geometry,
+          properties: { elementType: el.elementType, name: el.name, color: el.color }
+        }))
+      }
+      draw.current.set(featureCollection)
     }
-  }, [site?.id, mapLoaded, loadElements])
+  }, [site?.id, site?.elements, mapLoaded])
 
   // Change map style
   useEffect(() => {
     if (map.current && mapLoaded) {
       map.current.setStyle(`mapbox://styles/mapbox/${mapStyle}`)
-      // Re-add elements after style change
       map.current.once('style.load', () => {
-        loadElements()
+        // Re-add layers after style change
+        const { elements, buffers } = generateAllSitesGeoJSON()
+
+        map.current.addSource('elements-source', { type: 'geojson', data: elements })
+        map.current.addSource('buffers-source', { type: 'geojson', data: buffers })
+
+        // Re-add all layers
+        map.current.addLayer({
+          id: 'buffers-fill', type: 'fill', source: 'buffers-source',
+          paint: { 'fill-color': '#F59E0B', 'fill-opacity': 0.15 }
+        })
+        map.current.addLayer({
+          id: 'buffers-line', type: 'line', source: 'buffers-source',
+          paint: { 'line-color': '#F59E0B', 'line-width': 2, 'line-dasharray': [4, 2] }
+        })
+        map.current.addLayer({
+          id: 'elements-polygon-fill', type: 'fill', source: 'elements-source',
+          filter: ['==', '$type', 'Polygon'],
+          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': ['case', ['get', 'isActiveSite'], 0.3, 0.15] }
+        })
+        map.current.addLayer({
+          id: 'elements-polygon-outline', type: 'line', source: 'elements-source',
+          filter: ['==', '$type', 'Polygon'],
+          paint: { 'line-color': ['get', 'color'], 'line-width': ['case', ['get', 'isActiveSite'], 3, 2] }
+        })
+        map.current.addLayer({
+          id: 'elements-line', type: 'line', source: 'elements-source',
+          filter: ['==', '$type', 'LineString'],
+          paint: { 'line-color': ['get', 'color'], 'line-width': ['case', ['get', 'isActiveSite'], 4, 2] }
+        })
+        map.current.addLayer({
+          id: 'elements-point', type: 'circle', source: 'elements-source',
+          filter: ['==', '$type', 'Point'],
+          paint: { 'circle-radius': 8, 'circle-color': ['get', 'color'], 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' }
+        })
+        map.current.addLayer({
+          id: 'elements-point-label', type: 'symbol', source: 'elements-source',
+          filter: ['==', '$type', 'Point'],
+          layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'text-offset': [0, 1.8], 'text-anchor': 'top' },
+          paint: { 'text-color': '#374151', 'text-halo-color': '#fff', 'text-halo-width': 1.5 }
+        })
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapStyle])
 
-  // Handle selected type change - activate appropriate draw mode
+  // Handle selected type change
   useEffect(() => {
     if (!draw.current || !mapLoaded) return
 
@@ -868,32 +1097,6 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
     }
   }, [selectedType, activeTool, mapLoaded, getDrawModeForType])
 
-  // Sync element colors/names when they change in state
-  useEffect(() => {
-    if (!draw.current || !mapLoaded) return
-
-    const prevElements = prevElementsRef.current
-    const currentElements = site?.elements || []
-
-    // Find elements that have changed
-    currentElements.forEach(el => {
-      const prev = prevElements.find(p => p.id === el.id)
-      if (prev) {
-        // Check if color or name changed
-        if (prev.color !== el.color || prev.name !== el.name) {
-          try {
-            draw.current.setFeatureProperty(el.id, 'color', el.color)
-            draw.current.setFeatureProperty(el.id, 'name', el.name)
-          } catch {
-            // Feature might not exist
-          }
-        }
-      }
-    })
-
-    prevElementsRef.current = currentElements
-  }, [site?.elements, mapLoaded])
-
   // Delete selected elements
   const deleteSelected = useCallback(() => {
     if (!draw.current) return
@@ -906,23 +1109,30 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
     }
   }, [])
 
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+    // Resize map after state change
+    setTimeout(() => {
+      map.current?.resize()
+    }, 100)
+  }
+
   if (!MAPBOX_TOKEN) {
     return (
       <div className="h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <MapPin className="w-12 h-12 mx-auto text-gray-300 mb-3" />
           <p className="text-gray-600 font-medium">Mapbox Token Required</p>
-          <p className="text-sm text-gray-500 mt-1">
-            Add VITE_MAPBOX_TOKEN to your .env file
-          </p>
+          <p className="text-sm text-gray-500 mt-1">Add VITE_MAPBOX_TOKEN to your .env file</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      {/* Style Switcher & Controls */}
+    <div className={`space-y-3 ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-4' : ''}`}>
+      {/* Controls */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Style:</span>
@@ -931,9 +1141,7 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
               key={style.value}
               onClick={() => setMapStyle(style.value)}
               className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                mapStyle === style.value
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                mapStyle === style.value ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {style.label}
@@ -942,6 +1150,11 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
         </div>
 
         <div className="flex items-center gap-2">
+          {bufferDistance > 0 && (
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+              Buffer: {(bufferDistance * 1000).toFixed(0)}m
+            </span>
+          )}
           {drawingMode && (
             <span className="text-xs bg-brand-100 text-brand-700 px-2 py-1 rounded-full">
               Drawing: {ELEMENT_TYPES[selectedType]?.label || 'Element'}
@@ -954,27 +1167,40 @@ function SiteMap({ site, onUpdateSite, selectedType, activeTool }) {
           >
             <Trash2 className="w-4 h-4" />
           </button>
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded"
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
       {/* Map Container */}
       <div
         ref={mapContainer}
-        className="h-[500px] rounded-lg overflow-hidden border border-gray-200"
+        className={`rounded-lg overflow-hidden border border-gray-200 ${isFullscreen ? 'flex-1 h-[calc(100vh-120px)]' : 'h-[500px]'}`}
       />
 
-      {/* Instructions */}
-      <div className="flex items-center gap-4 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <MousePointer className="w-3 h-3" /> Click element type, then click map to place
-        </span>
-        <span className="flex items-center gap-1">
-          <Move className="w-3 h-3" /> Drag to move
-        </span>
-        <span className="flex items-center gap-1">
-          <Edit2 className="w-3 h-3" /> Double-click to edit vertices
-        </span>
-      </div>
+      {/* Legend */}
+      {!isFullscreen && (
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <MousePointer className="w-3 h-3" /> Select type, then click map
+            </span>
+            <span className="flex items-center gap-1">
+              <Move className="w-3 h-3" /> Drag to move
+            </span>
+          </div>
+          {bufferDistance > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-1 bg-amber-400 rounded" /> Operational Volume Buffer
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -2153,10 +2379,11 @@ export default function SiteTab({ project, onUpdate, equipment }) {
           <div className="lg:col-span-3 space-y-6">
             <SiteMap
               site={activeSite}
+              allSites={sites}
               onUpdateSite={updateActiveSite}
               selectedType={selectedElementType}
               activeTool={activeTool}
-              onToolChange={setActiveTool}
+              flightParams={activeSite?.flightParams}
             />
 
             <div className="border-t pt-6">
