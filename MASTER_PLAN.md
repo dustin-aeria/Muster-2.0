@@ -436,9 +436,9 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 | 1 | Foundation | COMPLETE |
 | 2 | Libraries | COMPLETE |
 | 3 | Documents | COMPLETE |
-| 4 | Safety Program | NOT STARTED |
-| 5 | Utilities & Integrations | NOT STARTED |
-| 6 | Project Management | NOT STARTED |
+| 4 | Safety Program | COMPLETE |
+| 5 | Utilities & Integrations | COMPLETE |
+| 6 | Project Management | IN PROGRESS - Awaiting requirements clarification |
 
 ---
 
@@ -540,6 +540,12 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 | 2026-03-11 | Phase 1 complete | React + Vite + Tailwind + Supabase auth + Vercel deployment |
 | 2026-03-11 | Phase 2 complete | Libraries built: Operators, Equipment, Services with full CRUD |
 | 2026-03-11 | Phase 3 complete | Documents with markdown editor, amendment tracking, type filtering |
+| 2026-03-12 | Phase 4 complete | Safety program: Incidents, CAPAs, JHSC, Inspections |
+| 2026-03-12 | Phase 5 complete | Utilities: Tasks, Time Tracking, Expenses, Forms |
+| 2026-03-13 | Phase 6 started | Projects list page built, project stages pipeline |
+| 2026-03-13 | ProjectDetail v1 | Initial attempt - too stripped down, rejected |
+| 2026-03-13 | ProjectDetail v2 | Rebuilt with SORA, costs, safety, tailgate - still needs work |
+| 2026-03-13 | Created Questions_for_d.md | Comprehensive feature questionnaire for project detail page |
 | | | |
 
 ---
@@ -550,6 +556,7 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
 ├── MASTER_PLAN.md (this file)
 ├── SORA_LOGIC_REFERENCE.md (SORA 2.5 quick reference)
+├── Questions_for_d.md (Phase 6 project detail requirements questionnaire)
 ├── Web Tool Rebuild.docx (original requirements doc)
 ├── Regulations/ (JARUS SORA docs, TC Part 9, AIM, etc.)
 ├── Formal Hazard Assessments/ (49 FHA templates)
@@ -561,12 +568,25 @@ C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
     │   ├── supabase.js (Supabase client)
     │   ├── api.js (CRUD functions for all tables)
     │   ├── database.sql (PostgreSQL schema - all phases)
-    │   └── database-phase3.sql (Phase 3 documents table - run separately)
+    │   ├── database-phase3.sql (Phase 3 documents table)
+    │   ├── database-phase4-safety.sql (Phase 4 safety tables)
+    │   ├── database-phase5-utilities.sql (Phase 5 utilities tables)
+    │   └── database-phase6-projects.sql (Phase 6 project management tables)
     ├── pages/
-    │   ├── Operators.jsx (operators library with certifications, roles, rates)
-    │   ├── Equipment.jsx (equipment with 922.XX declarations, rate calculator)
-    │   ├── Services.jsx (services with complex rates, modifiers tab)
-    │   └── Documents.jsx (policies, procedures, FHAs with markdown editor)
+    │   ├── Operators.jsx (operators library)
+    │   ├── Equipment.jsx (equipment with 922.XX declarations)
+    │   ├── Services.jsx (services with complex rates)
+    │   ├── Documents.jsx (policies, procedures, FHAs)
+    │   ├── Forms.jsx (fillable forms)
+    │   ├── Incidents.jsx (safety incidents)
+    │   ├── CAPAs.jsx (corrective actions)
+    │   ├── JHSC.jsx (safety committee meetings)
+    │   ├── Inspections.jsx (safety inspections)
+    │   ├── Tasks.jsx (task management)
+    │   ├── TimeTracking.jsx (time entries)
+    │   ├── Expenses.jsx (expense tracking)
+    │   ├── Projects.jsx (project list with stages pipeline)
+    │   └── ProjectDetail.jsx (project detail - IN PROGRESS)
     └── contexts/
         └── AuthContext.jsx (Supabase auth wrapper)
 ```
@@ -574,6 +594,67 @@ C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
 ---
 
 ## Resume Instructions
+
+If Claude crashes or session ends, paste this prompt into Claude Code:
+
+```
+Resume Muster 2.0 build from MASTER_PLAN.md
+
+Working directory: C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)
+
+Read these files to get context:
+1. MASTER_PLAN.md - Overall project status and progress
+2. ProjectDetail_FINAL.md - Current implementation spec for ProjectDetail page
+
+Check the "Phase 6 Build Progress" section in MASTER_PLAN.md to see exactly where we left off. Continue from the next uncompleted task.
+
+Tech stack: React 19 + Vite + Tailwind CSS 4 + Supabase + Lucide icons
+Database: Supabase (PostgreSQL) - NOT Firebase
+```
+
+---
+
+## Phase 6 Build Progress
+
+### ProjectDetail.jsx Implementation
+
+| Step | Task | Status | Notes |
+|------|------|--------|-------|
+| 1 | Admin Tab - Project Header & Status | COMPLETE | Editable name, status dropdown, save indicator |
+| 2 | Admin Tab - Client & Dates section | COMPLETE | Client name/email/phone, field dates, days |
+| 3 | Admin Tab - Deliverables (repeatable) | COMPLETE | Add/remove deliverable + date pairs |
+| 4 | Admin Tab - Notification Contacts | COMPLETE | Name/email/phone for GO/NO-GO alerts |
+| 5 | Admin Tab - Crew assignment | COMPLETE | Library + manual, roles, rates, "Use field days" button |
+| 6 | Admin Tab - Equipment assignment | COMPLETE | Library selection, SORA indicator, rates |
+| 7 | Admin Tab - Services assignment | COMPLETE | Library + project-specific notes, modifiers |
+| 8 | Admin Tab - Cost Summary table | COMPLETE | Labour/Materials breakdown, overhead%, markup% |
+| 9 | Admin Tab - CSV Export | COMPLETE | QuickBooks-compatible format |
+| 10 | Admin Tab - Post-field notes | COMPLETE | Processing, QA/QC, additional notes |
+| 11 | Site Tab - Map canvas setup | NOT STARTED | |
+| 12 | Site Tab - Drawing tools | NOT STARTED | |
+| 13 | Site Tab - Element tables | NOT STARTED | |
+| 14 | Site Tab - Click-to-highlight | NOT STARTED | |
+| 15 | Site Tab - SORA calculator | NOT STARTED | |
+| 16 | Site Tab - Hazard table | NOT STARTED | |
+| 17 | Site Tab - Emergency planning | NOT STARTED | |
+| 18 | Field Docs Tab - Tailgate list | NOT STARTED | |
+| 19 | Field Docs Tab - Tailgate form | NOT STARTED | |
+| 20 | Field Docs Tab - GO/NO-GO buttons | NOT STARTED | |
+| 21 | Field Docs Tab - Notifications | NOT STARTED | |
+| 22 | Field Docs Tab - IMSAFE reference | NOT STARTED | |
+| 23 | Integration - Auto-save | COMPLETE | 2-second debounce, subtle indicator |
+| 24 | Integration - Google Calendar sync | NOT STARTED | |
+| 25 | Final testing & bug fixes | NOT STARTED | |
+
+### Current Task
+**Step 11: Site Tab - Map canvas setup**
+
+### Last Updated
+2026-03-15 - Admin Tab complete (Steps 1-10), Auto-save complete (Step 23)
+
+---
+
+## Original Resume Instructions
 
 If Claude crashes or session ends:
 1. Share this file with Claude

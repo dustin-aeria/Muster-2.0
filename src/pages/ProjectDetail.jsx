@@ -1,30 +1,28 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
-  ArrowLeft, Save, FolderOpen, Calendar, DollarSign, Users, MapPin,
-  FileText, Settings2, Plane, AlertTriangle, CheckCircle2, Circle,
-  Loader2, MoreVertical, Trash2, Archive, Clock, Package, ClipboardCheck,
-  Radio, Shield, HardHat, ChevronDown, ChevronUp, Plus, X, Phone, Mail,
-  Target, Navigation, Calculator, AlertCircle, XCircle, ThumbsUp, ThumbsDown,
-  Eye, Zap, Flag, Building2, Briefcase, Percent, Info
+  ArrowLeft, Save, Calendar, DollarSign, Users, MapPin,
+  FileText, Plane, AlertTriangle, CheckCircle2, Circle,
+  Loader2, MoreVertical, Trash2, Clock, Package, ClipboardCheck,
+  Shield, ChevronDown, ChevronUp, Plus, X, Phone, Mail,
+  Download, Building2, Briefcase, Percent, Info, AlertCircle,
+  ThumbsUp, ThumbsDown, Minus, UserPlus, Search
 } from 'lucide-react'
 import {
-  getProject, updateProject, deleteProject, getProjectStages,
-  getProjectResources, createProjectResource, updateProjectResource, deleteProjectResource,
+  getProject, updateProject, deleteProject,
   getTailgateMeetings, createTailgateMeeting, updateTailgateMeeting,
   getOperators, getEquipment, getServices
 } from '../lib/api'
-import { format, parseISO } from 'date-fns'
 
 // ============================================
-// CONSTANTS & CONFIGS
+// CONSTANTS
 // ============================================
 
 const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft', color: 'bg-gray-100 text-gray-700' },
   { value: 'active', label: 'Active', color: 'bg-green-100 text-green-700' },
-  { value: 'on_hold', label: 'On Hold', color: 'bg-yellow-100 text-yellow-700' },
-  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-700' },
-  { value: 'archived', label: 'Archived', color: 'bg-gray-100 text-gray-700' }
+  { value: 'complete', label: 'Complete', color: 'bg-blue-100 text-blue-700' },
+  { value: 'archived', label: 'Archived', color: 'bg-gray-100 text-gray-500' }
 ]
 
 const SAVE_STATUS = {
@@ -36,1487 +34,1391 @@ const SAVE_STATUS = {
 }
 
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: FolderOpen },
-  { id: 'resources', label: 'Resources & Costs', icon: Users },
-  { id: 'sora', label: 'SORA', icon: Shield },
-  { id: 'safety', label: 'Safety', icon: AlertTriangle },
-  { id: 'tailgate', label: 'Tailgate', icon: ClipboardCheck },
-  { id: 'documents', label: 'Documents', icon: FileText }
+  { id: 'admin', label: 'Admin', icon: Briefcase },
+  { id: 'site', label: 'Site', icon: MapPin },
+  { id: 'field', label: 'Field Docs', icon: ClipboardCheck }
 ]
 
 const ROLE_OPTIONS = [
   { value: 'PIC', label: 'Pilot in Command' },
   { value: 'VO', label: 'Visual Observer' },
-  { value: 'Safety Lead', label: 'Safety Lead' },
-  { value: 'Project Lead', label: 'Project Lead' },
-  { value: 'First Aid', label: 'First Aid Attendant' },
-  { value: 'Ground Support', label: 'Ground Support' },
+  { value: 'Payload Op', label: 'Payload Operator' },
+  { value: 'Safety', label: 'Safety Lead' },
   { value: 'Other', label: 'Other' }
 ]
 
-// SORA Population Categories
-const POPULATION_CATEGORIES = {
-  controlled: { label: 'Controlled Ground Area', density: 0, description: 'No uninvolved people' },
-  sparsely: { label: 'Sparsely Populated', density: 1, description: '<10 people/km²' },
-  populated: { label: 'Populated', density: 2, description: '10-1500 people/km²' },
-  gathering: { label: 'Gathering of People', density: 3, description: '>1500 people/km²' },
-  assembly: { label: 'Assembly of People', density: 4, description: 'Open-air assemblies' }
-}
-
-// UA Characteristics for SORA
-const UA_CHARACTERISTICS = {
-  '1m_25ms': { label: '≤1m, ≤25m/s', maxDim: 1, maxSpeed: 25 },
-  '3m_25ms': { label: '≤3m, ≤25m/s', maxDim: 3, maxSpeed: 25 },
-  '8m_25ms': { label: '≤8m, ≤25m/s', maxDim: 8, maxSpeed: 25 },
-  '1m_35ms': { label: '≤1m, ≤35m/s', maxDim: 1, maxSpeed: 35 },
-  '3m_35ms': { label: '≤3m, ≤35m/s', maxDim: 3, maxSpeed: 35 }
-}
-
-// Intrinsic GRC Matrix
-const GRC_MATRIX = {
-  controlled: { '1m_25ms': 1, '3m_25ms': 2, '8m_25ms': 3, '1m_35ms': 2, '3m_35ms': 3 },
-  sparsely: { '1m_25ms': 2, '3m_25ms': 3, '8m_25ms': 4, '1m_35ms': 3, '3m_35ms': 4 },
-  populated: { '1m_25ms': 4, '3m_25ms': 5, '8m_25ms': 6, '1m_35ms': 5, '3m_35ms': 6 },
-  gathering: { '1m_25ms': 6, '3m_25ms': 7, '8m_25ms': 8, '1m_35ms': 7, '3m_35ms': 8 },
-  assembly: { '1m_25ms': 8, '3m_25ms': 9, '8m_25ms': 10, '1m_35ms': 9, '3m_35ms': 10 }
-}
-
-// Ground Mitigations
-const GROUND_MITIGATIONS = {
-  M1A: { name: 'M1A - Strategic Mitigation', reductions: { low: 0, medium: -1, high: -2 } },
-  M1B: { name: 'M1B - Effects Reduction', reductions: { low: 0, medium: -1, high: -2 } },
-  M1C: { name: 'M1C - Emergency Response', reductions: { low: 0, medium: -1, high: -1 } },
-  M2: { name: 'M2 - Containment', reductions: { low: -1, medium: -2, high: -4 } }
-}
-
-// ARC Levels
-const ARC_LEVELS = ['ARC-a', 'ARC-b', 'ARC-c', 'ARC-d']
-
-// SAIL Colors
-const SAIL_COLORS = {
-  'I': '#22C55E', 'II': '#84CC16', 'III': '#EAB308',
-  'IV': '#F97316', 'V': '#EF4444', 'VI': '#991B1B'
-}
-
-// SAIL Matrix (fGRC x ARC)
-const SAIL_MATRIX = {
-  1: { 'ARC-a': 'I', 'ARC-b': 'I', 'ARC-c': 'II', 'ARC-d': 'IV' },
-  2: { 'ARC-a': 'I', 'ARC-b': 'I', 'ARC-c': 'II', 'ARC-d': 'IV' },
-  3: { 'ARC-a': 'II', 'ARC-b': 'II', 'ARC-c': 'III', 'ARC-d': 'V' },
-  4: { 'ARC-a': 'II', 'ARC-b': 'III', 'ARC-c': 'III', 'ARC-d': 'V' },
-  5: { 'ARC-a': 'III', 'ARC-b': 'III', 'ARC-c': 'IV', 'ARC-d': 'VI' },
-  6: { 'ARC-a': 'III', 'ARC-b': 'IV', 'ARC-c': 'IV', 'ARC-d': 'VI' },
-  7: { 'ARC-a': 'IV', 'ARC-b': 'IV', 'ARC-c': 'V', 'ARC-d': 'VI' }
-}
+const RATE_TYPES = [
+  { value: 'hourly', label: 'Hourly' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' }
+]
 
 // ============================================
-// UTILITY FUNCTIONS
+// HELPER COMPONENTS
 // ============================================
 
-function formatCurrency(amount) {
-  if (!amount && amount !== 0) return '--'
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
-}
-
-function calculateSORA(sora) {
-  if (!sora?.population || !sora?.uaCharacteristics) {
-    return { iGRC: null, fGRC: null, sail: null }
+function SaveIndicator({ status }) {
+  if (status === SAVE_STATUS.SAVING) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-gray-500">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Saving...
+      </span>
+    )
   }
-
-  // Get intrinsic GRC
-  const iGRC = GRC_MATRIX[sora.population]?.[sora.uaCharacteristics] || null
-  if (iGRC === null) return { iGRC: null, fGRC: null, sail: null }
-
-  // Calculate final GRC with mitigations
-  let fGRC = iGRC
-  const mitigations = sora.mitigations || {}
-
-  Object.entries(mitigations).forEach(([key, config]) => {
-    if (config?.enabled && config?.robustness) {
-      const reduction = GROUND_MITIGATIONS[key]?.reductions[config.robustness] || 0
-      fGRC += reduction
-    }
-  })
-
-  fGRC = Math.max(1, Math.min(fGRC, 10)) // Clamp to 1-10
-
-  // Determine SAIL
-  const arc = sora.residualARC || sora.initialARC || 'ARC-b'
-  const sail = fGRC <= 7 ? SAIL_MATRIX[fGRC]?.[arc] : null
-
-  return { iGRC, fGRC, sail, arc, withinScope: fGRC <= 7 }
+  if (status === SAVE_STATUS.SAVED) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-green-600">
+        <CheckCircle2 className="w-4 h-4" />
+        Saved
+      </span>
+    )
+  }
+  if (status === SAVE_STATUS.ERROR) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-red-600">
+        <AlertCircle className="w-4 h-4" />
+        Error saving
+      </span>
+    )
+  }
+  if (status === SAVE_STATUS.PENDING) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-amber-600">
+        <Circle className="w-3 h-3 fill-current" />
+        Unsaved
+      </span>
+    )
+  }
+  return null
 }
 
-// ============================================
-// COLLAPSIBLE SECTION COMPONENT
-// ============================================
-
-function Section({ title, icon: Icon, children, defaultOpen = true, badge = null, badgeColor = 'gray' }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-  const badgeColors = {
-    gray: 'bg-gray-100 text-gray-700',
-    green: 'bg-green-100 text-green-700',
-    yellow: 'bg-yellow-100 text-yellow-700',
-    red: 'bg-red-100 text-red-700',
-    blue: 'bg-blue-100 text-blue-700'
-  }
-
+function Section({ title, children, className = '' }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
+    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      </div>
+      <div className="p-6">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function InputField({ label, type = 'text', value, onChange, placeholder, className = '' }) {
+  return (
+    <div className={className}>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+      <input
+        type={type}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+      />
+    </div>
+  )
+}
+
+function TextArea({ label, value, onChange, placeholder, rows = 3, className = '' }) {
+  return (
+    <div className={className}>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+      <textarea
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+      />
+    </div>
+  )
+}
+
+function SelectField({ label, value, onChange, options, className = '' }) {
+  return (
+    <div className={className}>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
       >
-        <div className="flex items-center gap-3">
-          {Icon && <Icon className="w-5 h-5 text-gray-500" />}
-          <span className="font-medium text-gray-900">{title}</span>
-          {badge && (
-            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${badgeColors[badgeColor]}`}>
-              {badge}
-            </span>
-          )}
-        </div>
-        {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-      </button>
-      {isOpen && <div className="p-4 space-y-4">{children}</div>}
+        <option value="">Select...</option>
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   )
 }
 
 // ============================================
-// OVERVIEW TAB
+// ADMIN TAB COMPONENTS
 // ============================================
 
-function OverviewTab({ project, resources, soraCalc, onUpdate }) {
-  const crewCount = resources.filter(r => r.resource_type === 'operator').length
-  const equipmentCount = resources.filter(r => r.resource_type === 'equipment').length
-  const hasPIC = resources.some(r => r.role === 'PIC')
+function ClientDatesSection({ project, onUpdate }) {
+  return (
+    <Section title="Client & Dates">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <InputField
+          label="Client Name"
+          value={project.client_name}
+          onChange={(v) => onUpdate({ client_name: v })}
+          placeholder="Company or contact name"
+        />
+        <InputField
+          label="Client Email"
+          type="email"
+          value={project.client_email}
+          onChange={(v) => onUpdate({ client_email: v })}
+          placeholder="email@example.com"
+        />
+        <InputField
+          label="Client Phone"
+          type="tel"
+          value={project.client_phone}
+          onChange={(v) => onUpdate({ client_phone: v })}
+          placeholder="(604) 555-1234"
+        />
+        <InputField
+          label="Field Start Date"
+          type="date"
+          value={project.start_date}
+          onChange={(v) => onUpdate({ start_date: v })}
+        />
+        <InputField
+          label="Field End Date"
+          type="date"
+          value={project.end_date}
+          onChange={(v) => onUpdate({ end_date: v })}
+        />
+        <InputField
+          label="Field Days"
+          type="number"
+          value={project.field_days}
+          onChange={(v) => onUpdate({ field_days: parseInt(v) || 0 })}
+          placeholder="Number of days"
+        />
+      </div>
+      <div className="mt-6">
+        <TextArea
+          label="Project Description / Scope"
+          value={project.description}
+          onChange={(v) => onUpdate({ description: v })}
+          placeholder="Describe the project scope, objectives, and requirements..."
+          rows={4}
+        />
+      </div>
+    </Section>
+  )
+}
+
+function DeliverablesSection({ project, onUpdate }) {
+  const deliverables = project.deliverables || []
+
+  const addDeliverable = () => {
+    const newDeliverables = [...deliverables, { id: Date.now(), name: '', due_date: '' }]
+    onUpdate({ deliverables: newDeliverables })
+  }
+
+  const updateDeliverable = (id, field, value) => {
+    const newDeliverables = deliverables.map(d =>
+      d.id === id ? { ...d, [field]: value } : d
+    )
+    onUpdate({ deliverables: newDeliverables })
+  }
+
+  const removeDeliverable = (id) => {
+    onUpdate({ deliverables: deliverables.filter(d => d.id !== id) })
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Project Header Card */}
-      <div className="bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-xl p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold mb-2">{project.name}</h2>
-            <div className="flex flex-wrap items-center gap-4 text-white/80 text-sm">
-              {project.client_name && (
-                <span className="flex items-center gap-1">
-                  <Building2 className="w-4 h-4" />{project.client_name}
-                </span>
-              )}
-              {project.location && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />{project.location}
-                </span>
-              )}
-              {project.category && (
-                <span className="flex items-center gap-1">
-                  <Briefcase className="w-4 h-4" />{project.category}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* SORA Summary */}
-          <div className="flex items-center gap-6">
-            {soraCalc.sail && (
-              <div className="text-center">
-                <p className="text-white/70 text-xs uppercase mb-1">SAIL</p>
-                <span
-                  className="inline-block px-4 py-1 rounded-full text-lg font-bold"
-                  style={{ backgroundColor: SAIL_COLORS[soraCalc.sail], color: ['I', 'II'].includes(soraCalc.sail) ? '#1F2937' : '#FFF' }}
-                >
-                  {soraCalc.sail}
-                </span>
-              </div>
-            )}
-            <div className="text-center">
-              <p className="text-white/70 text-xs uppercase mb-1">Crew</p>
-              <p className="text-2xl font-bold">{crewCount}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-white/70 text-xs uppercase mb-1">Equipment</p>
-              <p className="text-2xl font-bold">{equipmentCount}</p>
-            </div>
-          </div>
-        </div>
+    <Section title="Deliverables">
+      <div className="space-y-3">
+        {deliverables.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center">No deliverables added yet</p>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-sm text-gray-500 border-b">
+                <th className="pb-2 font-medium">Deliverable</th>
+                <th className="pb-2 font-medium w-40">Due Date</th>
+                <th className="pb-2 w-10"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {deliverables.map((d) => (
+                <tr key={d.id}>
+                  <td className="py-2 pr-3">
+                    <input
+                      type="text"
+                      value={d.name}
+                      onChange={(e) => updateDeliverable(d.id, 'name', e.target.value)}
+                      placeholder="e.g., Orthomosaic, Final Report"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <input
+                      type="date"
+                      value={d.due_date}
+                      onChange={(e) => updateDeliverable(d.id, 'due_date', e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => removeDeliverable(d.id)}
+                      className="p-1 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <button
+          onClick={addDeliverable}
+          className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          Add Deliverable
+        </button>
       </div>
-
-      {/* Warnings */}
-      {!hasPIC && crewCount > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-amber-800">No Pilot in Command assigned</p>
-            <p className="text-sm text-amber-700">At least one crew member should be designated as PIC.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <Calendar className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-          <p className="text-lg font-bold text-gray-900">
-            {project.start_date ? format(parseISO(project.start_date), 'MMM d') : '--'}
-          </p>
-          <p className="text-xs text-gray-500">Start Date</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <Calendar className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-          <p className="text-lg font-bold text-gray-900">
-            {project.due_date ? format(parseISO(project.due_date), 'MMM d') : '--'}
-          </p>
-          <p className="text-xs text-gray-500">Due Date</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <DollarSign className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-          <p className="text-lg font-bold text-gray-900">{formatCurrency(project.estimated_cost)}</p>
-          <p className="text-xs text-gray-500">Est. Cost</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <DollarSign className="w-6 h-6 mx-auto text-green-500 mb-2" />
-          <p className="text-lg font-bold text-gray-900">{formatCurrency(project.quoted_price)}</p>
-          <p className="text-xs text-gray-500">Quoted Price</p>
-        </div>
-      </div>
-
-      {/* Project Details */}
-      <Section title="Project Details" icon={FileText}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={project.description || ''}
-              onChange={(e) => onUpdate({ description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="Project description and objectives..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input
-                type="date"
-                value={project.start_date || ''}
-                onChange={(e) => onUpdate({ start_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <input
-                type="date"
-                value={project.end_date || ''}
-                onChange={(e) => onUpdate({ end_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-              <input
-                type="date"
-                value={project.due_date || ''}
-                onChange={(e) => onUpdate({ due_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input
-                type="text"
-                value={project.location || ''}
-                onChange={(e) => onUpdate({ location: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="Site location"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Altitude (m AGL)</label>
-              <input
-                type="number"
-                value={project.max_altitude_m || ''}
-                onChange={(e) => onUpdate({ max_altitude_m: e.target.value ? parseInt(e.target.value) : null })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="120"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Flight Speed (m/s)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={project.flight_speed_ms || ''}
-                onChange={(e) => onUpdate({ flight_speed_ms: e.target.value ? parseFloat(e.target.value) : null })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="10"
-              />
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* Client Information */}
-      <Section title="Client Information" icon={Users}>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-            <input
-              type="text"
-              value={project.client_name || ''}
-              onChange={(e) => onUpdate({ client_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-            <input
-              type="text"
-              value={project.client_contact || ''}
-              onChange={(e) => onUpdate({ client_contact: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              value={project.client_email || ''}
-              onChange={(e) => onUpdate({ client_email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-            <input
-              type="tel"
-              value={project.client_phone || ''}
-              onChange={(e) => onUpdate({ client_phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-        </div>
-      </Section>
-
-      {/* Notification Contacts */}
-      <Section title="Notification Contacts" icon={Radio} badge="GO/NO-GO Alerts">
-        <NotificationContacts project={project} onUpdate={onUpdate} />
-      </Section>
-
-      {/* Notes */}
-      <Section title="Notes" icon={FileText} defaultOpen={false}>
-        <textarea
-          value={project.notes || ''}
-          onChange={(e) => onUpdate({ notes: e.target.value })}
-          rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          placeholder="Additional project notes..."
-        />
-      </Section>
-    </div>
+    </Section>
   )
 }
 
-// ============================================
-// NOTIFICATION CONTACTS COMPONENT
-// ============================================
-
-function NotificationContacts({ project, onUpdate }) {
-  const [newContact, setNewContact] = useState({ name: '', email: '', phone: '' })
+function NotificationContactsSection({ project, onUpdate }) {
   const contacts = project.notification_contacts || []
 
   const addContact = () => {
-    if (!newContact.name) return
-    onUpdate({ notification_contacts: [...contacts, { ...newContact }] })
-    setNewContact({ name: '', email: '', phone: '' })
+    const newContacts = [...contacts, { id: Date.now(), name: '', email: '', phone: '' }]
+    onUpdate({ notification_contacts: newContacts })
   }
 
-  const removeContact = (index) => {
-    onUpdate({ notification_contacts: contacts.filter((_, i) => i !== index) })
+  const updateContact = (id, field, value) => {
+    const newContacts = contacts.map(c =>
+      c.id === id ? { ...c, [field]: value } : c
+    )
+    onUpdate({ notification_contacts: newContacts })
+  }
+
+  const removeContact = (id) => {
+    onUpdate({ notification_contacts: contacts.filter(c => c.id !== id) })
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">These contacts will be notified when GO/NO-GO decisions are made.</p>
-
-      {contacts.length > 0 && (
-        <div className="space-y-2">
-          {contacts.map((contact, i) => (
-            <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{contact.name}</p>
-                <div className="flex gap-4 text-sm text-gray-500">
-                  {contact.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{contact.email}</span>}
-                  {contact.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{contact.phone}</span>}
-                </div>
-              </div>
-              <button onClick={() => removeContact(i)} className="p-1 text-gray-400 hover:text-red-500">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={newContact.name}
-          onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-          placeholder="Name"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-        />
-        <input
-          type="email"
-          value={newContact.email}
-          onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-          placeholder="Email"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-        />
-        <input
-          type="tel"
-          value={newContact.phone}
-          onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-          placeholder="Phone"
-          className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-        />
-        <button onClick={addContact} className="px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">
+    <Section title="Notification Contacts">
+      <p className="text-sm text-gray-500 mb-4">
+        These contacts will receive GO/NO-GO notifications via email and SMS.
+      </p>
+      <div className="space-y-3">
+        {contacts.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center">No notification contacts added</p>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-sm text-gray-500 border-b">
+                <th className="pb-2 font-medium">Name</th>
+                <th className="pb-2 font-medium">Email</th>
+                <th className="pb-2 font-medium">Phone</th>
+                <th className="pb-2 w-10"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {contacts.map((c) => (
+                <tr key={c.id}>
+                  <td className="py-2 pr-3">
+                    <input
+                      type="text"
+                      value={c.name}
+                      onChange={(e) => updateContact(c.id, 'name', e.target.value)}
+                      placeholder="Name"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <input
+                      type="email"
+                      value={c.email}
+                      onChange={(e) => updateContact(c.id, 'email', e.target.value)}
+                      placeholder="email@example.com"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <input
+                      type="tel"
+                      value={c.phone}
+                      onChange={(e) => updateContact(c.id, 'phone', e.target.value)}
+                      placeholder="(604) 555-1234"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => removeContact(c.id)}
+                      className="p-1 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <button
+          onClick={addContact}
+          className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+        >
           <Plus className="w-4 h-4" />
+          Add Contact
         </button>
       </div>
-    </div>
-  )
-}
-
-// ============================================
-// RESOURCES & COSTS TAB
-// ============================================
-
-function ResourcesTab({ projectId, project, resources, onRefresh, onUpdateProject }) {
-  const [operators, setOperators] = useState([])
-  const [equipment, setEquipment] = useState([])
-  const [services, setServices] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(null) // 'operator', 'equipment', 'service', or null
-  const [selectedResource, setSelectedResource] = useState('')
-  const [role, setRole] = useState('')
-  const [estimatedHours, setEstimatedHours] = useState('')
-  const [estimatedDays, setEstimatedDays] = useState('')
-
-  // Cost settings from project
-  const costSettings = project.cost_settings || { overhead_percent: 15, markup_percent: 20 }
-
-  useEffect(() => {
-    loadLibraries()
-  }, [])
-
-  const loadLibraries = async () => {
-    try {
-      const [ops, equip, svc] = await Promise.all([getOperators(), getEquipment(), getServices()])
-      setOperators(ops.filter(o => o.status === 'active'))
-      setEquipment(equip.filter(e => e.status === 'active'))
-      setServices(svc.filter(s => s.status === 'active'))
-    } catch (err) {
-      console.error('Failed to load libraries:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Calculate costs
-  const costBreakdown = useMemo(() => {
-    let personnelCost = 0
-    let equipmentCost = 0
-    let servicesCost = 0
-
-    resources.forEach(r => {
-      const hours = parseFloat(r.actual_hours || r.estimated_hours) || 0
-      const days = parseFloat(r.actual_days || r.estimated_days) || 0
-      const rate = parseFloat(r.rate_amount) || 0
-
-      let cost = 0
-      if (r.rate_type === 'hourly') cost = rate * hours
-      else if (r.rate_type === 'daily') cost = rate * days
-      else if (r.rate_type === 'weekly') cost = rate * (days / 7)
-
-      if (r.resource_type === 'operator') personnelCost += cost
-      else if (r.resource_type === 'equipment') equipmentCost += cost
-      else if (r.resource_type === 'service') servicesCost += cost
-    })
-
-    const subtotal = personnelCost + equipmentCost + servicesCost
-    const overhead = subtotal * (costSettings.overhead_percent / 100)
-    const beforeMarkup = subtotal + overhead
-    const markup = beforeMarkup * (costSettings.markup_percent / 100)
-    const total = beforeMarkup + markup
-
-    return { personnelCost, equipmentCost, servicesCost, subtotal, overhead, markup, total }
-  }, [resources, costSettings])
-
-  const getAvailableResources = (type) => {
-    const assignedIds = resources.filter(r => r.resource_type === type).map(r => r.resource_id)
-    switch (type) {
-      case 'operator': return operators.filter(o => !assignedIds.includes(o.id))
-      case 'equipment': return equipment.filter(e => !assignedIds.includes(e.id))
-      case 'service': return services.filter(s => !assignedIds.includes(s.id))
-      default: return []
-    }
-  }
-
-  const handleAdd = async () => {
-    if (!selectedResource || !showAdd) return
-    const available = getAvailableResources(showAdd)
-    const resource = available.find(r => r.id === selectedResource)
-    if (!resource) return
-
-    try {
-      let name = ''
-      let rate = null
-      let rateType = null
-
-      if (showAdd === 'operator') {
-        name = `${resource.first_name} ${resource.last_name}`
-        rate = resource.hourly_rate || resource.daily_rate
-        rateType = resource.hourly_rate ? 'hourly' : resource.daily_rate ? 'daily' : null
-      } else {
-        name = resource.name
-        rate = resource.hourly_rate || resource.daily_rate
-        rateType = resource.hourly_rate ? 'hourly' : resource.daily_rate ? 'daily' : null
-      }
-
-      await createProjectResource({
-        project_id: projectId,
-        resource_type: showAdd,
-        resource_id: selectedResource,
-        resource_name: name,
-        role: role || null,
-        rate_type: rateType,
-        rate_amount: rate,
-        estimated_hours: estimatedHours ? parseFloat(estimatedHours) : null,
-        estimated_days: estimatedDays ? parseFloat(estimatedDays) : null
-      })
-
-      setShowAdd(null)
-      setSelectedResource('')
-      setRole('')
-      setEstimatedHours('')
-      setEstimatedDays('')
-      onRefresh()
-    } catch (err) {
-      alert('Failed to add resource: ' + err.message)
-    }
-  }
-
-  const handleRemove = async (resourceId) => {
-    if (!confirm('Remove this resource from the project?')) return
-    try {
-      await deleteProjectResource(resourceId)
-      onRefresh()
-    } catch (err) {
-      alert('Failed to remove: ' + err.message)
-    }
-  }
-
-  const handleUpdateResource = async (resourceId, updates) => {
-    try {
-      await updateProjectResource(resourceId, updates)
-      onRefresh()
-    } catch (err) {
-      console.error('Failed to update resource:', err)
-    }
-  }
-
-  const updateCostSettings = (key, value) => {
-    onUpdateProject({
-      cost_settings: { ...costSettings, [key]: parseFloat(value) || 0 }
-    })
-  }
-
-  const groupedResources = {
-    operator: resources.filter(r => r.resource_type === 'operator'),
-    equipment: resources.filter(r => r.resource_type === 'equipment'),
-    service: resources.filter(r => r.resource_type === 'service')
-  }
-
-  const renderResourceGroup = (type, items, icon, label) => (
-    <Section title={label} icon={icon} badge={`${items.length}`} badgeColor={items.length > 0 ? 'blue' : 'gray'}>
-      {items.length > 0 ? (
-        <div className="space-y-2">
-          {items.map(resource => (
-            <div key={resource.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-gray-900">{resource.resource_name}</p>
-                  {resource.role && (
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{resource.role}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                  {resource.rate_amount && (
-                    <span>${resource.rate_amount}/{resource.rate_type === 'hourly' ? 'hr' : 'day'}</span>
-                  )}
-                  <input
-                    type="number"
-                    placeholder="Hours"
-                    value={resource.estimated_hours || ''}
-                    onChange={(e) => handleUpdateResource(resource.id, { estimated_hours: e.target.value ? parseFloat(e.target.value) : null })}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-xs"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Days"
-                    value={resource.estimated_days || ''}
-                    onChange={(e) => handleUpdateResource(resource.id, { estimated_days: e.target.value ? parseFloat(e.target.value) : null })}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-xs"
-                  />
-                </div>
-              </div>
-              <button onClick={() => handleRemove(resource.id)} className="p-2 text-gray-400 hover:text-red-500">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-gray-500 text-center py-4">No {label.toLowerCase()} assigned</p>
-      )}
-      <button
-        onClick={() => setShowAdd(type)}
-        className="w-full mt-2 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-brand-500 hover:text-brand-600"
-      >
-        <Plus className="w-4 h-4 inline mr-1" />Add {label.slice(0, -1)}
-      </button>
     </Section>
   )
-
-  return (
-    <div className="space-y-6">
-      {/* Cost Summary Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-brand-600" />
-          Cost Estimate
-        </h3>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-lg p-3">
-            <p className="text-xs text-blue-600 font-medium">Personnel</p>
-            <p className="text-xl font-bold text-blue-900">{formatCurrency(costBreakdown.personnelCost)}</p>
-          </div>
-          <div className="bg-green-50 rounded-lg p-3">
-            <p className="text-xs text-green-600 font-medium">Equipment</p>
-            <p className="text-xl font-bold text-green-900">{formatCurrency(costBreakdown.equipmentCost)}</p>
-          </div>
-          <div className="bg-purple-50 rounded-lg p-3">
-            <p className="text-xs text-purple-600 font-medium">Services</p>
-            <p className="text-xl font-bold text-purple-900">{formatCurrency(costBreakdown.servicesCost)}</p>
-          </div>
-          <div className="bg-gray-100 rounded-lg p-3">
-            <p className="text-xs text-gray-600 font-medium">Total</p>
-            <p className="text-xl font-bold text-gray-900">{formatCurrency(costBreakdown.total)}</p>
-          </div>
-        </div>
-
-        {/* Cost Settings */}
-        <div className="flex items-center gap-6 pt-4 border-t border-gray-200">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Overhead:</label>
-            <input
-              type="number"
-              value={costSettings.overhead_percent}
-              onChange={(e) => updateCostSettings('overhead_percent', e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
-            />
-            <span className="text-sm text-gray-500">%</span>
-            <span className="text-sm text-gray-400">({formatCurrency(costBreakdown.overhead)})</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Markup:</label>
-            <input
-              type="number"
-              value={costSettings.markup_percent}
-              onChange={(e) => updateCostSettings('markup_percent', e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
-            />
-            <span className="text-sm text-gray-500">%</span>
-            <span className="text-sm text-gray-400">({formatCurrency(costBreakdown.markup)})</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Resource Groups */}
-      {renderResourceGroup('operator', groupedResources.operator, Users, 'Crew')}
-      {renderResourceGroup('equipment', groupedResources.equipment, Package, 'Equipment')}
-      {renderResourceGroup('service', groupedResources.service, Briefcase, 'Services')}
-
-      {/* Add Resource Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Add {showAdd === 'operator' ? 'Crew Member' : showAdd.charAt(0).toUpperCase() + showAdd.slice(1)}</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select {showAdd}</label>
-                <select
-                  value={selectedResource}
-                  onChange={(e) => setSelectedResource(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="">Select...</option>
-                  {getAvailableResources(showAdd).map(r => (
-                    <option key={r.id} value={r.id}>
-                      {showAdd === 'operator' ? `${r.first_name} ${r.last_name}` : r.name}
-                      {r.hourly_rate && ` ($${r.hourly_rate}/hr)`}
-                      {r.daily_rate && ` ($${r.daily_rate}/day)`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {showAdd === 'operator' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                  <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Select role...</option>
-                    {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                  </select>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Est. Hours</label>
-                  <input
-                    type="number"
-                    value={estimatedHours}
-                    onChange={(e) => setEstimatedHours(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Est. Days</label>
-                  <input
-                    type="number"
-                    value={estimatedDays}
-                    onChange={(e) => setEstimatedDays(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowAdd(null)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={handleAdd} disabled={!selectedResource} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50">Add</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
-// ============================================
-// SORA TAB
-// ============================================
+function CrewSection({ project, onUpdate, operators }) {
+  const crew = project.crew || []
+  const [showLibrary, setShowLibrary] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
-function SORATab({ project, onUpdate }) {
-  const sora = project.sora_assessment || {}
-  const calc = calculateSORA(sora)
+  const fieldDays = project.field_days || 0
 
-  const updateSORA = (updates) => {
-    onUpdate({ sora_assessment: { ...sora, ...updates } })
+  const addFromLibrary = (operator) => {
+    const newCrew = [...crew, {
+      id: Date.now(),
+      source: 'library',
+      operator_id: operator.id,
+      name: `${operator.first_name} ${operator.last_name}`,
+      role: '',
+      rate_type: 'daily',
+      rate: operator.daily_rate || 0,
+      quantity: fieldDays || 1
+    }]
+    onUpdate({ crew: newCrew })
+    setShowLibrary(false)
+    setSearchTerm('')
   }
 
-  const updateMitigation = (key, config) => {
-    updateSORA({ mitigations: { ...sora.mitigations, [key]: config } })
+  const addManual = () => {
+    const newCrew = [...crew, {
+      id: Date.now(),
+      source: 'manual',
+      name: '',
+      role: '',
+      rate_type: 'daily',
+      rate: 0,
+      quantity: fieldDays || 1
+    }]
+    onUpdate({ crew: newCrew })
   }
+
+  const updateCrewMember = (id, field, value) => {
+    const newCrew = crew.map(c =>
+      c.id === id ? { ...c, [field]: value } : c
+    )
+    onUpdate({ crew: newCrew })
+  }
+
+  const useFieldDays = (id) => {
+    updateCrewMember(id, 'quantity', fieldDays)
+  }
+
+  const removeCrewMember = (id) => {
+    onUpdate({ crew: crew.filter(c => c.id !== id) })
+  }
+
+  const calculateSubtotal = (member) => {
+    return (member.rate || 0) * (member.quantity || 0)
+  }
+
+  const filteredOperators = operators.filter(op => {
+    const name = `${op.first_name} ${op.last_name}`.toLowerCase()
+    return name.includes(searchTerm.toLowerCase())
+  })
+
+  const crewTotal = crew.reduce((sum, m) => sum + calculateSubtotal(m), 0)
 
   return (
-    <div className="space-y-6">
-      {/* SORA Summary Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-brand-600" />
-          SORA Risk Assessment Summary
-        </h3>
-
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          {/* GRC Flow */}
-          <div className="flex items-center gap-2">
-            <div className={`px-4 py-2 rounded-lg border-2 text-center ${calc.iGRC ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
-              <p className="text-xs text-gray-500">iGRC</p>
-              <p className="text-2xl font-bold">{calc.iGRC ?? '?'}</p>
-            </div>
-            <span className="text-gray-400">→</span>
-            <div className={`px-4 py-2 rounded-lg border-2 text-center ${calc.fGRC ? (calc.withinScope ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50') : 'border-gray-200 bg-gray-50'}`}>
-              <p className="text-xs text-gray-500">fGRC</p>
-              <p className="text-2xl font-bold">{calc.fGRC ?? '?'}</p>
-            </div>
-          </div>
-
-          <span className="text-2xl text-gray-300">+</span>
-
-          {/* ARC */}
-          <div className={`px-4 py-2 rounded-lg border-2 text-center ${calc.arc ? 'border-purple-300 bg-purple-50' : 'border-gray-200 bg-gray-50'}`}>
-            <p className="text-xs text-gray-500">ARC</p>
-            <p className="text-lg font-bold">{calc.arc || '?'}</p>
-          </div>
-
-          <span className="text-2xl text-gray-300">=</span>
-
-          {/* SAIL */}
-          <div
-            className="px-6 py-3 rounded-lg text-center"
-            style={{ backgroundColor: calc.sail ? SAIL_COLORS[calc.sail] : '#E5E7EB' }}
-          >
-            <p className="text-xs" style={{ color: calc.sail && ['I', 'II'].includes(calc.sail) ? '#374151' : '#FFF', opacity: 0.8 }}>SAIL</p>
-            <p className="text-3xl font-bold" style={{ color: calc.sail && ['I', 'II'].includes(calc.sail) ? '#1F2937' : '#FFF' }}>
-              {calc.sail || '?'}
-            </p>
-          </div>
-        </div>
-
-        {calc.fGRC > 7 && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-center">
-            <p className="text-red-700 font-medium">fGRC &gt; 7: Outside SORA scope - requires additional authorization</p>
+    <Section title="Crew">
+      <div className="space-y-4">
+        {crew.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center">No crew assigned</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b">
+                  <th className="pb-2 font-medium">Name</th>
+                  <th className="pb-2 font-medium">Role</th>
+                  <th className="pb-2 font-medium">Rate Type</th>
+                  <th className="pb-2 font-medium text-right">Rate</th>
+                  <th className="pb-2 font-medium text-right">Qty</th>
+                  <th className="pb-2 font-medium text-right">Subtotal</th>
+                  <th className="pb-2 w-20"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {crew.map((member) => (
+                  <tr key={member.id}>
+                    <td className="py-2 pr-2">
+                      {member.source === 'library' ? (
+                        <span className="font-medium">{member.name}</span>
+                      ) : (
+                        <input
+                          type="text"
+                          value={member.name}
+                          onChange={(e) => updateCrewMember(member.id, 'name', e.target.value)}
+                          placeholder="Name"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      )}
+                    </td>
+                    <td className="py-2 pr-2">
+                      <select
+                        value={member.role}
+                        onChange={(e) => updateCrewMember(member.id, 'role', e.target.value)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        <option value="">Select role...</option>
+                        {ROLE_OPTIONS.map(r => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <select
+                        value={member.rate_type}
+                        onChange={(e) => updateCrewMember(member.id, 'rate_type', e.target.value)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        {RATE_TYPES.map(r => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        type="number"
+                        value={member.rate}
+                        onChange={(e) => updateCrewMember(member.id, 'rate', parseFloat(e.target.value) || 0)}
+                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={member.quantity}
+                          onChange={(e) => updateCrewMember(member.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                        />
+                        {fieldDays > 0 && (
+                          <button
+                            onClick={() => useFieldDays(member.id)}
+                            className="text-xs text-brand-600 hover:text-brand-700 whitespace-nowrap"
+                            title="Use field days"
+                          >
+                            ={fieldDays}d
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2 text-right font-medium">
+                      ${calculateSubtotal(member).toLocaleString()}
+                    </td>
+                    <td className="py-2">
+                      <button
+                        onClick={() => removeCrewMember(member.id)}
+                        className="p-1 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 font-semibold">
+                  <td colSpan={5} className="py-2 text-right">Crew Total:</td>
+                  <td className="py-2 text-right">${crewTotal.toLocaleString()}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         )}
-      </div>
 
-      {/* Step 1: Population Category */}
-      <Section title="Step 1: Population Category" icon={Users}>
-        <p className="text-sm text-gray-500 mb-4">Select the population density of the operational area.</p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          {Object.entries(POPULATION_CATEGORIES).map(([key, cat]) => (
-            <button
-              key={key}
-              onClick={() => updateSORA({ population: key })}
-              className={`p-3 rounded-lg border text-left transition-all ${
-                sora.population === key
-                  ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-200'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <p className={`text-sm font-medium ${sora.population === key ? 'text-brand-700' : 'text-gray-900'}`}>
-                {cat.label.split('(')[0].trim()}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">{cat.description}</p>
-            </button>
-          ))}
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => setShowLibrary(true)}
+            className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+          >
+            <Users className="w-4 h-4" />
+            Add from Library
+          </button>
+          <button
+            onClick={addManual}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-700 font-medium"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add Manual Entry
+          </button>
         </div>
-      </Section>
 
-      {/* Step 2: UA Characteristics */}
-      <Section title="Step 2: UA Characteristics" icon={Plane}>
-        <p className="text-sm text-gray-500 mb-4">Select the maximum dimension and speed of your UA.</p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          {Object.entries(UA_CHARACTERISTICS).map(([key, char]) => (
-            <button
-              key={key}
-              onClick={() => updateSORA({ uaCharacteristics: key })}
-              className={`p-3 rounded-lg border text-center transition-all ${
-                sora.uaCharacteristics === key
-                  ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-200'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <p className={`text-sm font-medium ${sora.uaCharacteristics === key ? 'text-brand-700' : 'text-gray-900'}`}>
-                {char.label}
-              </p>
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      {/* Step 3: Ground Mitigations */}
-      <Section title="Step 3: Ground Risk Mitigations" icon={Target}>
-        <p className="text-sm text-gray-500 mb-4">Apply mitigations to reduce the Ground Risk Class.</p>
-        <div className="space-y-3">
-          {Object.entries(GROUND_MITIGATIONS).map(([key, mit]) => {
-            const config = sora.mitigations?.[key] || { enabled: false, robustness: 'low' }
-            return (
-              <div key={key} className={`p-4 rounded-lg border ${config.enabled ? 'border-brand-300 bg-brand-50' : 'border-gray-200'}`}>
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={config.enabled}
-                      onChange={(e) => updateMitigation(key, { ...config, enabled: e.target.checked })}
-                      className="w-4 h-4 text-brand-600 rounded"
-                    />
-                    <span className="font-medium text-gray-900">{mit.name}</span>
-                  </label>
-                  {config.enabled && (
-                    <span className="text-sm font-medium text-green-600">
-                      {mit.reductions[config.robustness]} GRC
-                    </span>
-                  )}
+        {/* Library Modal */}
+        {showLibrary && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h4 className="font-semibold">Select Operator</h4>
+                <button onClick={() => setShowLibrary(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 border-b">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search operators..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg"
+                  />
                 </div>
-                {config.enabled && (
-                  <div className="mt-3 ml-7 flex gap-2">
-                    {['low', 'medium', 'high'].map(level => (
+              </div>
+              <div className="overflow-y-auto flex-1 p-2">
+                {filteredOperators.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No operators found</p>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredOperators.map(op => (
                       <button
-                        key={level}
-                        onClick={() => updateMitigation(key, { ...config, robustness: level })}
-                        className={`px-3 py-1 rounded text-sm capitalize ${
-                          config.robustness === level
-                            ? 'bg-brand-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        key={op.id}
+                        onClick={() => addFromLibrary(op)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center justify-between"
                       >
-                        {level} ({mit.reductions[level]})
+                        <span className="font-medium">{op.first_name} {op.last_name}</span>
+                        {op.daily_rate && (
+                          <span className="text-sm text-gray-500">${op.daily_rate}/day</span>
+                        )}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-            )
-          })}
-        </div>
-      </Section>
-
-      {/* Step 4: Air Risk */}
-      <Section title="Step 4: Air Risk Class" icon={Navigation}>
-        <p className="text-sm text-gray-500 mb-4">Select the initial and residual Air Risk Class.</p>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Initial ARC</label>
-            <div className="flex gap-2">
-              {ARC_LEVELS.map(arc => (
-                <button
-                  key={arc}
-                  onClick={() => updateSORA({ initialARC: arc })}
-                  className={`flex-1 py-2 rounded-lg border text-sm font-medium ${
-                    sora.initialARC === arc
-                      ? 'border-brand-600 bg-brand-50 text-brand-700'
-                      : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {arc}
-                </button>
-              ))}
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Residual ARC (after TMPR)</label>
-            <div className="flex gap-2">
-              {ARC_LEVELS.map(arc => (
-                <button
-                  key={arc}
-                  onClick={() => updateSORA({ residualARC: arc })}
-                  className={`flex-1 py-2 rounded-lg border text-sm font-medium ${
-                    sora.residualARC === arc
-                      ? 'border-brand-600 bg-brand-50 text-brand-700'
-                      : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {arc}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Section>
-    </div>
+        )}
+      </div>
+    </Section>
   )
 }
 
-// ============================================
-// SAFETY TAB
-// ============================================
+function EquipmentSection({ project, onUpdate, equipment }) {
+  const assigned = project.equipment || []
+  const [showLibrary, setShowLibrary] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
-function SafetyTab({ project, onUpdate }) {
-  const safety = project.safety_plan || {}
+  const fieldDays = project.field_days || 0
 
-  const updateSafety = (updates) => {
-    onUpdate({ safety_plan: { ...safety, ...updates } })
+  const addFromLibrary = (item) => {
+    // Check if it has SORA specs
+    const hasSoraSpecs = item.max_dimension || item.max_speed || item.mtow
+    const newAssigned = [...assigned, {
+      id: Date.now(),
+      equipment_id: item.id,
+      name: item.name,
+      category: item.category || 'Equipment',
+      has_sora_specs: hasSoraSpecs,
+      max_dimension: item.max_dimension,
+      max_speed: item.max_speed,
+      mtow: item.mtow,
+      rate_type: 'daily',
+      rate: item.daily_rate || 0,
+      quantity: fieldDays || 1
+    }]
+    onUpdate({ equipment: newAssigned })
+    setShowLibrary(false)
+    setSearchTerm('')
   }
 
-  const addHazard = () => {
-    const hazards = safety.hazards || []
-    updateSafety({
-      hazards: [...hazards, { id: Date.now(), hazard: '', controls: '', severity: 'medium' }]
-    })
+  const updateEquipment = (id, field, value) => {
+    const newAssigned = assigned.map(e =>
+      e.id === id ? { ...e, [field]: value } : e
+    )
+    onUpdate({ equipment: newAssigned })
   }
 
-  const updateHazard = (id, updates) => {
-    const hazards = (safety.hazards || []).map(h => h.id === id ? { ...h, ...updates } : h)
-    updateSafety({ hazards })
+  const useFieldDays = (id) => {
+    updateEquipment(id, 'quantity', fieldDays)
   }
 
-  const removeHazard = (id) => {
-    updateSafety({ hazards: (safety.hazards || []).filter(h => h.id !== id) })
+  const removeEquipment = (id) => {
+    onUpdate({ equipment: assigned.filter(e => e.id !== id) })
   }
 
-  const addEmergencyContact = () => {
-    const contacts = safety.emergency_contacts || []
-    updateSafety({
-      emergency_contacts: [...contacts, { id: Date.now(), name: '', role: '', phone: '' }]
-    })
+  const calculateSubtotal = (item) => {
+    return (item.rate || 0) * (item.quantity || 0)
   }
 
-  const updateEmergencyContact = (id, updates) => {
-    const contacts = (safety.emergency_contacts || []).map(c => c.id === id ? { ...c, ...updates } : c)
-    updateSafety({ emergency_contacts: contacts })
-  }
-
-  const removeEmergencyContact = (id) => {
-    updateSafety({ emergency_contacts: (safety.emergency_contacts || []).filter(c => c.id !== id) })
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* HSE Risk Assessment */}
-      <Section title="Hazards & Controls" icon={AlertTriangle} badge={`${(safety.hazards || []).length}`}>
-        <p className="text-sm text-gray-500 mb-4">Identify hazards and their control measures.</p>
-
-        {(safety.hazards || []).map((hazard, index) => (
-          <div key={hazard.id} className="p-4 bg-gray-50 rounded-lg mb-3">
-            <div className="flex items-start gap-3">
-              <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                {index + 1}
-              </span>
-              <div className="flex-1 space-y-3">
-                <input
-                  type="text"
-                  value={hazard.hazard}
-                  onChange={(e) => updateHazard(hazard.id, { hazard: e.target.value })}
-                  placeholder="Describe the hazard..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
-                <input
-                  type="text"
-                  value={hazard.controls}
-                  onChange={(e) => updateHazard(hazard.id, { controls: e.target.value })}
-                  placeholder="Control measures..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
-                <div className="flex gap-2">
-                  {['low', 'medium', 'high'].map(sev => (
-                    <button
-                      key={sev}
-                      onClick={() => updateHazard(hazard.id, { severity: sev })}
-                      className={`px-3 py-1 rounded text-xs capitalize ${
-                        hazard.severity === sev
-                          ? sev === 'high' ? 'bg-red-600 text-white' : sev === 'medium' ? 'bg-yellow-500 text-white' : 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {sev}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={() => removeHazard(hazard.id)} className="p-1 text-gray-400 hover:text-red-500">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-
-        <button onClick={addHazard} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-brand-500 hover:text-brand-600">
-          <Plus className="w-4 h-4 inline mr-1" />Add Hazard
-        </button>
-      </Section>
-
-      {/* Emergency Contacts */}
-      <Section title="Emergency Contacts" icon={Phone}>
-        {(safety.emergency_contacts || []).map((contact) => (
-          <div key={contact.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-2">
-            <input
-              type="text"
-              value={contact.name}
-              onChange={(e) => updateEmergencyContact(contact.id, { name: e.target.value })}
-              placeholder="Name"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={contact.role}
-              onChange={(e) => updateEmergencyContact(contact.id, { role: e.target.value })}
-              placeholder="Role"
-              className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <input
-              type="tel"
-              value={contact.phone}
-              onChange={(e) => updateEmergencyContact(contact.id, { phone: e.target.value })}
-              placeholder="Phone"
-              className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <button onClick={() => removeEmergencyContact(contact.id)} className="p-1 text-gray-400 hover:text-red-500">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-        <button onClick={addEmergencyContact} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-brand-500 hover:text-brand-600">
-          <Plus className="w-4 h-4 inline mr-1" />Add Contact
-        </button>
-      </Section>
-
-      {/* Emergency Facilities */}
-      <Section title="Emergency Facilities" icon={Building2}>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nearest Hospital</label>
-            <input
-              type="text"
-              value={safety.nearest_hospital || ''}
-              onChange={(e) => updateSafety({ nearest_hospital: e.target.value })}
-              placeholder="Hospital name and address"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Phone</label>
-            <input
-              type="tel"
-              value={safety.hospital_phone || ''}
-              onChange={(e) => updateSafety({ hospital_phone: e.target.value })}
-              placeholder="Phone number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-        </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Muster Point / Rally Point</label>
-          <input
-            type="text"
-            value={safety.muster_point || ''}
-            onChange={(e) => updateSafety({ muster_point: e.target.value })}
-            placeholder="Describe the muster point location"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          />
-        </div>
-      </Section>
-
-      {/* PPE Requirements */}
-      <Section title="PPE Requirements" icon={HardHat}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {['Safety Vest', 'Hard Hat', 'Safety Boots', 'Safety Glasses', 'Hearing Protection', 'Gloves', 'Sunscreen', 'First Aid Kit'].map(item => {
-            const ppe = safety.ppe || []
-            const isSelected = ppe.includes(item)
-            return (
-              <button
-                key={item}
-                onClick={() => updateSafety({ ppe: isSelected ? ppe.filter(p => p !== item) : [...ppe, item] })}
-                className={`p-3 rounded-lg border text-sm text-left ${
-                  isSelected ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {isSelected && <CheckCircle2 className="w-4 h-4 inline mr-2" />}
-                {item}
-              </button>
-            )
-          })}
-        </div>
-      </Section>
-
-      {/* Communications */}
-      <Section title="Communications" icon={Radio}>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Primary Channel</label>
-            <input
-              type="text"
-              value={safety.primary_channel || ''}
-              onChange={(e) => updateSafety({ primary_channel: e.target.value })}
-              placeholder="e.g., Channel 1, 462.5625 MHz"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Backup Channel</label>
-            <input
-              type="text"
-              value={safety.backup_channel || ''}
-              onChange={(e) => updateSafety({ backup_channel: e.target.value })}
-              placeholder="e.g., Cell phone"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Word</label>
-            <input
-              type="text"
-              value={safety.emergency_word || ''}
-              onChange={(e) => updateSafety({ emergency_word: e.target.value })}
-              placeholder="e.g., MAYDAY"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Stop Word</label>
-            <input
-              type="text"
-              value={safety.stop_word || ''}
-              onChange={(e) => updateSafety({ stop_word: e.target.value })}
-              placeholder="e.g., ABORT"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-        </div>
-      </Section>
-    </div>
-  )
-}
-
-// ============================================
-// TAILGATE TAB
-// ============================================
-
-function TailgateTab({ projectId, project, meetings, resources, onRefresh }) {
-  const [showNew, setShowNew] = useState(false)
-  const [expandedMeeting, setExpandedMeeting] = useState(null)
-  const [newMeeting, setNewMeeting] = useState({
-    meeting_date: new Date().toISOString().split('T')[0],
-    meeting_time: new Date().toTimeString().slice(0, 5),
-    location: project.location || '',
-    conducted_by: '',
-    objectives: '',
-    identified_risks: '',
-    controls: '',
-    weather_conditions: '',
-    decision: null,
-    decision_reason: ''
+  const filteredEquipment = equipment.filter(e => {
+    return e.name.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
-  const handleCreate = async () => {
-    if (!newMeeting.meeting_date || !newMeeting.conducted_by) {
-      alert('Date and Conducted By are required')
-      return
-    }
+  const equipmentTotal = assigned.reduce((sum, e) => sum + calculateSubtotal(e), 0)
 
-    try {
-      await createTailgateMeeting({
-        project_id: projectId,
-        ...newMeeting,
-        attendees: resources.filter(r => r.resource_type === 'operator').map(r => ({
-          name: r.resource_name,
-          role: r.role,
-          fit_for_duty: true
-        })),
-        status: 'draft'
-      })
-      setShowNew(false)
-      setNewMeeting({
-        meeting_date: new Date().toISOString().split('T')[0],
-        meeting_time: new Date().toTimeString().slice(0, 5),
-        location: project.location || '',
-        conducted_by: '',
-        objectives: '',
-        identified_risks: '',
-        controls: '',
-        weather_conditions: '',
-        decision: null,
-        decision_reason: ''
-      })
-      onRefresh()
-    } catch (err) {
-      alert('Failed to create: ' + err.message)
-    }
+  return (
+    <Section title="Equipment">
+      <div className="space-y-4">
+        {assigned.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center">No equipment assigned</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b">
+                  <th className="pb-2 font-medium">Name</th>
+                  <th className="pb-2 font-medium">Category</th>
+                  <th className="pb-2 font-medium text-center">SORA</th>
+                  <th className="pb-2 font-medium">Rate Type</th>
+                  <th className="pb-2 font-medium text-right">Rate</th>
+                  <th className="pb-2 font-medium text-right">Qty</th>
+                  <th className="pb-2 font-medium text-right">Subtotal</th>
+                  <th className="pb-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {assigned.map((item) => (
+                  <tr key={item.id}>
+                    <td className="py-2 pr-2 font-medium">{item.name}</td>
+                    <td className="py-2 pr-2 text-gray-600">{item.category}</td>
+                    <td className="py-2 pr-2 text-center">
+                      {item.has_sora_specs ? (
+                        <span className="text-green-600" title="Has UA specs for SORA">✓</span>
+                      ) : (
+                        <span className="text-gray-300">-</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-2">
+                      <select
+                        value={item.rate_type}
+                        onChange={(e) => updateEquipment(item.id, 'rate_type', e.target.value)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        {RATE_TYPES.map(r => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        type="number"
+                        value={item.rate}
+                        onChange={(e) => updateEquipment(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateEquipment(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                        />
+                        {fieldDays > 0 && (
+                          <button
+                            onClick={() => useFieldDays(item.id)}
+                            className="text-xs text-brand-600 hover:text-brand-700 whitespace-nowrap"
+                            title="Use field days"
+                          >
+                            ={fieldDays}d
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2 text-right font-medium">
+                      ${calculateSubtotal(item).toLocaleString()}
+                    </td>
+                    <td className="py-2">
+                      <button
+                        onClick={() => removeEquipment(item.id)}
+                        className="p-1 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 font-semibold">
+                  <td colSpan={6} className="py-2 text-right">Equipment Total:</td>
+                  <td className="py-2 text-right">${equipmentTotal.toLocaleString()}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowLibrary(true)}
+          className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+        >
+          <Package className="w-4 h-4" />
+          Add from Library
+        </button>
+
+        {/* Library Modal */}
+        {showLibrary && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h4 className="font-semibold">Select Equipment</h4>
+                <button onClick={() => setShowLibrary(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 border-b">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search equipment..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+              </div>
+              <div className="overflow-y-auto flex-1 p-2">
+                {filteredEquipment.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No equipment found</p>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredEquipment.map(item => {
+                      const hasSoraSpecs = item.max_dimension || item.max_speed || item.mtow
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => addFromLibrary(item)}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center justify-between"
+                        >
+                          <div>
+                            <span className="font-medium">{item.name}</span>
+                            {item.category && (
+                              <span className="text-sm text-gray-500 ml-2">({item.category})</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {hasSoraSpecs && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">SORA</span>
+                            )}
+                            {item.daily_rate && (
+                              <span className="text-sm text-gray-500">${item.daily_rate}/day</span>
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Section>
+  )
+}
+
+function ServicesSection({ project, onUpdate, services }) {
+  const assigned = project.services || []
+  const [showLibrary, setShowLibrary] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const addFromLibrary = (service) => {
+    const newAssigned = [...assigned, {
+      id: Date.now(),
+      service_id: service.id,
+      name: service.name,
+      description: '',
+      rate_type: 'daily',
+      rate: service.daily_rate || 0,
+      quantity: 1,
+      modifiers: []
+    }]
+    onUpdate({ services: newAssigned })
+    setShowLibrary(false)
+    setSearchTerm('')
   }
 
-  const handleDecision = async (meetingId, decision) => {
-    try {
-      await updateTailgateMeeting(meetingId, {
-        decision,
-        decision_time: new Date().toISOString(),
-        status: 'completed'
+  const updateService = (id, field, value) => {
+    const newAssigned = assigned.map(s =>
+      s.id === id ? { ...s, [field]: value } : s
+    )
+    onUpdate({ services: newAssigned })
+  }
+
+  const removeService = (id) => {
+    onUpdate({ services: assigned.filter(s => s.id !== id) })
+  }
+
+  const calculateSubtotal = (service) => {
+    let base = (service.rate || 0) * (service.quantity || 0)
+    // Apply modifiers
+    if (service.modifiers && service.modifiers.length > 0) {
+      service.modifiers.forEach(mod => {
+        if (mod.type === 'percent') {
+          base *= (1 + mod.value / 100)
+        } else {
+          base += mod.value
+        }
       })
-      // TODO: Send notifications via Twilio/email
-      onRefresh()
-    } catch (err) {
-      alert('Failed to update: ' + err.message)
+    }
+    return base
+  }
+
+  const filteredServices = services.filter(s => {
+    return s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  })
+
+  const servicesTotal = assigned.reduce((sum, s) => sum + calculateSubtotal(s), 0)
+
+  const MODIFIER_PRESETS = [
+    { label: 'Rush Job (+15%)', type: 'percent', value: 15 },
+    { label: 'Nonprofit (-10%)', type: 'percent', value: -10 },
+    { label: 'Friends & Family (-20%)', type: 'percent', value: -20 }
+  ]
+
+  const toggleModifier = (serviceId, modifier) => {
+    const service = assigned.find(s => s.id === serviceId)
+    if (!service) return
+
+    const modifiers = service.modifiers || []
+    const exists = modifiers.find(m => m.label === modifier.label)
+
+    if (exists) {
+      updateService(serviceId, 'modifiers', modifiers.filter(m => m.label !== modifier.label))
+    } else {
+      updateService(serviceId, 'modifiers', [...modifiers, modifier])
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Tailgate Meetings</h2>
-          <p className="text-sm text-gray-500">Pre-deployment briefings and GO/NO-GO decisions</p>
-        </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
-        >
-          <Plus className="w-4 h-4" />
-          New Meeting
-        </button>
-      </div>
-
-      {/* New Meeting Form */}
-      {showNew && (
-        <div className="bg-brand-50 border border-brand-200 rounded-xl p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900">New Tailgate Meeting</h3>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-              <input type="date" value={newMeeting.meeting_date} onChange={(e) => setNewMeeting({ ...newMeeting, meeting_date: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-              <input type="time" value={newMeeting.meeting_time} onChange={(e) => setNewMeeting({ ...newMeeting, meeting_time: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input type="text" value={newMeeting.location} onChange={(e) => setNewMeeting({ ...newMeeting, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Conducted By *</label>
-              <input type="text" value={newMeeting.conducted_by} onChange={(e) => setNewMeeting({ ...newMeeting, conducted_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Name" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Objectives</label>
-            <textarea value={newMeeting.objectives} onChange={(e) => setNewMeeting({ ...newMeeting, objectives: e.target.value })} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Today's objectives..." />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Identified Risks</label>
-              <textarea value={newMeeting.identified_risks} onChange={(e) => setNewMeeting({ ...newMeeting, identified_risks: e.target.value })} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Key risks for today..." />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Controls</label>
-              <textarea value={newMeeting.controls} onChange={(e) => setNewMeeting({ ...newMeeting, controls: e.target.value })} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Control measures..." />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Weather Conditions</label>
-            <input type="text" value={newMeeting.weather_conditions} onChange={(e) => setNewMeeting({ ...newMeeting, weather_conditions: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., Clear, 15°C, 10 km/h NW" />
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setShowNew(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
-            <button onClick={handleCreate} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">Create Meeting</button>
-          </div>
-        </div>
-      )}
-
-      {/* Meetings List */}
-      {meetings.length > 0 ? (
-        <div className="space-y-4">
-          {meetings.map(meeting => (
-            <div key={meeting.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className="w-5 h-5 text-gray-500" />
+    <Section title="Services">
+      <div className="space-y-4">
+        {assigned.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center">No services assigned</p>
+        ) : (
+          <div className="space-y-4">
+            {assigned.map((service) => (
+              <div key={service.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-medium text-gray-900">
-                      {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {meeting.meeting_time || 'Time not set'} • {meeting.conducted_by}
-                    </p>
+                    <h4 className="font-medium">{service.name}</h4>
+                  </div>
+                  <button
+                    onClick={() => removeService(service.id)}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs text-gray-500 mb-1">Project-specific description</label>
+                    <input
+                      type="text"
+                      value={service.description}
+                      onChange={(e) => updateService(service.id, 'description', e.target.value)}
+                      placeholder="e.g., 50 acre site survey"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Rate</label>
+                    <input
+                      type="number"
+                      value={service.rate}
+                      onChange={(e) => updateService(service.id, 'rate', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      value={service.quantity}
+                      onChange={(e) => updateService(service.id, 'quantity', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+                    />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {meeting.decision === 'go' && <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">GO</span>}
-                  {meeting.decision === 'nogo' && <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold">NO-GO</span>}
-                  {meeting.decision === 'conditional' && <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold">CONDITIONAL</span>}
-                  {!meeting.decision && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">Pending</span>}
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-gray-500">Modifiers:</span>
+                  {MODIFIER_PRESETS.map(mod => {
+                    const isActive = (service.modifiers || []).find(m => m.label === mod.label)
+                    return (
+                      <button
+                        key={mod.label}
+                        onClick={() => toggleModifier(service.id, mod)}
+                        className={`text-xs px-2 py-1 rounded-full border ${
+                          isActive
+                            ? 'bg-brand-100 border-brand-300 text-brand-700'
+                            : 'border-gray-300 text-gray-600 hover:border-gray-400'
+                        }`}
+                      >
+                        {mod.label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="mt-3 pt-3 border-t text-right">
+                  <span className="text-sm text-gray-500">Subtotal: </span>
+                  <span className="font-semibold">${calculateSubtotal(service).toLocaleString()}</span>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
 
-              <div className="p-4">
-                {meeting.objectives && (
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-500 uppercase font-medium">Objectives</p>
-                    <p className="text-sm text-gray-700">{meeting.objectives}</p>
+        <div className="flex items-center justify-between pt-2">
+          <button
+            onClick={() => setShowLibrary(true)}
+            className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+          >
+            <Briefcase className="w-4 h-4" />
+            Add from Library
+          </button>
+          {assigned.length > 0 && (
+            <div className="text-right">
+              <span className="text-sm text-gray-500">Services Total: </span>
+              <span className="font-semibold text-lg">${servicesTotal.toLocaleString()}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Library Modal */}
+        {showLibrary && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h4 className="font-semibold">Select Service</h4>
+                <button onClick={() => setShowLibrary(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 border-b">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search services..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+              </div>
+              <div className="overflow-y-auto flex-1 p-2">
+                {filteredServices.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No services found</p>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredServices.map(service => (
+                      <button
+                        key={service.id}
+                        onClick={() => addFromLibrary(service)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center justify-between"
+                      >
+                        <span className="font-medium">{service.name}</span>
+                        {service.daily_rate && (
+                          <span className="text-sm text-gray-500">${service.daily_rate}/day</span>
+                        )}
+                      </button>
+                    ))}
                   </div>
-                )}
-
-                {!meeting.decision && (
-                  <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={() => handleDecision(meeting.id, 'go')}
-                      className="flex-1 py-4 bg-green-100 text-green-700 rounded-lg font-bold hover:bg-green-200 flex items-center justify-center gap-2"
-                    >
-                      <ThumbsUp className="w-5 h-5" />GO
-                    </button>
-                    <button
-                      onClick={() => handleDecision(meeting.id, 'conditional')}
-                      className="flex-1 py-4 bg-yellow-100 text-yellow-700 rounded-lg font-bold hover:bg-yellow-200"
-                    >
-                      CONDITIONAL
-                    </button>
-                    <button
-                      onClick={() => handleDecision(meeting.id, 'nogo')}
-                      className="flex-1 py-4 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 flex items-center justify-center gap-2"
-                    >
-                      <ThumbsDown className="w-5 h-5" />NO-GO
-                    </button>
-                  </div>
-                )}
-
-                {meeting.decision && meeting.decision_time && (
-                  <p className="text-xs text-gray-500 mt-3">
-                    Decision made: {format(parseISO(meeting.decision_time), 'MMM d, yyyy h:mm a')}
-                  </p>
                 )}
               </div>
             </div>
-          ))}
+          </div>
+        )}
+      </div>
+    </Section>
+  )
+}
+
+function CostSummarySection({ project, onUpdate }) {
+  // Calculate totals
+  const crewTotal = (project.crew || []).reduce((sum, m) => sum + (m.rate || 0) * (m.quantity || 0), 0)
+  const equipmentTotal = (project.equipment || []).reduce((sum, e) => sum + (e.rate || 0) * (e.quantity || 0), 0)
+
+  const calculateServiceSubtotal = (service) => {
+    let base = (service.rate || 0) * (service.quantity || 0)
+    if (service.modifiers && service.modifiers.length > 0) {
+      service.modifiers.forEach(mod => {
+        if (mod.type === 'percent') {
+          base *= (1 + mod.value / 100)
+        } else {
+          base += mod.value
+        }
+      })
+    }
+    return base
+  }
+
+  const servicesTotal = (project.services || []).reduce((sum, s) => sum + calculateServiceSubtotal(s), 0)
+  const otherCosts = project.other_costs || 0
+
+  const labourTotal = crewTotal
+  const materialsTotal = equipmentTotal + servicesTotal
+  const subtotal = labourTotal + materialsTotal + otherCosts
+
+  const overheadPercent = project.overhead_percent || 0
+  const overhead = subtotal * (overheadPercent / 100)
+  const estimatedCost = subtotal + overhead
+
+  const markupPercent = project.markup_percent || 0
+  const markup = estimatedCost * (markupPercent / 100)
+  const quotedPrice = project.quoted_price || (estimatedCost + markup)
+
+  const actualCost = project.actual_cost || 0
+  const variance = estimatedCost - actualCost
+
+  const exportToCSV = () => {
+    const rows = [
+      ['Category', 'Item', 'Rate', 'Quantity', 'Amount'],
+      ['--- LABOUR ---', '', '', '', ''],
+      ...(project.crew || []).map(m => [
+        'Labour',
+        `${m.name} (${m.role || 'No role'})`,
+        m.rate,
+        m.quantity,
+        (m.rate || 0) * (m.quantity || 0)
+      ]),
+      ['', 'Labour Subtotal', '', '', labourTotal],
+      ['--- MATERIALS ---', '', '', '', ''],
+      ...(project.equipment || []).map(e => [
+        'Equipment',
+        e.name,
+        e.rate,
+        e.quantity,
+        (e.rate || 0) * (e.quantity || 0)
+      ]),
+      ...(project.services || []).map(s => [
+        'Service',
+        `${s.name}${s.description ? ` - ${s.description}` : ''}`,
+        s.rate,
+        s.quantity,
+        calculateServiceSubtotal(s)
+      ]),
+      ['', 'Materials Subtotal', '', '', materialsTotal],
+      ['--- OTHER ---', '', '', '', ''],
+      ['Other', 'Additional Costs', '', '', otherCosts],
+      ['', '', '', '', ''],
+      ['', 'SUBTOTAL', '', '', subtotal],
+      ['', `Overhead (${overheadPercent}%)`, '', '', overhead],
+      ['', 'ESTIMATED COST', '', '', estimatedCost],
+      ['', `Markup (${markupPercent}%)`, '', '', markup],
+      ['', 'QUOTED PRICE', '', '', quotedPrice]
+    ]
+
+    const csv = rows.map(row => row.map(cell =>
+      typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+    ).join(',')).join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${project.name || 'project'}_cost_estimate.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <Section title="Cost Summary">
+      <div className="space-y-6">
+        {/* Labour Section */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-400" />
+            Labour
+          </h4>
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-gray-100">
+              {(project.crew || []).map(m => (
+                <tr key={m.id}>
+                  <td className="py-1.5">{m.name} ({m.role || 'No role'})</td>
+                  <td className="py-1.5 text-right text-gray-600">
+                    ${m.rate} × {m.quantity} {m.rate_type === 'daily' ? 'days' : m.rate_type === 'hourly' ? 'hrs' : 'wks'}
+                  </td>
+                  <td className="py-1.5 text-right font-medium w-28">
+                    ${((m.rate || 0) * (m.quantity || 0)).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+              <tr className="font-semibold border-t">
+                <td className="py-2">Labour Subtotal</td>
+                <td></td>
+                <td className="py-2 text-right">${labourTotal.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      ) : (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No tailgate meetings yet</p>
-          <button onClick={() => setShowNew(true)} className="mt-4 text-brand-600 hover:text-brand-700 text-sm font-medium">
-            Schedule your first meeting
+
+        {/* Materials Section */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+            <Package className="w-4 h-4 text-gray-400" />
+            Materials
+          </h4>
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-gray-100">
+              {(project.equipment || []).map(e => (
+                <tr key={e.id}>
+                  <td className="py-1.5">{e.name}</td>
+                  <td className="py-1.5 text-right text-gray-600">
+                    ${e.rate} × {e.quantity}
+                  </td>
+                  <td className="py-1.5 text-right font-medium w-28">
+                    ${((e.rate || 0) * (e.quantity || 0)).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+              {(project.services || []).map(s => (
+                <tr key={s.id}>
+                  <td className="py-1.5">
+                    {s.name}
+                    {s.description && <span className="text-gray-500"> - {s.description}</span>}
+                    {(s.modifiers || []).length > 0 && (
+                      <span className="text-xs text-brand-600 ml-2">
+                        {s.modifiers.map(m => m.label).join(', ')}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-1.5 text-right text-gray-600">
+                    ${s.rate} × {s.quantity}
+                  </td>
+                  <td className="py-1.5 text-right font-medium w-28">
+                    ${calculateServiceSubtotal(s).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+              <tr className="font-semibold border-t">
+                <td className="py-2">Materials Subtotal</td>
+                <td></td>
+                <td className="py-2 text-right">${materialsTotal.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Other Costs */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2">Other Costs</h4>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">Travel, accommodation, etc.:</span>
+            <div className="flex items-center">
+              <span className="text-gray-500 mr-1">$</span>
+              <input
+                type="number"
+                value={otherCosts}
+                onChange={(e) => onUpdate({ other_costs: parseFloat(e.target.value) || 0 })}
+                className="w-32 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Totals */}
+        <div className="border-t pt-4 space-y-3">
+          <div className="flex justify-between text-sm">
+            <span>Subtotal</span>
+            <span className="font-medium">${subtotal.toLocaleString()}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <span>Overhead</span>
+              <input
+                type="number"
+                value={overheadPercent}
+                onChange={(e) => onUpdate({ overhead_percent: parseFloat(e.target.value) || 0 })}
+                className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+              />
+              <span className="text-gray-500">%</span>
+            </div>
+            <span className="font-medium">${overhead.toLocaleString()}</span>
+          </div>
+
+          <div className="flex justify-between text-lg font-semibold border-t pt-3">
+            <span>Estimated Cost</span>
+            <span>${estimatedCost.toLocaleString()}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <span>Markup</span>
+              <input
+                type="number"
+                value={markupPercent}
+                onChange={(e) => onUpdate({ markup_percent: parseFloat(e.target.value) || 0 })}
+                className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+              />
+              <span className="text-gray-500">%</span>
+            </div>
+            <span className="font-medium">${markup.toLocaleString()}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-lg font-bold bg-brand-50 -mx-6 px-6 py-3 border-t border-brand-100">
+            <span>Quoted Price</span>
+            <div className="flex items-center">
+              <span className="text-gray-500 mr-1">$</span>
+              <input
+                type="number"
+                value={quotedPrice}
+                onChange={(e) => onUpdate({ quoted_price: parseFloat(e.target.value) || 0 })}
+                className="w-32 px-2 py-1 border border-brand-300 rounded text-right font-bold"
+              />
+            </div>
+          </div>
+
+          {/* Actual vs Estimated (Internal) */}
+          <div className="border-t pt-4 mt-4">
+            <p className="text-xs text-gray-500 mb-2">Internal tracking (not shown to client)</p>
+            <div className="flex items-center justify-between text-sm">
+              <span>Actual Cost</span>
+              <div className="flex items-center">
+                <span className="text-gray-500 mr-1">$</span>
+                <input
+                  type="number"
+                  value={actualCost}
+                  onChange={(e) => onUpdate({ actual_cost: parseFloat(e.target.value) || 0 })}
+                  className="w-32 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                />
+              </div>
+            </div>
+            {actualCost > 0 && (
+              <div className="flex justify-between text-sm mt-2">
+                <span>Variance</span>
+                <span className={variance >= 0 ? 'text-green-600' : 'text-red-600'}>
+                  {variance >= 0 ? '+' : ''}${variance.toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Export Button */}
+        <div className="border-t pt-4">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+          >
+            <Download className="w-4 h-4" />
+            Export to CSV (QuickBooks format)
           </button>
         </div>
-      )}
+      </div>
+    </Section>
+  )
+}
+
+function PostFieldSection({ project, onUpdate }) {
+  return (
+    <Section title="Post-Field Notes">
+      <div className="space-y-4">
+        <TextArea
+          label="Processing Requirements"
+          value={project.processing_notes}
+          onChange={(v) => onUpdate({ processing_notes: v })}
+          placeholder="Describe processing requirements, software, deliverable specifications..."
+          rows={3}
+        />
+        <TextArea
+          label="QA/QC Notes"
+          value={project.qaqc_notes}
+          onChange={(v) => onUpdate({ qaqc_notes: v })}
+          placeholder="Quality assurance and quality control requirements..."
+          rows={3}
+        />
+        <TextArea
+          label="Additional Notes"
+          value={project.post_field_notes}
+          onChange={(v) => onUpdate({ post_field_notes: v })}
+          placeholder="Any other post-field notes..."
+          rows={3}
+        />
+      </div>
+    </Section>
+  )
+}
+
+// ============================================
+// ADMIN TAB
+// ============================================
+
+function AdminTab({ project, onUpdate, operators, equipment, services }) {
+  return (
+    <div className="space-y-8">
+      <ClientDatesSection project={project} onUpdate={onUpdate} />
+      <DeliverablesSection project={project} onUpdate={onUpdate} />
+      <NotificationContactsSection project={project} onUpdate={onUpdate} />
+      <CrewSection project={project} onUpdate={onUpdate} operators={operators} />
+      <EquipmentSection project={project} onUpdate={onUpdate} equipment={equipment} />
+      <ServicesSection project={project} onUpdate={onUpdate} services={services} />
+      <CostSummarySection project={project} onUpdate={onUpdate} />
+      <PostFieldSection project={project} onUpdate={onUpdate} />
     </div>
   )
 }
 
 // ============================================
-// DOCUMENTS TAB
+// SITE TAB (Placeholder for now)
 // ============================================
 
-function DocumentsTab({ project }) {
+function SiteTab({ project, onUpdate }) {
   return (
-    <div className="space-y-6">
-      <Section title="Document Generation" icon={FileText}>
-        <p className="text-sm text-gray-500 mb-4">Generate project documentation for internal use or client delivery.</p>
-        <div className="grid grid-cols-2 gap-4">
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-brand-500 hover:bg-brand-50 transition-colors">
-            <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="font-medium text-gray-700">Internal Operations Plan</p>
-            <p className="text-xs text-gray-500 mt-1">Costs, crew, needs analysis</p>
-          </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-brand-500 hover:bg-brand-50 transition-colors">
-            <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="font-medium text-gray-700">External Operations Plan</p>
-            <p className="text-xs text-gray-500 mt-1">Site, flight, safety, SORA</p>
-          </button>
-        </div>
-      </Section>
+    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+      <MapPin className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Site Planning</h3>
+      <p className="text-gray-500 mb-4">
+        Unified map, SORA calculator, hazard identification, and emergency planning.
+      </p>
+      <p className="text-sm text-gray-400">Coming in next build step...</p>
+    </div>
+  )
+}
 
-      <Section title="Linked Forms" icon={ClipboardCheck}>
-        <p className="text-sm text-gray-500 mb-4">Forms associated with this project.</p>
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No forms linked yet</p>
-          <p className="text-xs text-gray-400 mt-1">Forms from Google Forms will appear here</p>
-        </div>
-      </Section>
+// ============================================
+// FIELD DOCS TAB (Placeholder for now)
+// ============================================
+
+function FieldDocsTab({ project, onUpdate }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+      <ClipboardCheck className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Field Documents</h3>
+      <p className="text-gray-500 mb-4">
+        Tailgate meetings, GO/NO-GO decisions, and IMSAFE reference.
+      </p>
+      <p className="text-sm text-gray-400">Coming in next build step...</p>
     </div>
   )
 }
@@ -1529,73 +1431,80 @@ export default function ProjectDetail() {
   const { projectId } = useParams()
   const navigate = useNavigate()
 
+  // State
   const [project, setProject] = useState(null)
-  const [stages, setStages] = useState([])
-  const [resources, setResources] = useState([])
-  const [meetings, setMeetings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('admin')
   const [saveStatus, setSaveStatus] = useState(SAVE_STATUS.IDLE)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  // Library data
+  const [operators, setOperators] = useState([])
+  const [equipment, setEquipment] = useState([])
+  const [services, setServices] = useState([])
+
+  // Refs for auto-save
   const projectRef = useRef(project)
   const saveTimeoutRef = useRef(null)
-  const pendingChangesRef = useRef(false)
-
-  useEffect(() => { projectRef.current = project }, [project])
 
   useEffect(() => {
-    loadAll()
+    projectRef.current = project
+  }, [project])
+
+  // Load data
+  useEffect(() => {
+    loadData()
+
     return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-      if (pendingChangesRef.current && projectRef.current) saveToDb(projectRef.current)
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
     }
   }, [projectId])
 
-  const loadAll = async () => {
+  const loadData = async () => {
     setLoading(true)
     try {
-      const [proj, stg, res, mtg] = await Promise.all([
+      const [projectData, opsData, equipData, servData] = await Promise.all([
         getProject(projectId),
-        getProjectStages(),
-        getProjectResources(projectId),
-        getTailgateMeetings(projectId)
+        getOperators(),
+        getEquipment(),
+        getServices()
       ])
-      setProject(proj)
-      setStages(stg)
-      setResources(res)
-      setMeetings(mtg)
+      setProject(projectData)
+      setOperators(opsData || [])
+      setEquipment(equipData || [])
+      setServices(servData || [])
     } catch (err) {
+      console.error('Failed to load project:', err)
       setError('Failed to load project')
-      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const saveToDb = async (data) => {
-    if (!data || !projectId) return false
-    setSaveStatus(SAVE_STATUS.SAVING)
-    try {
-      await updateProject(projectId, data)
-      setSaveStatus(SAVE_STATUS.SAVED)
-      pendingChangesRef.current = false
-      setTimeout(() => setSaveStatus(prev => prev === SAVE_STATUS.SAVED ? SAVE_STATUS.IDLE : prev), 2000)
-      return true
-    } catch (err) {
-      console.error('Save failed:', err)
-      setSaveStatus(SAVE_STATUS.ERROR)
-      setTimeout(() => setSaveStatus(SAVE_STATUS.PENDING), 3000)
-      return false
+  // Auto-save with debounce
+  const scheduleSave = useCallback((projectData) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
     }
-  }
 
-  const scheduleSave = useCallback((data) => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-    pendingChangesRef.current = true
     setSaveStatus(SAVE_STATUS.PENDING)
-    saveTimeoutRef.current = setTimeout(() => saveToDb(data), 2000)
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      setSaveStatus(SAVE_STATUS.SAVING)
+      try {
+        await updateProject(projectId, projectData)
+        setSaveStatus(SAVE_STATUS.SAVED)
+        setTimeout(() => {
+          setSaveStatus(prev => prev === SAVE_STATUS.SAVED ? SAVE_STATUS.IDLE : prev)
+        }, 2000)
+      } catch (err) {
+        console.error('Failed to save:', err)
+        setSaveStatus(SAVE_STATUS.ERROR)
+      }
+    }, 2000)
   }, [projectId])
 
   const handleUpdate = useCallback((updates) => {
@@ -1608,111 +1517,101 @@ export default function ProjectDetail() {
     })
   }, [scheduleSave])
 
-  const handleStageChange = (stageId) => {
-    const stage = stages.find(s => s.id === stageId)
-    handleUpdate({ stage_id: stageId, stage_name: stage?.name || '' })
-  }
-
-  const handleStatusChange = (status) => handleUpdate({ status })
-
   const handleDelete = async () => {
     if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return
+
     try {
       await deleteProject(projectId)
       navigate('/projects')
     } catch (err) {
-      alert('Failed to delete: ' + err.message)
+      console.error('Failed to delete:', err)
+      alert('Failed to delete project')
     }
   }
 
-  const handleManualSave = async () => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-    await saveToDb(project)
-  }
-
-  const refreshResources = async () => {
-    const res = await getProjectResources(projectId)
-    setResources(res)
-  }
-
-  const refreshMeetings = async () => {
-    const mtg = await getTailgateMeetings(projectId)
-    setMeetings(mtg)
-  }
-
-  const soraCalc = useMemo(() => calculateSORA(project?.sora_assessment || {}), [project?.sora_assessment])
-
-  const getStatusBadge = (status) => STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-100 text-gray-700'
-
-  const renderSaveStatus = () => {
-    switch (saveStatus) {
-      case SAVE_STATUS.PENDING: return <span className="text-sm text-amber-600 flex items-center gap-1"><Circle className="w-2 h-2 fill-current" />Unsaved</span>
-      case SAVE_STATUS.SAVING: return <span className="text-sm text-blue-600 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Saving...</span>
-      case SAVE_STATUS.SAVED: return <span className="text-sm text-green-600 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" />Saved</span>
-      case SAVE_STATUS.ERROR: return <span className="text-sm text-red-600 flex items-center gap-1"><AlertTriangle className="w-4 h-4" />Error</span>
-      default: return null
-    }
-  }
-
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading project...</p>
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
       </div>
     )
   }
 
+  // Error state
   if (error || !project) {
     return (
-      <div className="space-y-6">
-        <Link to="/projects" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" />Back to Projects</Link>
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-amber-500" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Project Not Found</h2>
-          <p className="text-gray-600">{error || 'The requested project could not be loaded.'}</p>
-        </div>
+      <div className="text-center py-12">
+        <AlertTriangle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Project Not Found</h2>
+        <p className="text-gray-500 mb-4">{error}</p>
+        <Link to="/projects" className="text-brand-600 hover:text-brand-700 font-medium">
+          Back to Projects
+        </Link>
       </div>
     )
   }
+
+  const statusOption = STATUS_OPTIONS.find(s => s.value === project.status) || STATUS_OPTIONS[0]
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link to="/projects" className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+          <Link
+            to="/projects"
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-gray-600">{project.client_name || 'No client assigned'}</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={project.name || ''}
+                onChange={(e) => handleUpdate({ name: e.target.value })}
+                className="text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                placeholder="Project Name"
+              />
+              <select
+                value={project.status}
+                onChange={(e) => handleUpdate({ status: e.target.value })}
+                className={`px-3 py-1 rounded-full text-sm font-medium border-0 ${statusOption.color}`}
+              >
+                {STATUS_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            {project.client_name && (
+              <p className="text-gray-500 mt-1">{project.client_name}</p>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {renderSaveStatus()}
-          <button onClick={handleManualSave} disabled={saveStatus === SAVE_STATUS.SAVING || saveStatus === SAVE_STATUS.IDLE} className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50">
-            {saveStatus === SAVE_STATUS.SAVING ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save
-          </button>
-          <select value={project.stage_id || ''} onChange={(e) => handleStageChange(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-            {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-          <select value={project.status} onChange={(e) => handleStatusChange(e.target.value)} className={`px-3 py-2 rounded-lg border text-sm font-medium ${getStatusBadge(project.status)}`}>
-            {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
+          <SaveIndicator status={saveStatus} />
+
+          {/* More menu */}
           <div className="relative">
-            <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            >
               <MoreVertical className="w-5 h-5" />
             </button>
+
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                  <button onClick={() => { handleDelete(); setMenuOpen(false) }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                    <Trash2 className="w-4 h-4" />Delete Project
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-20 py-1">
+                  <button
+                    onClick={() => { handleDelete(); setMenuOpen(false) }}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Project
                   </button>
                 </div>
               </>
@@ -1722,8 +1621,8 @@ export default function ProjectDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 overflow-x-auto">
-        <nav className="flex gap-1 min-w-max">
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-8">
           {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -1731,11 +1630,14 @@ export default function ProjectDetail() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  isActive ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`flex items-center gap-2 py-4 border-b-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'border-brand-600 text-brand-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <Icon className="w-4 h-4" />{tab.label}
+                <Icon className="w-4 h-4" />
+                {tab.label}
               </button>
             )
           })}
@@ -1744,12 +1646,21 @@ export default function ProjectDetail() {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'overview' && <OverviewTab project={project} resources={resources} soraCalc={soraCalc} onUpdate={handleUpdate} />}
-        {activeTab === 'resources' && <ResourcesTab projectId={projectId} project={project} resources={resources} onRefresh={refreshResources} onUpdateProject={handleUpdate} />}
-        {activeTab === 'sora' && <SORATab project={project} onUpdate={handleUpdate} />}
-        {activeTab === 'safety' && <SafetyTab project={project} onUpdate={handleUpdate} />}
-        {activeTab === 'tailgate' && <TailgateTab projectId={projectId} project={project} meetings={meetings} resources={resources} onRefresh={refreshMeetings} />}
-        {activeTab === 'documents' && <DocumentsTab project={project} />}
+        {activeTab === 'admin' && (
+          <AdminTab
+            project={project}
+            onUpdate={handleUpdate}
+            operators={operators}
+            equipment={equipment}
+            services={services}
+          />
+        )}
+        {activeTab === 'site' && (
+          <SiteTab project={project} onUpdate={handleUpdate} />
+        )}
+        {activeTab === 'field' && (
+          <FieldDocsTab project={project} onUpdate={handleUpdate} />
+        )}
       </div>
     </div>
   )
