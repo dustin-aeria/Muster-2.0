@@ -13,6 +13,8 @@ import {
   getTailgateMeetings, createTailgateMeeting, updateTailgateMeeting,
   getOperators, getEquipment, getServices
 } from '../lib/api'
+import SiteTab from '../components/SiteTab'
+import FieldDocsTab from '../components/FieldDocsTab'
 
 // ============================================
 // CONSTANTS
@@ -1389,39 +1391,9 @@ function AdminTab({ project, onUpdate, operators, equipment, services }) {
   )
 }
 
-// ============================================
-// SITE TAB (Placeholder for now)
-// ============================================
+// SiteTab is now imported from ../components/SiteTab
 
-function SiteTab({ project, onUpdate }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-      <MapPin className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">Site Planning</h3>
-      <p className="text-gray-500 mb-4">
-        Unified map, SORA calculator, hazard identification, and emergency planning.
-      </p>
-      <p className="text-sm text-gray-400">Coming in next build step...</p>
-    </div>
-  )
-}
-
-// ============================================
-// FIELD DOCS TAB (Placeholder for now)
-// ============================================
-
-function FieldDocsTab({ project, onUpdate }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-      <ClipboardCheck className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">Field Documents</h3>
-      <p className="text-gray-500 mb-4">
-        Tailgate meetings, GO/NO-GO decisions, and IMSAFE reference.
-      </p>
-      <p className="text-sm text-gray-400">Coming in next build step...</p>
-    </div>
-  )
-}
+// FieldDocsTab is now imported from ../components/FieldDocsTab
 
 // ============================================
 // MAIN COMPONENT
@@ -1527,6 +1499,37 @@ export default function ProjectDetail() {
       console.error('Failed to delete:', err)
       alert('Failed to delete project')
     }
+  }
+
+  // Handle GO/NO-GO notification sending
+  const handleSendNotification = async (notification) => {
+    // In production, this would call Twilio API for SMS and an email service
+    // For now, log the notification that would be sent
+    console.log('Sending notification:', notification)
+
+    const decisionLabels = {
+      go: 'GO',
+      nogo: 'NO-GO',
+      conditional: 'CONDITIONAL'
+    }
+
+    const message = `NOTIFICATION FROM AERIA SOLUTIONS FIELD TEAM\n\n` +
+      `Project: ${notification.project}\n` +
+      `Decision: ${decisionLabels[notification.type] || notification.type}\n` +
+      (notification.notes ? `Notes: ${notification.notes}\n` : '') +
+      `\nMore information to come.`
+
+    // Log contacts that would receive the notification
+    notification.contacts?.forEach(contact => {
+      console.log(`Would send to ${contact.name}:`)
+      if (contact.email) console.log(`  Email: ${contact.email}`)
+      if (contact.phone) console.log(`  SMS: ${contact.phone}`)
+      console.log(`  Message: ${message}`)
+    })
+
+    // TODO: Integrate with Twilio for SMS and email service for email
+    // For now, show a confirmation
+    alert(`Notification sent to ${notification.contacts?.length || 0} contacts!\n\nDecision: ${decisionLabels[notification.type]}`)
   }
 
   // Loading state
@@ -1656,10 +1659,14 @@ export default function ProjectDetail() {
           />
         )}
         {activeTab === 'site' && (
-          <SiteTab project={project} onUpdate={handleUpdate} />
+          <SiteTab project={project} onUpdate={handleUpdate} equipment={project.equipment || []} />
         )}
         {activeTab === 'field' && (
-          <FieldDocsTab project={project} onUpdate={handleUpdate} />
+          <FieldDocsTab
+            project={project}
+            onUpdate={handleUpdate}
+            onSendNotification={handleSendNotification}
+          />
         )}
       </div>
     </div>

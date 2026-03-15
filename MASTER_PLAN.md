@@ -587,6 +587,9 @@ C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
     │   ├── Expenses.jsx (expense tracking)
     │   ├── Projects.jsx (project list with stages pipeline)
     │   └── ProjectDetail.jsx (project detail - IN PROGRESS)
+    ├── components/
+    │   ├── SiteTab.jsx (Site planning: map, SORA, hazards, emergency)
+    │   └── FieldDocsTab.jsx (Tailgate meetings, GO/NO-GO, IMSAFE)
     └── contexts/
         └── AuthContext.jsx (Supabase auth wrapper)
 ```
@@ -630,27 +633,27 @@ Database: Supabase (PostgreSQL) - NOT Firebase
 | 8 | Admin Tab - Cost Summary table | COMPLETE | Labour/Materials breakdown, overhead%, markup% |
 | 9 | Admin Tab - CSV Export | COMPLETE | QuickBooks-compatible format |
 | 10 | Admin Tab - Post-field notes | COMPLETE | Processing, QA/QC, additional notes |
-| 11 | Site Tab - Map canvas setup | NOT STARTED | |
-| 12 | Site Tab - Drawing tools | NOT STARTED | |
-| 13 | Site Tab - Element tables | NOT STARTED | |
-| 14 | Site Tab - Click-to-highlight | NOT STARTED | |
-| 15 | Site Tab - SORA calculator | NOT STARTED | |
-| 16 | Site Tab - Hazard table | NOT STARTED | |
-| 17 | Site Tab - Emergency planning | NOT STARTED | |
-| 18 | Field Docs Tab - Tailgate list | NOT STARTED | |
-| 19 | Field Docs Tab - Tailgate form | NOT STARTED | |
-| 20 | Field Docs Tab - GO/NO-GO buttons | NOT STARTED | |
-| 21 | Field Docs Tab - Notifications | NOT STARTED | |
-| 22 | Field Docs Tab - IMSAFE reference | NOT STARTED | |
+| 11 | Site Tab - Map canvas setup | COMPLETE | Mapbox GL JS with style switcher |
+| 12 | Site Tab - Drawing tools | COMPLETE | Polygon, line, point tools |
+| 13 | Site Tab - Element tables | COMPLETE | Grouped by type, editable |
+| 14 | Site Tab - Click-to-highlight | COMPLETE | Click row to highlight on map |
+| 15 | Site Tab - SORA calculator | COMPLETE | Full iGRC/fGRC/SAIL flow, visual diagram |
+| 16 | Site Tab - Hazard table | COMPLETE | Single-line entry, risk scoring |
+| 17 | Site Tab - Emergency planning | COMPLETE | Contacts, facilities, PPE, comms |
+| 18 | Field Docs Tab - Tailgate list | COMPLETE | Sorted list, view/new buttons |
+| 19 | Field Docs Tab - Tailgate form | COMPLETE | Full form with all fields |
+| 20 | Field Docs Tab - GO/NO-GO buttons | COMPLETE | 3 decision options |
+| 21 | Field Docs Tab - Notifications | COMPLETE | Placeholder for Twilio/email |
+| 22 | Field Docs Tab - IMSAFE reference | COMPLETE | Self-check reference card |
 | 23 | Integration - Auto-save | COMPLETE | 2-second debounce, subtle indicator |
 | 24 | Integration - Google Calendar sync | NOT STARTED | |
 | 25 | Final testing & bug fixes | NOT STARTED | |
 
 ### Current Task
-**Step 11: Site Tab - Map canvas setup**
+**Step 24: Integration - Google Calendar sync**
 
 ### Last Updated
-2026-03-15 - Admin Tab complete (Steps 1-10), Auto-save complete (Step 23)
+2026-03-15 - Field Docs Tab complete (Steps 18-22), ready for Google Calendar integration
 
 ---
 
