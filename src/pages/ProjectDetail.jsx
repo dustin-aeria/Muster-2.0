@@ -6,7 +6,8 @@ import {
   Loader2, MoreVertical, Trash2, Clock, Package, ClipboardCheck,
   Shield, ChevronDown, ChevronUp, Plus, X, Phone, Mail,
   Download, Building2, Briefcase, Percent, Info, AlertCircle,
-  ThumbsUp, ThumbsDown, Minus, UserPlus, Search
+  ThumbsUp, ThumbsDown, Minus, UserPlus, Search,
+  Fuel, Battery, Hotel, Car, Receipt, Utensils, PlaneTakeoff, ParkingCircle
 } from 'lucide-react'
 import {
   getProject, updateProject, deleteProject,
@@ -1944,7 +1945,31 @@ function ServicesSection({ project, onUpdate, services, modifiers }) {
   )
 }
 
+// Consumables presets
+const CONSUMABLE_TYPES = [
+  { id: 'fuel', label: 'Fuel', icon: Fuel },
+  { id: 'batteries', label: 'Batteries', icon: Battery },
+  { id: 'propellers', label: 'Propellers', icon: Plane },
+  { id: 'media', label: 'SD Cards / Media', icon: Package },
+  { id: 'other', label: 'Other', icon: Package }
+]
+
+// Expense presets
+const EXPENSE_TYPES = [
+  { id: 'accommodations', label: 'Accommodations', icon: Hotel, unit: 'nights' },
+  { id: 'per_diem', label: 'Per Diem', icon: Utensils, unit: 'days' },
+  { id: 'mileage', label: 'Mileage', icon: Car, unit: 'km' },
+  { id: 'flights', label: 'Flights', icon: PlaneTakeoff, unit: 'trips' },
+  { id: 'vehicle_rental', label: 'Vehicle Rental', icon: Car, unit: 'days' },
+  { id: 'parking', label: 'Parking', icon: ParkingCircle, unit: 'days' },
+  { id: 'permits', label: 'Permits & Fees', icon: FileText, unit: 'each' },
+  { id: 'other', label: 'Other Expense', icon: Receipt, unit: 'each' }
+]
+
 function CostSummarySection({ project, onUpdate }) {
+  const [showAddConsumable, setShowAddConsumable] = useState(false)
+  const [showAddExpense, setShowAddExpense] = useState(false)
+
   // Calculate totals
   const crewTotal = (project.crew || []).reduce((sum, m) => sum + (m.rate || 0) * (m.quantity || 0), 0)
   const equipmentTotal = (project.equipment || []).reduce((sum, e) => sum + (e.rate || 0) * (e.quantity || 0), 0)
@@ -1964,26 +1989,89 @@ function CostSummarySection({ project, onUpdate }) {
   }
 
   const servicesTotal = (project.services || []).reduce((sum, s) => sum + calculateServiceSubtotal(s), 0)
-  const otherCosts = project.other_costs || 0
 
-  const labourTotal = crewTotal
-  const materialsTotal = equipmentTotal + servicesTotal
-  const subtotal = labourTotal + materialsTotal + otherCosts
+  // Consumables
+  const consumables = project.consumables || []
+  const consumablesTotal = consumables.reduce((sum, c) => sum + (c.cost || 0) * (c.quantity || 0), 0)
+
+  // Expenses with markup
+  const expenses = project.expenses || []
+  const expenseMarkupPercent = project.expense_markup_percent || 0
+  const expensesSubtotal = expenses.reduce((sum, e) => sum + (e.cost || 0) * (e.quantity || 0), 0)
+  const expenseMarkup = expensesSubtotal * (expenseMarkupPercent / 100)
+  const expensesTotal = expensesSubtotal + expenseMarkup
+
+  // Professional fees (labour + equipment + services)
+  const professionalFees = crewTotal + equipmentTotal + servicesTotal
+
+  // Subtotals
+  const subtotal = professionalFees + consumablesTotal + expensesTotal
 
   const overheadPercent = project.overhead_percent || 0
-  const overhead = subtotal * (overheadPercent / 100)
+  const overhead = professionalFees * (overheadPercent / 100) // Overhead only on professional fees
   const estimatedCost = subtotal + overhead
 
   const markupPercent = project.markup_percent || 0
-  const markup = estimatedCost * (markupPercent / 100)
+  const markup = professionalFees * (markupPercent / 100) // Markup only on professional fees
   const quotedPrice = project.quoted_price || (estimatedCost + markup)
 
   const actualCost = project.actual_cost || 0
   const variance = estimatedCost - actualCost
 
+  // Consumable handlers
+  const addConsumable = (type) => {
+    const preset = CONSUMABLE_TYPES.find(t => t.id === type)
+    const newConsumable = {
+      id: Date.now(),
+      type,
+      label: preset?.label || 'Other',
+      description: '',
+      cost: 0,
+      quantity: 1
+    }
+    onUpdate({ consumables: [...consumables, newConsumable] })
+    setShowAddConsumable(false)
+  }
+
+  const updateConsumable = (id, updates) => {
+    onUpdate({
+      consumables: consumables.map(c => c.id === id ? { ...c, ...updates } : c)
+    })
+  }
+
+  const removeConsumable = (id) => {
+    onUpdate({ consumables: consumables.filter(c => c.id !== id) })
+  }
+
+  // Expense handlers
+  const addExpense = (type) => {
+    const preset = EXPENSE_TYPES.find(t => t.id === type)
+    const newExpense = {
+      id: Date.now(),
+      type,
+      label: preset?.label || 'Other',
+      unit: preset?.unit || 'each',
+      description: '',
+      cost: 0,
+      quantity: 1
+    }
+    onUpdate({ expenses: [...expenses, newExpense] })
+    setShowAddExpense(false)
+  }
+
+  const updateExpense = (id, updates) => {
+    onUpdate({
+      expenses: expenses.map(e => e.id === id ? { ...e, ...updates } : e)
+    })
+  }
+
+  const removeExpense = (id) => {
+    onUpdate({ expenses: expenses.filter(e => e.id !== id) })
+  }
+
   const exportToCSV = () => {
     const rows = [
-      ['Category', 'Item', 'Rate', 'Quantity', 'Amount'],
+      ['Category', 'Item', 'Rate/Cost', 'Quantity', 'Amount'],
       ['--- LABOUR ---', '', '', '', ''],
       ...(project.crew || []).map(m => [
         'Labour',
@@ -1992,8 +2080,8 @@ function CostSummarySection({ project, onUpdate }) {
         m.quantity,
         (m.rate || 0) * (m.quantity || 0)
       ]),
-      ['', 'Labour Subtotal', '', '', labourTotal],
-      ['--- MATERIALS ---', '', '', '', ''],
+      ['', 'Labour Subtotal', '', '', crewTotal],
+      ['--- EQUIPMENT ---', '', '', '', ''],
       ...(project.equipment || []).map(e => [
         'Equipment',
         e.name,
@@ -2001,6 +2089,8 @@ function CostSummarySection({ project, onUpdate }) {
         e.quantity,
         (e.rate || 0) * (e.quantity || 0)
       ]),
+      ['', 'Equipment Subtotal', '', '', equipmentTotal],
+      ['--- SERVICES ---', '', '', '', ''],
       ...(project.services || []).map(s => [
         'Service',
         `${s.name}${s.description ? ` - ${s.description}` : ''}`,
@@ -2008,16 +2098,36 @@ function CostSummarySection({ project, onUpdate }) {
         s.quantity,
         calculateServiceSubtotal(s)
       ]),
-      ['', 'Materials Subtotal', '', '', materialsTotal],
-      ['--- OTHER ---', '', '', '', ''],
-      ['Other', 'Additional Costs', '', '', otherCosts],
+      ['', 'Services Subtotal', '', '', servicesTotal],
+      ['--- CONSUMABLES ---', '', '', '', ''],
+      ...consumables.map(c => [
+        'Consumable',
+        `${c.label}${c.description ? ` - ${c.description}` : ''}`,
+        c.cost,
+        c.quantity,
+        (c.cost || 0) * (c.quantity || 0)
+      ]),
+      ['', 'Consumables Subtotal', '', '', consumablesTotal],
+      ['--- EXPENSES (REIMBURSABLE) ---', '', '', '', ''],
+      ...expenses.map(e => [
+        'Expense',
+        `${e.label}${e.description ? ` - ${e.description}` : ''}`,
+        e.cost,
+        e.quantity,
+        (e.cost || 0) * (e.quantity || 0)
+      ]),
+      ['', 'Expenses Subtotal', '', '', expensesSubtotal],
+      expenseMarkupPercent > 0 ? ['', `Expense Admin Fee (${expenseMarkupPercent}%)`, '', '', expenseMarkup] : null,
+      ['', 'Expenses Total', '', '', expensesTotal],
       ['', '', '', '', ''],
-      ['', 'SUBTOTAL', '', '', subtotal],
+      ['', 'Professional Fees', '', '', professionalFees],
       ['', `Overhead (${overheadPercent}%)`, '', '', overhead],
+      ['', 'Consumables', '', '', consumablesTotal],
+      ['', 'Expenses (incl. admin fee)', '', '', expensesTotal],
       ['', 'ESTIMATED COST', '', '', estimatedCost],
       ['', `Markup (${markupPercent}%)`, '', '', markup],
       ['', 'QUOTED PRICE', '', '', quotedPrice]
-    ]
+    ].filter(Boolean)
 
     const csv = rows.map(row => row.map(cell =>
       typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
@@ -2041,97 +2151,353 @@ function CostSummarySection({ project, onUpdate }) {
             <Users className="w-4 h-4 text-gray-400" />
             Labour
           </h4>
-          <table className="w-full text-sm">
-            <tbody className="divide-y divide-gray-100">
-              {(project.crew || []).map(m => (
-                <tr key={m.id}>
-                  <td className="py-1.5">{m.name} ({m.role || 'No role'})</td>
-                  <td className="py-1.5 text-right text-gray-600">
-                    ${m.rate} × {m.quantity} {m.rate_type === 'daily' ? 'days' : m.rate_type === 'hourly' ? 'hrs' : 'wks'}
-                  </td>
-                  <td className="py-1.5 text-right font-medium w-28">
-                    ${((m.rate || 0) * (m.quantity || 0)).toLocaleString()}
-                  </td>
+          {(project.crew || []).length === 0 ? (
+            <p className="text-sm text-gray-500 italic">No crew assigned</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {(project.crew || []).map(m => (
+                  <tr key={m.id}>
+                    <td className="py-1.5">{m.name} ({m.role || 'No role'})</td>
+                    <td className="py-1.5 text-right text-gray-600">
+                      ${m.rate} × {m.quantity} {m.rate_type === 'daily' ? 'days' : m.rate_type === 'hourly' ? 'hrs' : 'wks'}
+                    </td>
+                    <td className="py-1.5 text-right font-medium w-28">
+                      ${((m.rate || 0) * (m.quantity || 0)).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="font-semibold border-t">
+                  <td className="py-2">Labour Subtotal</td>
+                  <td></td>
+                  <td className="py-2 text-right">${crewTotal.toLocaleString()}</td>
                 </tr>
-              ))}
-              <tr className="font-semibold border-t">
-                <td className="py-2">Labour Subtotal</td>
-                <td></td>
-                <td className="py-2 text-right">${labourTotal.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Materials Section */}
+        {/* Equipment Section */}
         <div>
           <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-            <Package className="w-4 h-4 text-gray-400" />
-            Materials
+            <Plane className="w-4 h-4 text-gray-400" />
+            Equipment
           </h4>
-          <table className="w-full text-sm">
-            <tbody className="divide-y divide-gray-100">
-              {(project.equipment || []).map(e => (
-                <tr key={e.id}>
-                  <td className="py-1.5">{e.name}</td>
-                  <td className="py-1.5 text-right text-gray-600">
-                    ${e.rate} × {e.quantity}
-                  </td>
-                  <td className="py-1.5 text-right font-medium w-28">
-                    ${((e.rate || 0) * (e.quantity || 0)).toLocaleString()}
-                  </td>
+          {(project.equipment || []).length === 0 ? (
+            <p className="text-sm text-gray-500 italic">No equipment assigned</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {(project.equipment || []).map(e => (
+                  <tr key={e.id}>
+                    <td className="py-1.5">{e.name}</td>
+                    <td className="py-1.5 text-right text-gray-600">
+                      ${e.rate} × {e.quantity}
+                    </td>
+                    <td className="py-1.5 text-right font-medium w-28">
+                      ${((e.rate || 0) * (e.quantity || 0)).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="font-semibold border-t">
+                  <td className="py-2">Equipment Subtotal</td>
+                  <td></td>
+                  <td className="py-2 text-right">${equipmentTotal.toLocaleString()}</td>
                 </tr>
-              ))}
-              {(project.services || []).map(s => (
-                <tr key={s.id}>
-                  <td className="py-1.5">
-                    {s.name}
-                    {s.description && <span className="text-gray-500"> - {s.description}</span>}
-                    {(s.modifiers || []).length > 0 && (
-                      <span className="text-xs text-brand-600 ml-2">
-                        {s.modifiers.map(m => m.label).join(', ')}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-1.5 text-right text-gray-600">
-                    ${s.rate} × {s.quantity}
-                  </td>
-                  <td className="py-1.5 text-right font-medium w-28">
-                    ${calculateServiceSubtotal(s).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-              <tr className="font-semibold border-t">
-                <td className="py-2">Materials Subtotal</td>
-                <td></td>
-                <td className="py-2 text-right">${materialsTotal.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Other Costs */}
+        {/* Services Section */}
         <div>
-          <h4 className="font-medium text-gray-900 mb-2">Other Costs</h4>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Travel, accommodation, etc.:</span>
-            <div className="flex items-center">
-              <span className="text-gray-500 mr-1">$</span>
+          <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-gray-400" />
+            Services
+          </h4>
+          {(project.services || []).length === 0 ? (
+            <p className="text-sm text-gray-500 italic">No services assigned</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {(project.services || []).map(s => (
+                  <tr key={s.id}>
+                    <td className="py-1.5">
+                      {s.name}
+                      {s.description && <span className="text-gray-500"> - {s.description}</span>}
+                      {(s.modifiers || []).length > 0 && (
+                        <span className="text-xs text-brand-600 ml-2">
+                          {s.modifiers.map(m => m.label).join(', ')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-1.5 text-right text-gray-600">
+                      ${s.rate} × {s.quantity}
+                    </td>
+                    <td className="py-1.5 text-right font-medium w-28">
+                      ${calculateServiceSubtotal(s).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="font-semibold border-t">
+                  <td className="py-2">Services Subtotal</td>
+                  <td></td>
+                  <td className="py-2 text-right">${servicesTotal.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Consumables Section */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+            <Fuel className="w-4 h-4 text-gray-400" />
+            Consumables
+          </h4>
+          {consumables.length === 0 ? (
+            <p className="text-sm text-gray-500 italic mb-2">No consumables added</p>
+          ) : (
+            <table className="w-full text-sm mb-2">
+              <tbody className="divide-y divide-gray-100">
+                {consumables.map(c => {
+                  const Icon = CONSUMABLE_TYPES.find(t => t.id === c.type)?.icon || Package
+                  return (
+                    <tr key={c.id} className="group">
+                      <td className="py-1.5">
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            value={c.label}
+                            onChange={(e) => updateConsumable(c.id, { label: e.target.value })}
+                            className="bg-transparent border-0 p-0 font-medium focus:ring-0 focus:outline-none"
+                            placeholder="Label"
+                          />
+                          <input
+                            type="text"
+                            value={c.description || ''}
+                            onChange={(e) => updateConsumable(c.id, { description: e.target.value })}
+                            className="bg-transparent border-0 p-0 text-gray-500 text-sm focus:ring-0 focus:outline-none flex-1"
+                            placeholder="Description (optional)"
+                          />
+                        </div>
+                      </td>
+                      <td className="py-1.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-gray-400">$</span>
+                          <input
+                            type="number"
+                            value={c.cost || ''}
+                            onChange={(e) => updateConsumable(c.id, { cost: parseFloat(e.target.value) || 0 })}
+                            className="w-20 px-1 py-0.5 border border-gray-200 rounded text-right text-sm"
+                            placeholder="0"
+                          />
+                          <span className="text-gray-400 mx-1">×</span>
+                          <input
+                            type="number"
+                            value={c.quantity || ''}
+                            onChange={(e) => updateConsumable(c.id, { quantity: parseFloat(e.target.value) || 0 })}
+                            className="w-16 px-1 py-0.5 border border-gray-200 rounded text-right text-sm"
+                            placeholder="1"
+                          />
+                        </div>
+                      </td>
+                      <td className="py-1.5 text-right font-medium w-28">
+                        <div className="flex items-center justify-end gap-2">
+                          <span>${((c.cost || 0) * (c.quantity || 0)).toLocaleString()}</span>
+                          <button
+                            onClick={() => removeConsumable(c.id)}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+                <tr className="font-semibold border-t">
+                  <td className="py-2">Consumables Subtotal</td>
+                  <td></td>
+                  <td className="py-2 text-right">${consumablesTotal.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+
+          {/* Add Consumable */}
+          {showAddConsumable ? (
+            <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
+              {CONSUMABLE_TYPES.map(type => (
+                <button
+                  key={type.id}
+                  onClick={() => addConsumable(type.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:border-brand-300 hover:bg-brand-50"
+                >
+                  <type.icon className="w-4 h-4 text-gray-400" />
+                  {type.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setShowAddConsumable(false)}
+                className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddConsumable(true)}
+              className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
+            >
+              <Plus className="w-4 h-4" />
+              Add Consumable
+            </button>
+          )}
+        </div>
+
+        {/* Expenses Section (Reimbursables) */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-gray-900 flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-gray-400" />
+              Expenses
+              <span className="text-xs font-normal text-gray-500">(Reimbursable)</span>
+            </h4>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">Admin fee:</span>
               <input
                 type="number"
-                value={otherCosts}
-                onChange={(e) => onUpdate({ other_costs: parseFloat(e.target.value) || 0 })}
-                className="w-32 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                value={expenseMarkupPercent}
+                onChange={(e) => onUpdate({ expense_markup_percent: parseFloat(e.target.value) || 0 })}
+                className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
               />
+              <span className="text-gray-500">%</span>
             </div>
           </div>
+
+          {expenses.length === 0 ? (
+            <p className="text-sm text-gray-500 italic mb-2">No expenses added</p>
+          ) : (
+            <table className="w-full text-sm mb-2">
+              <tbody className="divide-y divide-gray-100">
+                {expenses.map(e => {
+                  const preset = EXPENSE_TYPES.find(t => t.id === e.type)
+                  const Icon = preset?.icon || Receipt
+                  return (
+                    <tr key={e.id} className="group">
+                      <td className="py-1.5">
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            value={e.label}
+                            onChange={(ev) => updateExpense(e.id, { label: ev.target.value })}
+                            className="bg-transparent border-0 p-0 font-medium focus:ring-0 focus:outline-none"
+                            placeholder="Label"
+                          />
+                          <input
+                            type="text"
+                            value={e.description || ''}
+                            onChange={(ev) => updateExpense(e.id, { description: ev.target.value })}
+                            className="bg-transparent border-0 p-0 text-gray-500 text-sm focus:ring-0 focus:outline-none flex-1"
+                            placeholder="Description (optional)"
+                          />
+                        </div>
+                      </td>
+                      <td className="py-1.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-gray-400">$</span>
+                          <input
+                            type="number"
+                            value={e.cost || ''}
+                            onChange={(ev) => updateExpense(e.id, { cost: parseFloat(ev.target.value) || 0 })}
+                            className="w-20 px-1 py-0.5 border border-gray-200 rounded text-right text-sm"
+                            placeholder="0"
+                          />
+                          <span className="text-gray-400 mx-1">×</span>
+                          <input
+                            type="number"
+                            value={e.quantity || ''}
+                            onChange={(ev) => updateExpense(e.id, { quantity: parseFloat(ev.target.value) || 0 })}
+                            className="w-16 px-1 py-0.5 border border-gray-200 rounded text-right text-sm"
+                            placeholder="1"
+                          />
+                          <span className="text-xs text-gray-400 w-12">{e.unit}</span>
+                        </div>
+                      </td>
+                      <td className="py-1.5 text-right font-medium w-28">
+                        <div className="flex items-center justify-end gap-2">
+                          <span>${((e.cost || 0) * (e.quantity || 0)).toLocaleString()}</span>
+                          <button
+                            onClick={() => removeExpense(e.id)}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+                <tr className="border-t">
+                  <td className="py-1.5 text-gray-600">Expenses Subtotal</td>
+                  <td></td>
+                  <td className="py-1.5 text-right">${expensesSubtotal.toLocaleString()}</td>
+                </tr>
+                {expenseMarkupPercent > 0 && (
+                  <tr>
+                    <td className="py-1.5 text-gray-600">Admin Fee ({expenseMarkupPercent}%)</td>
+                    <td></td>
+                    <td className="py-1.5 text-right">${expenseMarkup.toLocaleString()}</td>
+                  </tr>
+                )}
+                <tr className="font-semibold">
+                  <td className="py-2">Expenses Total</td>
+                  <td></td>
+                  <td className="py-2 text-right">${expensesTotal.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+
+          {/* Add Expense */}
+          {showAddExpense ? (
+            <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
+              {EXPENSE_TYPES.map(type => (
+                <button
+                  key={type.id}
+                  onClick={() => addExpense(type.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:border-brand-300 hover:bg-brand-50"
+                >
+                  <type.icon className="w-4 h-4 text-gray-400" />
+                  {type.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setShowAddExpense(false)}
+                className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddExpense(true)}
+              className="flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
+            >
+              <Plus className="w-4 h-4" />
+              Add Expense
+            </button>
+          )}
         </div>
 
         {/* Totals */}
         <div className="border-t pt-4 space-y-3">
           <div className="flex justify-between text-sm">
-            <span>Subtotal</span>
-            <span className="font-medium">${subtotal.toLocaleString()}</span>
+            <span className="text-gray-600">Professional Fees (Labour + Equipment + Services)</span>
+            <span className="font-medium">${professionalFees.toLocaleString()}</span>
           </div>
 
           <div className="flex items-center justify-between text-sm">
@@ -2144,8 +2510,19 @@ function CostSummarySection({ project, onUpdate }) {
                 className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
               />
               <span className="text-gray-500">%</span>
+              <span className="text-xs text-gray-400">(on professional fees)</span>
             </div>
             <span className="font-medium">${overhead.toLocaleString()}</span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Consumables</span>
+            <span className="font-medium">${consumablesTotal.toLocaleString()}</span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Expenses (incl. admin fee)</span>
+            <span className="font-medium">${expensesTotal.toLocaleString()}</span>
           </div>
 
           <div className="flex justify-between text-lg font-semibold border-t pt-3">
@@ -2163,6 +2540,7 @@ function CostSummarySection({ project, onUpdate }) {
                 className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
               />
               <span className="text-gray-500">%</span>
+              <span className="text-xs text-gray-400">(on professional fees)</span>
             </div>
             <span className="font-medium">${markup.toLocaleString()}</span>
           </div>
