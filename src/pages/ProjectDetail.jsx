@@ -288,6 +288,80 @@ function ClientInfoSection({ project, onUpdate }) {
   )
 }
 
+// Data products for remote sensing
+const DATA_PRODUCTS = [
+  { id: 'orthomosaic', label: 'Orthomosaic' },
+  { id: 'dsm', label: 'DSM' },
+  { id: 'dtm', label: 'DTM' },
+  { id: 'point_cloud', label: 'Point Cloud' },
+  { id: 'contours', label: 'Contours' },
+  { id: 'volume', label: 'Volumetrics' },
+  { id: 'thermal', label: 'Thermal Map' },
+  { id: 'ndvi', label: 'NDVI/Multispectral' },
+  { id: 'video', label: 'Video/Footage' },
+  { id: 'photos', label: 'Still Photos' },
+  { id: '3d_model', label: '3D Model' },
+  { id: 'inspection', label: 'Inspection Report' }
+]
+
+const GSD_OPTIONS = [
+  { value: '', label: 'Not specified' },
+  { value: '1cm', label: '< 1 cm (Ultra-high)' },
+  { value: '2cm', label: '1-2 cm (High)' },
+  { value: '5cm', label: '2-5 cm (Standard)' },
+  { value: '10cm', label: '5-10 cm (Medium)' },
+  { value: '20cm', label: '10-20 cm (Low)' },
+  { value: 'na', label: 'N/A' }
+]
+
+const ACCURACY_OPTIONS = [
+  { value: '', label: 'Not specified' },
+  { value: 'survey', label: 'Survey-grade (< 3cm)' },
+  { value: 'high', label: 'High (3-10cm)' },
+  { value: 'standard', label: 'Standard (10-30cm)' },
+  { value: 'relative', label: 'Relative only' },
+  { value: 'na', label: 'N/A' }
+]
+
+const TERRAIN_OPTIONS = [
+  { value: 'flat', label: 'Flat/Open' },
+  { value: 'rolling', label: 'Rolling Hills' },
+  { value: 'steep', label: 'Steep/Mountainous' },
+  { value: 'forested', label: 'Forested' },
+  { value: 'urban', label: 'Urban/Built-up' },
+  { value: 'water', label: 'Over Water' },
+  { value: 'mixed', label: 'Mixed' }
+]
+
+const OPERATION_TYPE_OPTIONS = [
+  { value: 'vlos', label: 'VLOS (Visual Line of Sight)' },
+  { value: 'evlos', label: 'EVLOS (Extended VLOS)' },
+  { value: 'bvlos', label: 'BVLOS (Beyond VLOS)' }
+]
+
+const AIRSPACE_OPTIONS = [
+  { value: 'uncontrolled', label: 'Uncontrolled (Class G)' },
+  { value: 'controlled', label: 'Controlled (requires authorization)' },
+  { value: 'restricted', label: 'Restricted/Prohibited' },
+  { value: 'unknown', label: 'Unknown - needs assessment' }
+]
+
+function NeedsSubSection({ title, children, defaultOpen = true }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between text-left hover:bg-gray-100"
+      >
+        <span className="font-medium text-gray-800">{title}</span>
+        {isOpen ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+      </button>
+      {isOpen && <div className="p-4 bg-white">{children}</div>}
+    </div>
+  )
+}
+
 function NeedsAnalysisSection({ project, onUpdate }) {
   const needs = project.needs_analysis || {}
 
@@ -295,108 +369,315 @@ function NeedsAnalysisSection({ project, onUpdate }) {
     onUpdate({ needs_analysis: { ...needs, ...updates } })
   }
 
-  const projectTypes = needs.project_types || []
-  const constraints = needs.constraints || []
-
-  const toggleType = (typeId) => {
-    if (projectTypes.includes(typeId)) {
-      updateNeeds({ project_types: projectTypes.filter(t => t !== typeId) })
+  const toggleArrayItem = (field, itemId) => {
+    const current = needs[field] || []
+    if (current.includes(itemId)) {
+      updateNeeds({ [field]: current.filter(i => i !== itemId) })
     } else {
-      updateNeeds({ project_types: [...projectTypes, typeId] })
+      updateNeeds({ [field]: [...current, itemId] })
     }
   }
 
-  const toggleConstraint = (constraintId) => {
-    if (constraints.includes(constraintId)) {
-      updateNeeds({ constraints: constraints.filter(c => c !== constraintId) })
-    } else {
-      updateNeeds({ constraints: [...constraints, constraintId] })
-    }
-  }
+  const dataProducts = needs.data_products || []
+  const flags = needs.flags || []
 
   return (
     <Section title="Needs Analysis">
-      {/* Project Type */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
-        <div className="flex flex-wrap gap-2">
-          {PROJECT_TYPES.map(type => (
-            <button
-              key={type.id}
-              onClick={() => toggleType(type.id)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                projectTypes.includes(type.id)
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="space-y-4">
 
-      {/* Constraints */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Key Considerations</label>
-        <div className="flex flex-wrap gap-2">
-          {PROJECT_CONSTRAINTS.map(constraint => (
-            <button
-              key={constraint.id}
-              onClick={() => toggleConstraint(constraint.id)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                constraints.includes(constraint.id)
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {constraint.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Data Requirements */}
+        <NeedsSubSection title="Data Requirements">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Required Data Products</label>
+              <div className="flex flex-wrap gap-2">
+                {DATA_PRODUCTS.map(product => (
+                  <button
+                    key={product.id}
+                    onClick={() => toggleArrayItem('data_products', product.id)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      dataProducts.includes(product.id)
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {product.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Resolution (GSD)</label>
+                <select
+                  value={needs.gsd || ''}
+                  onChange={(e) => updateNeeds({ gsd: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  {GSD_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Accuracy Requirement</label>
+                <select
+                  value={needs.accuracy || ''}
+                  onChange={(e) => updateNeeds({ accuracy: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  {ACCURACY_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Coordinate System</label>
+                <input
+                  type="text"
+                  value={needs.coordinate_system || ''}
+                  onChange={(e) => updateNeeds({ coordinate_system: e.target.value })}
+                  placeholder="e.g., NAD83 UTM Zone 10N"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Deliverable Format Notes</label>
+              <input
+                type="text"
+                value={needs.deliverable_formats || ''}
+                onChange={(e) => updateNeeds({ deliverable_formats: e.target.value })}
+                placeholder="e.g., GeoTIFF, LAS 1.4, Shapefile, KML"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+        </NeedsSubSection>
 
-      {/* Key Questions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Objective
-            <span className="font-normal text-gray-400 ml-1">What do they need?</span>
-          </label>
-          <textarea
-            value={needs.objective || ''}
-            onChange={(e) => updateNeeds({ objective: e.target.value })}
-            placeholder="e.g., Accurate topographic map for drainage planning"
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
+        {/* Site Assessment */}
+        <NeedsSubSection title="Site Assessment">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Coverage Area</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={needs.area_size || ''}
+                  onChange={(e) => updateNeeds({ area_size: e.target.value })}
+                  placeholder="Size"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <select
+                  value={needs.area_unit || 'ha'}
+                  onChange={(e) => updateNeeds({ area_unit: e.target.value })}
+                  className="w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="ha">ha</option>
+                  <option value="ac">ac</option>
+                  <option value="km2">km²</option>
+                  <option value="m2">m²</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Terrain Type</label>
+              <select
+                value={needs.terrain || ''}
+                onChange={(e) => updateNeeds({ terrain: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select...</option>
+                {TERRAIN_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Elevation Change</label>
+              <input
+                type="text"
+                value={needs.elevation_change || ''}
+                onChange={(e) => updateNeeds({ elevation_change: e.target.value })}
+                placeholder="e.g., 50m"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">GCPs Required?</label>
+              <select
+                value={needs.gcp_required || ''}
+                onChange={(e) => updateNeeds({ gcp_required: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select...</option>
+                <option value="yes">Yes - we place</option>
+                <option value="client">Yes - client provides</option>
+                <option value="existing">Use existing control</option>
+                <option value="ppk">PPK/RTK only</option>
+                <option value="no">No - relative accuracy OK</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Site Access & Conditions</label>
+            <textarea
+              value={needs.site_conditions || ''}
+              onChange={(e) => updateNeeds({ site_conditions: e.target.value })}
+              placeholder="Access routes, obstacles, vegetation, power lines, restricted areas, parking, permissions needed..."
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+        </NeedsSubSection>
+
+        {/* Regulatory & Airspace */}
+        <NeedsSubSection title="Regulatory Considerations" defaultOpen={false}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Operation Type</label>
+              <select
+                value={needs.operation_type || ''}
+                onChange={(e) => updateNeeds({ operation_type: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select...</option>
+                {OPERATION_TYPE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Airspace</label>
+              <select
+                value={needs.airspace || ''}
+                onChange={(e) => updateNeeds({ airspace: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select...</option>
+                {AIRSPACE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Max AGL Required</label>
+              <input
+                type="text"
+                value={needs.max_agl || ''}
+                onChange={(e) => updateNeeds({ max_agl: e.target.value })}
+                placeholder="e.g., 120m"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Permits & Authorizations Needed</label>
+            <input
+              type="text"
+              value={needs.permits_needed || ''}
+              onChange={(e) => updateNeeds({ permits_needed: e.target.value })}
+              placeholder="e.g., SFOC, NAV CANADA authorization, land access permit, environmental permit"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+        </NeedsSubSection>
+
+        {/* Environmental & Timing */}
+        <NeedsSubSection title="Environmental & Timing" defaultOpen={false}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Weather Sensitivity</label>
+              <select
+                value={needs.weather_sensitivity || ''}
+                onChange={(e) => updateNeeds({ weather_sensitivity: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select...</option>
+                <option value="low">Low - flexible conditions</option>
+                <option value="moderate">Moderate - avoid rain/high wind</option>
+                <option value="high">High - clear skies needed</option>
+                <option value="critical">Critical - specific conditions required</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Lighting Requirements</label>
+              <select
+                value={needs.lighting || ''}
+                onChange={(e) => updateNeeds({ lighting: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select...</option>
+                <option value="any">Any daylight</option>
+                <option value="diffuse">Overcast preferred (diffuse)</option>
+                <option value="sunny">Sunny preferred (shadows OK)</option>
+                <option value="low_sun">Low sun angle needed</option>
+                <option value="solar_noon">Solar noon (+/- 2hrs)</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Seasonal / Timing Considerations</label>
+            <textarea
+              value={needs.timing_notes || ''}
+              onChange={(e) => updateNeeds({ timing_notes: e.target.value })}
+              placeholder="e.g., Before leaf-on, during low tide, avoid nesting season, snow-free conditions..."
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+        </NeedsSubSection>
+
+        {/* Key Flags */}
+        <div className="pt-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Quick Flags</label>
+          <div className="flex flex-wrap gap-2">
+            {PROJECT_CONSTRAINTS.map(flag => (
+              <button
+                key={flag.id}
+                onClick={() => toggleArrayItem('flags', flag.id)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  flags.includes(flag.id)
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {flag.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Constraints
-            <span className="font-normal text-gray-400 ml-1">Key limitations?</span>
-          </label>
-          <textarea
-            value={needs.constraints_notes || ''}
-            onChange={(e) => updateNeeds({ constraints_notes: e.target.value })}
-            placeholder="e.g., Must complete before rainy season, limited site access on weekends"
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
+
+        {/* Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 mt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Primary Objective
+              <span className="font-normal text-gray-400 ml-1">— What does success look like?</span>
+            </label>
+            <textarea
+              value={needs.objective || ''}
+              onChange={(e) => updateNeeds({ objective: e.target.value })}
+              placeholder="Clear statement of what the client needs to achieve with this data..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Key Risks / Concerns
+              <span className="font-normal text-gray-400 ml-1">— What could go wrong?</span>
+            </label>
+            <textarea
+              value={needs.risks || ''}
+              onChange={(e) => updateNeeds({ risks: e.target.value })}
+              placeholder="Weather windows, access issues, accuracy challenges, timeline pressure..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Success Criteria
-            <span className="font-normal text-gray-400 ml-1">How do we know we delivered?</span>
-          </label>
-          <textarea
-            value={needs.success_criteria || ''}
-            onChange={(e) => updateNeeds({ success_criteria: e.target.value })}
-            placeholder="e.g., 5cm accuracy, delivered within 2 weeks, includes contour lines"
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
-        </div>
+
       </div>
     </Section>
   )
