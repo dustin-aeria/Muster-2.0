@@ -12,13 +12,15 @@ import {
   ChevronUp,
   Tag,
   Percent,
-  Settings
+  Settings,
+  Package
 } from 'lucide-react'
 import {
   getServices, createService, updateService, archiveService, deleteService,
   getModifiers, createModifier, updateModifier, deleteModifier,
   logAmendment
 } from '../lib/api'
+import { formatCurrency as formatCurrencyUtil, getRateUnitLabel } from '../lib/rateCalculator'
 
 const SERVICE_CATEGORIES = [
   'Consulting',

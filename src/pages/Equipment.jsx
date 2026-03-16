@@ -19,6 +19,7 @@ import {
   Calculator
 } from 'lucide-react'
 import { getEquipment, createEquipment, updateEquipment, archiveEquipment, deleteEquipment, logAmendment } from '../lib/api'
+import { calculateEquipmentRates, calculateEquipmentDayRate } from '../lib/rateCalculator'
 
 const EQUIPMENT_TYPES = [
   { value: 'rpas_small', label: 'RPAS <25kg', icon: Plane },
@@ -143,17 +144,28 @@ function EquipmentModal({ equipment, onClose, onSave }) {
     }))
   }
 
-  // Calculate suggested daily rate
+  // Calculate suggested daily rate using rate calculator
   const calculatedRate = formData.purchase_price && formData.days_to_pay_off
-    ? (parseFloat(formData.purchase_price) / parseInt(formData.days_to_pay_off)).toFixed(2)
+    ? calculateEquipmentDayRate(parseFloat(formData.purchase_price), parseInt(formData.days_to_pay_off))
     : null
 
   const applyCalculatedRate = () => {
     if (calculatedRate) {
+      const rates = calculateEquipmentRates(calculatedRate)
       setFormData(prev => ({
         ...prev,
-        rate_day: calculatedRate,
-        rate_week: (parseFloat(calculatedRate) * 4).toFixed(2)
+        rate_day: rates.day,
+        rate_week: rates.week
+      }))
+    }
+  }
+
+  const autoCalculateWeek = () => {
+    if (formData.rate_day) {
+      const rates = calculateEquipmentRates(parseFloat(formData.rate_day))
+      setFormData(prev => ({
+        ...prev,
+        rate_week: rates.week
       }))
     }
   }
@@ -307,19 +319,31 @@ function EquipmentModal({ equipment, onClose, onSave }) {
 
           {/* Rates */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rates ($)
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Rates ($)
+              </label>
+              {formData.rate_day && (
+                <button
+                  type="button"
+                  onClick={autoCalculateWeek}
+                  className="inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium"
+                >
+                  <Calculator className="w-3.5 h-3.5" />
+                  Auto-calc week (4× day)
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Day Rate</label>
+                <label className="block text-xs text-gray-500 mb-1">Day Rate *</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.rate_day}
                   onChange={(e) => setFormData({ ...formData, rate_day: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ring-2 ring-brand-200"
+                  placeholder="Base rate"
                 />
               </div>
               <div>

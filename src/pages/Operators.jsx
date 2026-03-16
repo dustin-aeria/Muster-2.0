@@ -13,10 +13,12 @@ import {
   DollarSign,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Calculator
 } from 'lucide-react'
 import { getOperators, createOperator, updateOperator, archiveOperator, deleteOperator, logAmendment } from '../lib/api'
 import { format, parseISO, differenceInDays } from 'date-fns'
+import { calculatePersonnelRates, formatCurrency as formatCurrencyUtil } from '../lib/rateCalculator'
 
 const ROLE_OPTIONS = [
   'PIC - Basic',
@@ -216,9 +218,32 @@ function OperatorModal({ operator, onClose, onSave }) {
 
           {/* Rates */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rates ($)
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Rates ($)
+              </label>
+              {formData.rate_day && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rates = calculatePersonnelRates(parseFloat(formData.rate_day))
+                    if (rates) {
+                      setFormData(prev => ({
+                        ...prev,
+                        rate_hourly: rates.hourly,
+                        rate_half_day: rates.halfDay,
+                        rate_week: rates.week,
+                        travel_rate_day: rates.travel
+                      }))
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium"
+                >
+                  <Calculator className="w-3.5 h-3.5" />
+                  Auto-calculate from day rate
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Hourly</label>
@@ -243,14 +268,14 @@ function OperatorModal({ operator, onClose, onSave }) {
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Day</label>
+                <label className="block text-xs text-gray-500 mb-1">Day *</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.rate_day}
                   onChange={(e) => setFormData({ ...formData, rate_day: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ring-2 ring-brand-200"
+                  placeholder="Base rate"
                 />
               </div>
               <div>
@@ -276,6 +301,9 @@ function OperatorModal({ operator, onClose, onSave }) {
                 />
               </div>
             </div>
+            <p className="mt-1.5 text-xs text-gray-500">
+              Week = 4.5× Day | Half Day = 55% Day | Hourly = Day÷7.5 | Travel = 50% Day
+            </p>
           </div>
 
           {/* Certifications */}
