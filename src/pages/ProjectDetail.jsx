@@ -11,7 +11,7 @@ import {
 import {
   getProject, updateProject, deleteProject,
   getTailgateMeetings, createTailgateMeeting, updateTailgateMeeting,
-  getOperators, getEquipment, getServices
+  getOperators, getEquipment, getServices, getModifiers
 } from '../lib/api'
 import SiteTab from '../components/SiteTab'
 import FieldDocsTab from '../components/FieldDocsTab'
@@ -1223,23 +1223,45 @@ function NotificationContactsSection({ project, onUpdate }) {
   )
 }
 
-function CrewSection({ project, onUpdate, operators }) {
+function CrewSection({ project, onUpdate, operators, modifiers }) {
   const crew = project.crew || []
   const [showLibrary, setShowLibrary] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
   const fieldDays = project.field_days || 0
 
+  // Get rate based on rate type from operator
+  const getRateForType = (operator, rateType) => {
+    switch (rateType) {
+      case 'hourly': return operator.rate_hourly || 0
+      case 'half_day': return operator.rate_half_day || 0
+      case 'daily': return operator.rate_day || 0
+      case 'weekly': return operator.rate_week || 0
+      case 'travel': return operator.travel_rate_day || 0
+      default: return operator.rate_day || 0
+    }
+  }
+
   const addFromLibrary = (operator) => {
     const newCrew = [...crew, {
       id: Date.now(),
       source: 'library',
       operator_id: operator.id,
-      name: `${operator.first_name} ${operator.last_name}`,
-      role: '',
+      name: operator.name,
+      roles: operator.roles || [],
+      role: operator.roles?.[0] || '',
       rate_type: 'daily',
-      rate: operator.daily_rate || 0,
-      quantity: fieldDays || 1
+      rate: operator.rate_day || 0,
+      // Store all rates so we can switch
+      rates: {
+        hourly: operator.rate_hourly,
+        half_day: operator.rate_half_day,
+        daily: operator.rate_day,
+        weekly: operator.rate_week,
+        travel: operator.travel_rate_day
+      },
+      quantity: fieldDays || 1,
+      modifiers: []
     }]
     onUpdate({ crew: newCrew })
     setShowLibrary(false)
@@ -1254,16 +1276,36 @@ function CrewSection({ project, onUpdate, operators }) {
       role: '',
       rate_type: 'daily',
       rate: 0,
-      quantity: fieldDays || 1
+      rates: {},
+      quantity: fieldDays || 1,
+      modifiers: []
     }]
     onUpdate({ crew: newCrew })
   }
 
   const updateCrewMember = (id, field, value) => {
-    const newCrew = crew.map(c =>
-      c.id === id ? { ...c, [field]: value } : c
-    )
+    const newCrew = crew.map(c => {
+      if (c.id !== id) return c
+      const updated = { ...c, [field]: value }
+      // Auto-update rate when rate_type changes
+      if (field === 'rate_type' && c.rates && c.rates[value]) {
+        updated.rate = c.rates[value]
+      }
+      return updated
+    })
     onUpdate({ crew: newCrew })
+  }
+
+  const toggleModifier = (id, modifier) => {
+    const member = crew.find(c => c.id === id)
+    if (!member) return
+    const mods = member.modifiers || []
+    const exists = mods.find(m => m.id === modifier.id)
+    if (exists) {
+      updateCrewMember(id, 'modifiers', mods.filter(m => m.id !== modifier.id))
+    } else {
+      updateCrewMember(id, 'modifiers', [...mods, modifier])
+    }
   }
 
   const useFieldDays = (id) => {
@@ -1275,12 +1317,26 @@ function CrewSection({ project, onUpdate, operators }) {
   }
 
   const calculateSubtotal = (member) => {
-    return (member.rate || 0) * (member.quantity || 0)
+    let base = (member.rate || 0) * (member.quantity || 0)
+    // Apply modifiers
+    if (member.modifiers && member.modifiers.length > 0) {
+      member.modifiers.forEach(mod => {
+        if (mod.modifier_type === 'percentage') {
+          base *= (1 + mod.value / 100)
+        } else if (mod.modifier_type === 'multiplier') {
+          base *= mod.value
+        } else if (mod.modifier_type === 'flat_fee') {
+          base += mod.value
+        }
+      })
+    }
+    return Math.round(base * 100) / 100
   }
 
   const filteredOperators = operators.filter(op => {
-    const name = `${op.first_name} ${op.last_name}`.toLowerCase()
-    return name.includes(searchTerm.toLowerCase())
+    const searchLower = searchTerm.toLowerCase()
+    return op.name?.toLowerCase().includes(searchLower) ||
+      op.roles?.some(r => r.toLowerCase().includes(searchLower))
   })
 
   const crewTotal = crew.reduce((sum, m) => sum + calculateSubtotal(m), 0)
@@ -1443,11 +1499,22 @@ function CrewSection({ project, onUpdate, operators }) {
                       <button
                         key={op.id}
                         onClick={() => addFromLibrary(op)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center justify-between"
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100"
                       >
-                        <span className="font-medium">{op.first_name} {op.last_name}</span>
-                        {op.daily_rate && (
-                          <span className="text-sm text-gray-500">${op.daily_rate}/day</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{op.name}</span>
+                          {op.rate_day && (
+                            <span className="text-sm text-gray-500">${op.rate_day}/day</span>
+                          )}
+                        </div>
+                        {op.roles?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {op.roles.map(role => (
+                              <span key={role} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                                {role}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </button>
                     ))}
@@ -1462,7 +1529,7 @@ function CrewSection({ project, onUpdate, operators }) {
   )
 }
 
-function EquipmentSection({ project, onUpdate, equipment }) {
+function EquipmentSection({ project, onUpdate, equipment, modifiers }) {
   const assigned = project.equipment || []
   const [showLibrary, setShowLibrary] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -1482,8 +1549,14 @@ function EquipmentSection({ project, onUpdate, equipment }) {
       max_speed: item.max_speed,
       mtow: item.mtow,
       rate_type: 'daily',
-      rate: item.daily_rate || 0,
-      quantity: fieldDays || 1
+      rate: item.rate_day || 0,
+      // Store all rates
+      rates: {
+        daily: item.rate_day,
+        weekly: item.rate_week
+      },
+      quantity: fieldDays || 1,
+      modifiers: []
     }]
     onUpdate({ equipment: newAssigned })
     setShowLibrary(false)
@@ -1491,10 +1564,28 @@ function EquipmentSection({ project, onUpdate, equipment }) {
   }
 
   const updateEquipment = (id, field, value) => {
-    const newAssigned = assigned.map(e =>
-      e.id === id ? { ...e, [field]: value } : e
-    )
+    const newAssigned = assigned.map(e => {
+      if (e.id !== id) return e
+      const updated = { ...e, [field]: value }
+      // Auto-update rate when rate_type changes
+      if (field === 'rate_type' && e.rates && e.rates[value]) {
+        updated.rate = e.rates[value]
+      }
+      return updated
+    })
     onUpdate({ equipment: newAssigned })
+  }
+
+  const toggleModifier = (id, modifier) => {
+    const item = assigned.find(e => e.id === id)
+    if (!item) return
+    const mods = item.modifiers || []
+    const exists = mods.find(m => m.id === modifier.id)
+    if (exists) {
+      updateEquipment(id, 'modifiers', mods.filter(m => m.id !== modifier.id))
+    } else {
+      updateEquipment(id, 'modifiers', [...mods, modifier])
+    }
   }
 
   const useFieldDays = (id) => {
@@ -1506,11 +1597,26 @@ function EquipmentSection({ project, onUpdate, equipment }) {
   }
 
   const calculateSubtotal = (item) => {
-    return (item.rate || 0) * (item.quantity || 0)
+    let base = (item.rate || 0) * (item.quantity || 0)
+    // Apply modifiers
+    if (item.modifiers && item.modifiers.length > 0) {
+      item.modifiers.forEach(mod => {
+        if (mod.modifier_type === 'percentage') {
+          base *= (1 + mod.value / 100)
+        } else if (mod.modifier_type === 'multiplier') {
+          base *= mod.value
+        } else if (mod.modifier_type === 'flat_fee') {
+          base += mod.value
+        }
+      })
+    }
+    return Math.round(base * 100) / 100
   }
 
   const filteredEquipment = equipment.filter(e => {
-    return e.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const searchLower = searchTerm.toLowerCase()
+    return e.name?.toLowerCase().includes(searchLower) ||
+      e.category?.toLowerCase().includes(searchLower)
   })
 
   const equipmentTotal = assigned.reduce((sum, e) => sum + calculateSubtotal(e), 0)
@@ -1663,8 +1769,8 @@ function EquipmentSection({ project, onUpdate, equipment }) {
                             {hasSoraSpecs && (
                               <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">SORA</span>
                             )}
-                            {item.daily_rate && (
-                              <span className="text-sm text-gray-500">${item.daily_rate}/day</span>
+                            {item.rate_day && (
+                              <span className="text-sm text-gray-500">${item.rate_day}/day</span>
                             )}
                           </div>
                         </button>
@@ -1681,7 +1787,7 @@ function EquipmentSection({ project, onUpdate, equipment }) {
   )
 }
 
-function ServicesSection({ project, onUpdate, services }) {
+function ServicesSection({ project, onUpdate, services, modifiers }) {
   const assigned = project.services || []
   const [showLibrary, setShowLibrary] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -1691,11 +1797,19 @@ function ServicesSection({ project, onUpdate, services }) {
       id: Date.now(),
       service_id: service.id,
       name: service.name,
+      category: service.category,
       description: '',
-      rate_type: 'daily',
-      rate: service.daily_rate || 0,
+      base_unit: service.base_unit || 'day',
+      rate: service.base_rate || 0,
+      // Store all rates
+      rates: {
+        base: service.base_rate,
+        ...(service.alternate_rates || {})
+      },
+      alternate_rates: service.alternate_rates || {},
       quantity: 1,
-      modifiers: []
+      modifiers: [],
+      output_deliverables: service.output_deliverables || []
     }]
     onUpdate({ services: newAssigned })
     setShowLibrary(false)
@@ -1882,11 +1996,18 @@ function ServicesSection({ project, onUpdate, services }) {
                       <button
                         key={service.id}
                         onClick={() => addFromLibrary(service)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center justify-between"
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100"
                       >
-                        <span className="font-medium">{service.name}</span>
-                        {service.daily_rate && (
-                          <span className="text-sm text-gray-500">${service.daily_rate}/day</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{service.name}</span>
+                          {service.base_rate && (
+                            <span className="text-sm text-gray-500">
+                              ${service.base_rate}/{service.base_unit || 'unit'}
+                            </span>
+                          )}
+                        </div>
+                        {service.category && (
+                          <span className="text-xs text-gray-500">{service.category}</span>
                         )}
                       </button>
                     ))}
@@ -2212,7 +2333,7 @@ function PostFieldSection({ project, onUpdate }) {
 // ADMIN TAB
 // ============================================
 
-function AdminTab({ project, onUpdate, operators, equipment, services }) {
+function AdminTab({ project, onUpdate, operators, equipment, services, modifiers }) {
   return (
     <div className="space-y-8">
       <ProjectOverviewSection project={project} onUpdate={onUpdate} operators={operators} />
@@ -2220,9 +2341,9 @@ function AdminTab({ project, onUpdate, operators, equipment, services }) {
       <NeedsAnalysisSection project={project} onUpdate={onUpdate} />
       <DeliverablesSection project={project} onUpdate={onUpdate} />
       <NotificationContactsSection project={project} onUpdate={onUpdate} />
-      <CrewSection project={project} onUpdate={onUpdate} operators={operators} />
-      <EquipmentSection project={project} onUpdate={onUpdate} equipment={equipment} />
-      <ServicesSection project={project} onUpdate={onUpdate} services={services} />
+      <CrewSection project={project} onUpdate={onUpdate} operators={operators} modifiers={modifiers} />
+      <EquipmentSection project={project} onUpdate={onUpdate} equipment={equipment} modifiers={modifiers} />
+      <ServicesSection project={project} onUpdate={onUpdate} services={services} modifiers={modifiers} />
       <CostSummarySection project={project} onUpdate={onUpdate} />
       <PostFieldSection project={project} onUpdate={onUpdate} />
 
@@ -2258,6 +2379,7 @@ export default function ProjectDetail() {
   const [operators, setOperators] = useState([])
   const [equipment, setEquipment] = useState([])
   const [services, setServices] = useState([])
+  const [modifiers, setModifiers] = useState([])
 
   // Refs for auto-save
   const projectRef = useRef(project)
@@ -2281,16 +2403,18 @@ export default function ProjectDetail() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [projectData, opsData, equipData, servData] = await Promise.all([
+      const [projectData, opsData, equipData, servData, modsData] = await Promise.all([
         getProject(projectId),
         getOperators(),
         getEquipment(),
-        getServices()
+        getServices(),
+        getModifiers()
       ])
       setProject(projectData)
       setOperators(opsData || [])
       setEquipment(equipData || [])
       setServices(servData || [])
+      setModifiers(modsData || [])
     } catch (err) {
       console.error('Failed to load project:', err)
       setError('Failed to load project')
@@ -2499,6 +2623,7 @@ export default function ProjectDetail() {
             operators={operators}
             equipment={equipment}
             services={services}
+            modifiers={modifiers}
           />
         )}
         {activeTab === 'site' && (
