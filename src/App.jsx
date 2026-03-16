@@ -17,6 +17,7 @@ import TimeTracking from './pages/TimeTracking'
 import Expenses from './pages/Expenses'
 import Projects from './pages/Projects'
 import ProjectDetail from './pages/ProjectDetail'
+import Training from './pages/Training'
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -92,6 +93,9 @@ function AppRoutes() {
       {/* Projects */}
       <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
       <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
+
+      {/* Training */}
+      <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
 
       {/* Safety */}
       <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />

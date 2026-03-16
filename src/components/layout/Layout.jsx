@@ -18,6 +18,7 @@ import {
   X,
   ChevronDown,
   ClipboardList,
+  GraduationCap,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -44,6 +45,7 @@ const navigation = [
     ]
   },
   { name: 'Projects', href: '/projects', icon: FolderOpen },
+  { name: 'Training', href: '/training', icon: GraduationCap },
   {
     name: 'Safety',
     icon: Shield,
