@@ -295,54 +295,174 @@ const SAIL_COLORS = {
 // OSO Table - Operational Safety Objectives by SAIL level
 // O = Optional, L = Low, M = Medium, H = High robustness
 const OSO_TABLE = [
-  { id: 'OSO#01', name: 'Ensure the operator is competent and/or proven', category: 'Technical',
-    requirements: { I: 'O', II: 'L', III: 'M', IV: 'H', V: 'H', VI: 'H' } },
+  { id: 'OSO#01', name: 'Ensure the operator is competent and/or proven', category: 'Operational',
+    requirements: { I: 'O', II: 'L', III: 'M', IV: 'H', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Operator declares competency. Basic familiarity with regulations.',
+      medium: 'Documented training program. Operations manual exists. Internal audits conducted.',
+      high: 'Certified by authority or recognized body. Comprehensive SMS. Regular external audits.'
+    }},
   { id: 'OSO#02', name: 'UAS manufactured by competent entity', category: 'Technical',
-    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Manufacturer provides basic documentation and specifications.',
+      medium: 'Manufacturer has documented QA process. Production standards followed.',
+      high: 'Manufacturer certified to industry standards (ISO, AS9100). Full traceability.'
+    }},
   { id: 'OSO#03', name: 'UAS maintained by competent entity', category: 'Technical',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Maintenance per manufacturer instructions. Basic logs kept.',
+      medium: 'Trained maintenance personnel. Documented procedures. Scheduled maintenance program.',
+      high: 'Certified maintenance organization. Full maintenance tracking system. Component life limits enforced.'
+    }},
   { id: 'OSO#04', name: 'UAS developed to design standards', category: 'Technical',
-    requirements: { I: 'O', II: 'O', III: 'O', IV: 'L', V: 'M', VI: 'H' } },
+    requirements: { I: 'O', II: 'O', III: 'O', IV: 'L', V: 'M', VI: 'H' },
+    guidance: {
+      low: 'Basic industry design practices followed.',
+      medium: 'Compliance with recognized design standards. Design documentation available.',
+      high: 'Full compliance with aviation design standards. Type certificate or equivalent.'
+    }},
   { id: 'OSO#05', name: 'UAS is designed considering system safety', category: 'Technical',
-    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic failure modes identified. Simple safety analysis performed.',
+      medium: 'Formal safety assessment (FHA/FMEA). Safety requirements documented.',
+      high: 'Full system safety assessment per industry standards. Independent safety review.'
+    }},
   { id: 'OSO#06', name: 'C3 link performance is appropriate', category: 'Technical',
-    requirements: { I: 'O', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'O', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Link tested for operational range. Basic interference assessment.',
+      medium: 'Link budget analysis. Redundancy or lost-link procedures. Performance monitoring.',
+      high: 'Certified link equipment. Spectrum coordination. Redundant links with automatic switchover.'
+    }},
   { id: 'OSO#07', name: 'Inspection of UAS to ensure safe condition', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Pre-flight inspection checklist. Visual inspection before each flight.',
+      medium: 'Documented inspection procedures. Defect tracking. Regular scheduled inspections.',
+      high: 'Comprehensive inspection program. NDT where required. Full component tracking.'
+    }},
   { id: 'OSO#08', name: 'Operational procedures are defined, validated and adhered to', category: 'Operational',
-    requirements: { I: 'L', II: 'M', III: 'H', IV: 'H', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'M', III: 'H', IV: 'H', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic procedures documented. Crew familiar with procedures.',
+      medium: 'Comprehensive ops manual. Procedures validated through testing. Compliance monitored.',
+      high: 'Authority-approved procedures. Regular validation flights. Full audit trail of compliance.'
+    }},
   { id: 'OSO#09', name: 'Remote crew trained and current', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic pilot certification. Familiar with UAS type.',
+      medium: 'Type-specific training. Regular recurrency. Emergency procedure training.',
+      high: 'Approved training program. Simulator training. Competency checks. CRM training.'
+    }},
   { id: 'OSO#10', name: 'Safe recovery from technical issues', category: 'Technical',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic RTH function. Manual override capability.',
+      medium: 'Automated contingency responses. Multiple recovery options. Flight termination system.',
+      high: 'Certified recovery systems. Redundant flight termination. Tested to high reliability.'
+    }},
   { id: 'OSO#11', name: 'Procedures for safe handling of cargo', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'M', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'M', VI: 'H' },
+    guidance: {
+      low: 'Weight limits observed. Secure attachment verified.',
+      medium: 'Documented loading procedures. CG verification. Payload release procedures.',
+      high: 'Certified payload systems. Hazmat procedures if applicable. Emergency jettison capability.'
+    }},
   { id: 'OSO#12', name: 'UAS designed to manage deteriorating systems', category: 'Technical',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic system monitoring. Warnings for critical parameters.',
+      medium: 'Health monitoring system. Automated responses to degradation. Redundancy for critical systems.',
+      high: 'Full FDIR implementation. Graceful degradation designed in. Certified to failure requirements.'
+    }},
   { id: 'OSO#13', name: 'External services supporting UAS operation', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Weather information available. Basic airspace information.',
+      medium: 'Reliable weather sources. NOTAMs checked. Communication with relevant parties.',
+      high: 'Contractual service agreements. UTM integration. Real-time traffic information.'
+    }},
   { id: 'OSO#14', name: 'Operational procedures to handle adverse conditions', category: 'Operational',
-    requirements: { I: 'L', II: 'M', III: 'M', IV: 'H', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'M', III: 'M', IV: 'H', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic weather limits defined. Go/no-go criteria.',
+      medium: 'Comprehensive adverse condition procedures. Decision points defined. Divert options.',
+      high: 'Validated adverse condition procedures. Crew trained and tested. Real-time monitoring.'
+    }},
   { id: 'OSO#15', name: 'Adequate crew competency for adverse conditions', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Crew aware of adverse condition procedures.',
+      medium: 'Specific training for adverse conditions. Regular practice.',
+      high: 'Simulator training for emergencies. Tested competency. Stress management training.'
+    }},
   { id: 'OSO#16', name: 'Multi-crew coordination procedures', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
-  { id: 'OSO#17', name: 'Remote crew able to control iteration with ATC', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Clear roles defined. Basic communication plan.',
+      medium: 'Documented crew coordination procedures. Briefing requirements. Handover procedures.',
+      high: 'CRM training. Standardized communication. Tested coordination under stress.'
+    }},
+  { id: 'OSO#17', name: 'Remote crew able to control interaction with ATC', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Crew understands ATC requirements. Radio communication available.',
+      medium: 'ATC communication procedures. Crew trained in radio procedures. Contingency if comms lost.',
+      high: 'Real-time ATC link. Automated position reporting. Certified communication equipment.'
+    }},
   { id: 'OSO#18', name: 'Automatic protection of flight envelope', category: 'Technical',
-    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic geofencing. Altitude limits.',
+      medium: 'Comprehensive envelope protection. Automatic limiting of speed, bank, altitude.',
+      high: 'Certified flight envelope protection. Cannot be overridden. Fail-safe activation.'
+    }},
   { id: 'OSO#19', name: 'Safe recovery from human error', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Ability to take over manual control. Basic error recovery procedures.',
+      medium: 'Error trapping in procedures. Confirmation for critical actions. Recovery training.',
+      high: 'System designed to prevent/trap errors. Automated recovery from common errors.'
+    }},
   { id: 'OSO#20', name: 'Safe design to limit effects of human error', category: 'Technical',
-    requirements: { I: 'O', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'O', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Basic UI design. Clear controls.',
+      medium: 'HMI designed to minimize errors. Confirmation dialogs. Clear feedback.',
+      high: 'Human factors assessment. Certified HMI design. Error-proof control design.'
+    }},
   { id: 'OSO#21', name: 'Remote crew not impaired', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Crew self-declares fitness. No drugs/alcohol policy.',
+      medium: 'Fatigue management policy. Duty time limits. Fitness-for-duty assessment.',
+      high: 'Formal fatigue risk management. Random testing. Medical requirements.'
+    }},
   { id: 'OSO#22', name: 'Remote crew can cope with adverse conditions', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Crew trained for expected conditions.',
+      medium: 'Workload assessment. Additional crew for complex ops. Stress management.',
+      high: 'Full workload analysis. Automation to reduce workload. Tested under adverse conditions.'
+    }},
   { id: 'OSO#23', name: 'Environmental conditions to be measured', category: 'Operational',
-    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'M', VI: 'H' } },
+    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'M', VI: 'H' },
+    guidance: {
+      low: 'Weather check before flight. Basic wind measurement.',
+      medium: 'On-site weather station. Real-time monitoring. Documented limits.',
+      high: 'Certified weather equipment. Automated weather integration. Predictive capability.'
+    }},
   { id: 'OSO#24', name: 'UAS designed for environmental conditions', category: 'Technical',
-    requirements: { I: 'O', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' } }
+    requirements: { I: 'O', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' },
+    guidance: {
+      low: 'Manufacturer environmental limits known.',
+      medium: 'Tested for operational environment. IP rating appropriate. Temperature limits verified.',
+      high: 'Certified environmental envelope. Tested to extremes. Environmental monitoring systems.'
+    }}
 ]
 
 const OSO_ROBUSTNESS_COLORS = {
@@ -421,7 +541,7 @@ function Section({ title, children, defaultOpen = true, badge = null, icon: Icon
   )
 }
 
-function InfoTooltip({ children }) {
+function InfoTooltip({ children, wide = false }) {
   const [show, setShow] = useState(false)
   return (
     <div className="relative inline-block">
@@ -433,7 +553,7 @@ function InfoTooltip({ children }) {
         <Info className="w-4 h-4" />
       </button>
       {show && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+        <div className={`absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg ${wide ? 'w-80' : 'w-64'}`}>
           {children}
         </div>
       )}
@@ -2180,7 +2300,28 @@ function SORACalculator({ site, onUpdateSite, equipment }) {
                     return (
                       <tr key={oso.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2 font-mono text-xs text-gray-500">{oso.id}</td>
-                        <td className="px-4 py-2 text-gray-700">{oso.name}</td>
+                        <td className="px-4 py-2 text-gray-700">
+                          <div className="flex items-center gap-2">
+                            <span>{oso.name}</span>
+                            <InfoTooltip wide>
+                              <p className="font-medium mb-2">{oso.id}: {oso.name}</p>
+                              <div className="space-y-2">
+                                <div>
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-green-600 text-white text-xs font-medium mb-1">Low</span>
+                                  <p className="text-gray-200">{oso.guidance.low}</p>
+                                </div>
+                                <div>
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-yellow-500 text-white text-xs font-medium mb-1">Medium</span>
+                                  <p className="text-gray-200">{oso.guidance.medium}</p>
+                                </div>
+                                <div>
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-red-500 text-white text-xs font-medium mb-1">High</span>
+                                  <p className="text-gray-200">{oso.guidance.high}</p>
+                                </div>
+                              </div>
+                            </InfoTooltip>
+                          </div>
+                        </td>
                         <td className="px-4 py-2 text-center">
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${OSO_ROBUSTNESS_COLORS[requirement]}`}>
                             {requirement}
