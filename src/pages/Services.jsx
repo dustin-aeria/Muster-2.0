@@ -54,6 +54,57 @@ const MODIFIER_TYPES = [
   { value: 'flat_fee', label: 'Flat Fee ($)', example: 'e.g., 500 flat charge' }
 ]
 
+// Output deliverables that services can produce
+const OUTPUT_DELIVERABLES = [
+  // Mapping & Survey
+  { id: 'orthomosaic', label: 'Orthomosaic', category: 'Mapping' },
+  { id: 'dsm', label: 'DSM (Digital Surface Model)', category: 'Mapping' },
+  { id: 'dtm', label: 'DTM (Digital Terrain Model)', category: 'Mapping' },
+  { id: 'contours', label: 'Contour Lines', category: 'Mapping' },
+  { id: 'georeferenced_images', label: 'Georeferenced Images', category: 'Mapping' },
+  // 3D & Modeling
+  { id: 'point_cloud', label: 'Point Cloud', category: '3D' },
+  { id: '3d_mesh', label: '3D Mesh Model', category: '3D' },
+  { id: '3d_textured', label: '3D Textured Model', category: '3D' },
+  { id: 'cad_drawings', label: 'CAD Drawings', category: '3D' },
+  // LiDAR
+  { id: 'lidar_point_cloud', label: 'LiDAR Point Cloud', category: 'LiDAR' },
+  { id: 'classified_point_cloud', label: 'Classified Point Cloud', category: 'LiDAR' },
+  { id: 'intensity_map', label: 'Intensity Map', category: 'LiDAR' },
+  // Volumetrics
+  { id: 'volumetric_report', label: 'Volumetric Report', category: 'Analysis' },
+  { id: 'cut_fill_analysis', label: 'Cut/Fill Analysis', category: 'Analysis' },
+  { id: 'change_detection', label: 'Change Detection Report', category: 'Analysis' },
+  // Bathymetric
+  { id: 'bathymetric_surface', label: 'Bathymetric Surface', category: 'Bathymetric' },
+  { id: 'depth_contours', label: 'Depth Contours', category: 'Bathymetric' },
+  { id: 'velocity_profile', label: 'Velocity Profile (ADCP)', category: 'Bathymetric' },
+  { id: 'discharge_calc', label: 'Discharge Calculations', category: 'Bathymetric' },
+  // Spectral & Environmental
+  { id: 'ndvi', label: 'NDVI', category: 'Spectral' },
+  { id: 'ndre', label: 'NDRE', category: 'Spectral' },
+  { id: 'thermal_mosaic', label: 'Thermal Mosaic', category: 'Spectral' },
+  { id: 'vegetation_health', label: 'Vegetation Health Map', category: 'Spectral' },
+  { id: 'species_classification', label: 'Species Classification', category: 'Environmental' },
+  { id: 'wildlife_count', label: 'Wildlife Count/Report', category: 'Environmental' },
+  // Inspection
+  { id: 'inspection_report', label: 'Inspection Report', category: 'Inspection' },
+  { id: 'defect_map', label: 'Defect/Anomaly Map', category: 'Inspection' },
+  { id: 'annotated_images', label: 'Annotated Images', category: 'Inspection' },
+  // Media
+  { id: 'video_raw', label: 'Raw Video', category: 'Media' },
+  { id: 'video_edited', label: 'Edited Video', category: 'Media' },
+  { id: 'photos_raw', label: 'Raw Photos', category: 'Media' },
+  { id: 'photos_edited', label: 'Edited Photos', category: 'Media' },
+  // Reports
+  { id: 'flight_log', label: 'Flight Log', category: 'Reports' },
+  { id: 'accuracy_report', label: 'Accuracy Report', category: 'Reports' },
+  { id: 'qaqc_report', label: 'QA/QC Report', category: 'Reports' },
+  { id: 'technical_report', label: 'Technical Report', category: 'Reports' },
+]
+
+const DELIVERABLE_CATEGORIES = [...new Set(OUTPUT_DELIVERABLES.map(d => d.category))]
+
 function ServiceModal({ service, onClose, onSave }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -63,6 +114,7 @@ function ServiceModal({ service, onClose, onSave }) {
     base_rate: '',
     alternate_rates: {},
     pricing_options: '',
+    output_deliverables: [],
     notes: ''
   })
   const [newAltUnit, setNewAltUnit] = useState('')
@@ -80,10 +132,20 @@ function ServiceModal({ service, onClose, onSave }) {
         base_rate: service.base_rate || '',
         alternate_rates: service.alternate_rates || {},
         pricing_options: service.pricing_options || '',
+        output_deliverables: service.output_deliverables || [],
         notes: service.notes || ''
       })
     }
   }, [service])
+
+  const toggleDeliverable = (deliverableId) => {
+    setFormData(prev => ({
+      ...prev,
+      output_deliverables: prev.output_deliverables.includes(deliverableId)
+        ? prev.output_deliverables.filter(d => d !== deliverableId)
+        : [...prev.output_deliverables, deliverableId]
+    }))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -293,6 +355,66 @@ function ServiceModal({ service, onClose, onSave }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               placeholder="Additional pricing details, volume discounts, etc."
             />
+          </div>
+
+          {/* Output Deliverables */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Output Deliverables
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 mb-3">Select the deliverables this service produces</p>
+
+            {formData.output_deliverables.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {formData.output_deliverables.map(delId => {
+                  const del = OUTPUT_DELIVERABLES.find(d => d.id === delId)
+                  return del ? (
+                    <span
+                      key={delId}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-sm"
+                    >
+                      {del.label}
+                      <button
+                        type="button"
+                        onClick={() => toggleDeliverable(delId)}
+                        className="hover:text-green-900"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ) : null
+                })}
+              </div>
+            )}
+
+            <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+              {DELIVERABLE_CATEGORIES.map(category => (
+                <div key={category} className="border-b border-gray-100 last:border-0">
+                  <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-600 sticky top-0">
+                    {category}
+                  </div>
+                  <div className="p-2 flex flex-wrap gap-1.5">
+                    {OUTPUT_DELIVERABLES.filter(d => d.category === category).map(del => (
+                      <button
+                        key={del.id}
+                        type="button"
+                        onClick={() => toggleDeliverable(del.id)}
+                        className={`px-2 py-1 rounded text-xs transition-colors ${
+                          formData.output_deliverables.includes(del.id)
+                            ? 'bg-green-100 text-green-700 font-medium'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {del.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Notes */}
@@ -777,6 +899,27 @@ export default function Services() {
                                     </div>
                                   )}
                                 </div>
+                                {(service.output_deliverables?.length > 0) && (
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                                      <Package className="w-4 h-4" />
+                                      Output Deliverables
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {service.output_deliverables.map(delId => {
+                                        const del = OUTPUT_DELIVERABLES.find(d => d.id === delId)
+                                        return del ? (
+                                          <span
+                                            key={delId}
+                                            className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs"
+                                          >
+                                            {del.label}
+                                          </span>
+                                        ) : null
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
                                 {(service.pricing_options || service.notes) && (
                                   <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {service.pricing_options && (

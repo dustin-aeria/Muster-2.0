@@ -4,6 +4,11 @@
 -- ============================================
 
 -- ============================================
+-- SCHEMA UPDATES: Add output_deliverables to services
+-- ============================================
+ALTER TABLE services ADD COLUMN IF NOT EXISTS output_deliverables TEXT[] DEFAULT '{}';
+
+-- ============================================
 -- OPERATORS (Personnel Roles)
 -- Day rates are base, other rates auto-calculated in app
 -- ============================================
@@ -13,31 +18,31 @@
 
 -- PIC Roles
 INSERT INTO operators (name, roles, rate_day, rate_half_day, rate_hourly, rate_week, travel_rate_day, notes) VALUES
-('PIC - Basic Template', ARRAY['PIC - Basic'], 1500, 825, 200, 6750, 750, 'Certified PIC for standard VLOS operations. Half-day = 55% of day, Hourly = day/7.5, Week = 4.5x day.'),
-('PIC - Advanced Template', ARRAY['PIC - Advanced'], 1750, 962.50, 233.33, 7875, 875, 'PIC for advanced operations (EVLOS, complex airspace)'),
-('PIC - Complex Template', ARRAY['PIC - Complex'], 2050, 1127.50, 273.33, 9225, 1025, 'PIC for BVLOS, high-altitude, or complex regulatory operations'),
-('PIC - Specialized Template', ARRAY['PIC - Specialized'], 2500, 1375, 333.33, 11250, 1250, 'PIC tasked with piloting specialized vessels or platforms');
+('PIC - Basic', ARRAY['PIC - Basic'], 1500, 825, 200, 6750, 750, 'Certified PIC for standard VLOS operations. Half-day = 55% of day, Hourly = day/7.5, Week = 4.5x day.'),
+('PIC - Advanced', ARRAY['PIC - Advanced'], 1750, 962.50, 233.33, 7875, 875, 'PIC for advanced operations (EVLOS, complex airspace)'),
+('PIC - Complex', ARRAY['PIC - Complex'], 2050, 1127.50, 273.33, 9225, 1025, 'PIC for BVLOS, high-altitude, or complex regulatory operations'),
+('PIC - Specialized', ARRAY['PIC - Specialized'], 2500, 1375, 333.33, 11250, 1250, 'PIC tasked with piloting specialized vessels or platforms');
 
 -- Field Personnel
 INSERT INTO operators (name, roles, rate_day, rate_half_day, rate_hourly, rate_week, travel_rate_day, notes) VALUES
-('Visual Observer Template', ARRAY['Visual Observer'], 900, 495, 120, 4050, 450, 'Maintains VLOS with RPAS, monitors airspace'),
-('Ground Supervisor Template', ARRAY['Ground Supervisor'], 1200, 660, 160, 5400, 600, 'Site management, bystander control, ground operations'),
-('Payload Operator Template', ARRAY['Payload Operator'], 1100, 605, 146.67, 4950, 550, 'Operation of specialized sensors and payloads'),
-('Field Biologist Template', ARRAY['Field Biologist'], 1200, 660, 160, 5400, 600, 'Wildlife expertise, species ID, behavioral monitoring'),
-('Marine Mammal Observer Template', ARRAY['Marine Mammal Observer', 'MMO'], 1000, 550, 133.33, 4500, 500, 'Wildlife disturbance monitoring, DFO compliance'),
-('HSE Officer Template', ARRAY['HSE Officer'], 1200, 660, 160, 5400, 600, 'Health, Safety, and Environment oversight in field'),
-('Boat Operator Template', ARRAY['Boat Operator'], 1000, 550, 133.33, 4500, 500, 'Operation of watercraft for marine/river operations'),
-('Field Technician Template', ARRAY['Field Technician'], 750, 412.50, 100, 3375, 375, 'General field support, equipment handling, logistics');
+('Visual Observer', ARRAY['Visual Observer'], 900, 495, 120, 4050, 450, 'Maintains VLOS with RPAS, monitors airspace'),
+('Ground Supervisor', ARRAY['Ground Supervisor'], 1200, 660, 160, 5400, 600, 'Site management, bystander control, ground operations'),
+('Payload Operator', ARRAY['Payload Operator'], 1100, 605, 146.67, 4950, 550, 'Operation of specialized sensors and payloads'),
+('Field Biologist', ARRAY['Field Biologist'], 1200, 660, 160, 5400, 600, 'Wildlife expertise, species ID, behavioral monitoring'),
+('Marine Mammal Observer', ARRAY['Marine Mammal Observer', 'MMO'], 1000, 550, 133.33, 4500, 500, 'Wildlife disturbance monitoring, DFO compliance'),
+('HSE Officer', ARRAY['HSE Officer'], 1200, 660, 160, 5400, 600, 'Health, Safety, and Environment oversight in field'),
+('Boat Operator', ARRAY['Boat Operator'], 1000, 550, 133.33, 4500, 500, 'Operation of watercraft for marine/river operations'),
+('Field Technician', ARRAY['Field Technician'], 750, 412.50, 100, 3375, 375, 'General field support, equipment handling, logistics');
 
 -- Office Personnel
 INSERT INTO operators (name, roles, rate_day, rate_half_day, rate_hourly, rate_week, travel_rate_day, notes) VALUES
-('Project Manager Template', ARRAY['Project Manager'], 1300, 715, 173.33, 5850, 650, 'Project planning, scheduling, resource allocation, client liaison'),
-('HSE Planning Officer Template', ARRAY['HSE Planning Officer'], 1200, 660, 160, 5400, 600, 'Safety planning, risk assessment, compliance documentation'),
-('Compliance Officer Template', ARRAY['Compliance Officer'], 1300, 715, 173.33, 5850, 650, 'Regulatory compliance, TC liaison, permit management'),
-('Technical Officer Template', ARRAY['Technical Officer'], 1200, 660, 160, 5400, 600, 'Technical specifications, equipment selection, QA'),
-('Logistics Coordinator Template', ARRAY['Logistics Coordinator'], 950, 522.50, 126.67, 4275, 475, 'Mobilization planning, shipping, travel coordination'),
-('RPAS Operations Planner Template', ARRAY['RPAS Operations Planner'], 1200, 660, 160, 5400, 600, 'Flight planning, airspace coordination, mission planning'),
-('Data Analyst / GIS Template', ARRAY['Data Analyst', 'GIS Specialist'], 1100, 605, 146.67, 4950, 550, 'Data processing, analysis, deliverable production');
+('Project Manager', ARRAY['Project Manager'], 1300, 715, 173.33, 5850, 650, 'Project planning, scheduling, resource allocation, client liaison'),
+('HSE Planning Officer', ARRAY['HSE Planning Officer'], 1200, 660, 160, 5400, 600, 'Safety planning, risk assessment, compliance documentation'),
+('Compliance Officer', ARRAY['Compliance Officer'], 1300, 715, 173.33, 5850, 650, 'Regulatory compliance, TC liaison, permit management'),
+('Technical Officer', ARRAY['Technical Officer'], 1200, 660, 160, 5400, 600, 'Technical specifications, equipment selection, QA'),
+('Logistics Coordinator', ARRAY['Logistics Coordinator'], 950, 522.50, 126.67, 4275, 475, 'Mobilization planning, shipping, travel coordination'),
+('RPAS Operations Planner', ARRAY['RPAS Operations Planner'], 1200, 660, 160, 5400, 600, 'Flight planning, airspace coordination, mission planning'),
+('Data Analyst / GIS Specialist', ARRAY['Data Analyst', 'GIS Specialist'], 1100, 605, 146.67, 4950, 550, 'Data processing, analysis, deliverable production');
 
 -- ============================================
 -- EQUIPMENT
