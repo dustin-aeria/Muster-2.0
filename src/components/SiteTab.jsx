@@ -2885,6 +2885,8 @@ function PPESelector({ site, onUpdateSite }) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [customPPE, setCustomPPE] = useState('')
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const buttonRef = useRef(null)
   const dropdownRef = useRef(null)
 
   const emergency = site?.emergency || {}
@@ -2918,6 +2920,18 @@ function PPESelector({ site, onUpdateSite }) {
     })
   }
 
+  const handleOpen = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      })
+    }
+    setIsOpen(true)
+  }
+
   // Filter PPE items by search
   const filteredItems = PPE_ITEMS.filter(item =>
     item.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -2946,123 +2960,136 @@ function PPESelector({ site, onUpdateSite }) {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          buttonRef.current && !buttonRef.current.contains(e.target)) {
         setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   return (
     <div className="space-y-4">
-      {/* Dropdown Selector */}
-      <div ref={dropdownRef} className="relative">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white text-left flex items-center justify-between hover:border-gray-300"
+      {/* Dropdown Button */}
+      <button
+        ref={buttonRef}
+        onClick={() => isOpen ? setIsOpen(false) : handleOpen()}
+        className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white text-left flex items-center justify-between hover:border-gray-300"
+      >
+        <div className="flex-1 min-w-0">
+          {selectedLabels.length === 0 ? (
+            <span className="text-gray-400">Select required PPE...</span>
+          ) : (
+            <span className="text-gray-700">{selectedLabels.length} items selected</span>
+          )}
+        </div>
+        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown Portal */}
+      {isOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            maxHeight: '400px'
+          }}
         >
-          <div className="flex-1 min-w-0">
-            {selectedLabels.length === 0 ? (
-              <span className="text-gray-400">Select required PPE...</span>
-            ) : (
-              <span className="text-gray-700">{selectedLabels.length} items selected</span>
+          {/* Search */}
+          <div className="p-2 border-b border-gray-100">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search PPE..."
+              className="w-full px-3 py-2 border border-gray-200 rounded text-sm"
+              autoFocus
+            />
+          </div>
+
+          {/* PPE List by Category */}
+          <div className="max-h-64 overflow-y-auto">
+            {Object.entries(groupedItems).map(([category, items]) => (
+              <div key={category}>
+                <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0">
+                  {category}
+                </div>
+                {items.map(item => (
+                  <label
+                    key={item.id}
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPPE.includes(item.id)}
+                      onChange={() => togglePPE(item.id)}
+                      className="rounded text-brand-600"
+                    />
+                    <span className="text-sm text-gray-700">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            ))}
+
+            {/* Custom Items */}
+            {customItems.length > 0 && (
+              <div>
+                <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0">
+                  Custom Items
+                </div>
+                {customItems.map(item => (
+                  <label
+                    key={item}
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPPE.includes(`custom_${item}`)}
+                      onChange={() => togglePPE(`custom_${item}`)}
+                      className="rounded text-brand-600"
+                    />
+                    <span className="text-sm text-gray-700 flex-1">{item}</span>
+                    <button
+                      onClick={(e) => { e.preventDefault(); removeCustomPPE(item) }}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </label>
+                ))}
+              </div>
             )}
           </div>
-          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
 
-        {isOpen && (
-          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-hidden">
-            {/* Search */}
-            <div className="p-2 border-b border-gray-100">
+          {/* Add Custom */}
+          <div className="p-2 border-t border-gray-100">
+            <div className="flex gap-2">
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search PPE..."
-                className="w-full px-3 py-2 border border-gray-200 rounded text-sm"
-                autoFocus
+                value={customPPE}
+                onChange={(e) => setCustomPPE(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addCustomPPE()}
+                placeholder="Add custom PPE item..."
+                className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm"
               />
-            </div>
-
-            {/* PPE List by Category */}
-            <div className="max-h-64 overflow-y-auto">
-              {Object.entries(groupedItems).map(([category, items]) => (
-                <div key={category}>
-                  <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {category}
-                  </div>
-                  {items.map(item => (
-                    <label
-                      key={item.id}
-                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedPPE.includes(item.id)}
-                        onChange={() => togglePPE(item.id)}
-                        className="rounded text-brand-600"
-                      />
-                      <span className="text-sm text-gray-700">{item.label}</span>
-                    </label>
-                  ))}
-                </div>
-              ))}
-
-              {/* Custom Items */}
-              {customItems.length > 0 && (
-                <div>
-                  <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Custom Items
-                  </div>
-                  {customItems.map(item => (
-                    <label
-                      key={item}
-                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedPPE.includes(`custom_${item}`)}
-                        onChange={() => togglePPE(`custom_${item}`)}
-                        className="rounded text-brand-600"
-                      />
-                      <span className="text-sm text-gray-700 flex-1">{item}</span>
-                      <button
-                        onClick={(e) => { e.preventDefault(); removeCustomPPE(item) }}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Add Custom */}
-            <div className="p-2 border-t border-gray-100">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={customPPE}
-                  onChange={(e) => setCustomPPE(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addCustomPPE()}
-                  placeholder="Add custom PPE item..."
-                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm"
-                />
-                <button
-                  onClick={addCustomPPE}
-                  disabled={!customPPE.trim()}
-                  className="px-3 py-1.5 bg-brand-600 text-white rounded text-sm hover:bg-brand-700 disabled:opacity-50"
-                >
-                  Add
-                </button>
-              </div>
+              <button
+                onClick={addCustomPPE}
+                disabled={!customPPE.trim()}
+                className="px-3 py-1.5 bg-brand-600 text-white rounded text-sm hover:bg-brand-700 disabled:opacity-50"
+              >
+                Add
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>,
+        document.body
+      )}
 
       {/* Selected Items Display */}
       {selectedLabels.length > 0 && (
