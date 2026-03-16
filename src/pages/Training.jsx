@@ -347,18 +347,21 @@ const TRACKS = [
 // ============================================
 
 async function createSession(track, traineeName) {
+  // First try with trainee_name, fall back to notes if column doesn't exist
   const { data, error } = await supabase
     .from('track_assignments')
     .insert({
       track,
-      trainee_name: traineeName,
-      status: 'in_progress',
-      progress_data: {} // Store quiz answers, checklist completions, etc.
+      status: 'in_progress'
     })
     .select()
     .single()
+
   if (error) throw error
-  return data
+
+  // Store trainee name in localStorage since column may not exist
+  localStorage.setItem(`trainee_${data.id}`, traineeName)
+  return { ...data, trainee_name: traineeName }
 }
 
 async function getSessions() {
@@ -366,7 +369,11 @@ async function getSessions() {
     .from('track_assignments')
     .select('*')
     .order('assigned_at', { ascending: false })
-  return data || []
+  // Augment with trainee names from localStorage
+  return (data || []).map(s => ({
+    ...s,
+    trainee_name: s.trainee_name || localStorage.getItem(`trainee_${s.id}`) || 'Unknown'
+  }))
 }
 
 async function updateSession(id, updates) {
@@ -1069,7 +1076,11 @@ function ReferenceDocsSection({ documents }) {
 
 function TrainingSession({ track, existingSession, documents, operators, onBack }) {
   const [session, setSession] = useState(existingSession)
-  const [traineeName, setTraineeName] = useState(existingSession?.trainee_name || '')
+  const [traineeName, setTraineeName] = useState(
+    existingSession?.trainee_name ||
+    (existingSession ? localStorage.getItem(`trainee_${existingSession.id}`) : '') ||
+    ''
+  )
   const [started, setStarted] = useState(!!existingSession)
   const [saving, setSaving] = useState(false)
 
@@ -1096,23 +1107,25 @@ function TrainingSession({ track, existingSession, documents, operators, onBack 
       const skills = await getSkillSignoffs(existingSession.id)
       setSkillSignoffs(skills)
     }
-    // Load other progress from session.progress_data if stored
-    if (existingSession.progress_data) {
-      setQuizCompleted(existingSession.progress_data.quiz || [])
-      setScenariosCompleted(existingSession.progress_data.scenarios || [])
-      setEquipmentCompleted(existingSession.progress_data.equipment || [])
-      setReviewTasksCompleted(existingSession.progress_data.reviewTasks || [])
+    // Load other progress from localStorage
+    const stored = localStorage.getItem(`training_progress_${existingSession.id}`)
+    if (stored) {
+      const data = JSON.parse(stored)
+      setQuizCompleted(data.quiz || [])
+      setScenariosCompleted(data.scenarios || [])
+      setEquipmentCompleted(data.equipment || [])
+      setReviewTasksCompleted(data.reviewTasks || [])
     }
   }
 
-  const saveProgress = async (updates) => {
+  const saveProgress = (updates) => {
     const progressData = {
       quiz: updates.quiz ?? quizCompleted,
       scenarios: updates.scenarios ?? scenariosCompleted,
       equipment: updates.equipment ?? equipmentCompleted,
       reviewTasks: updates.reviewTasks ?? reviewTasksCompleted
     }
-    await updateSession(session.id, { progress_data: progressData })
+    localStorage.setItem(`training_progress_${session.id}`, JSON.stringify(progressData))
   }
 
   const handleStart = async () => {
