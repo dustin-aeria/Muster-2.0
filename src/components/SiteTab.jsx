@@ -1333,26 +1333,35 @@ function getDrawStyles() {
 // ELEMENT TABLES (REBUILT)
 // ============================================
 
-function ElementTables({ elements, onUpdateElement, onDeleteElement, onHighlight }) {
-  // Group by element type
-  const groupedElements = useMemo(() => {
-    const groups = {}
+function ElementTables({ sites, onUpdateSiteElement, onDeleteSiteElement, onHighlight }) {
+  // Group by site, then by category
+  const groupedBySite = useMemo(() => {
+    return (sites || []).map((site, index) => {
+      const sitePrefix = `S${index + 1}`
+      const groups = {}
 
-    Object.keys(ELEMENT_CATEGORIES).forEach(cat => {
-      groups[cat] = []
-    })
+      Object.keys(ELEMENT_CATEGORIES).forEach(cat => {
+        groups[cat] = []
+      })
 
-    ;(elements || []).forEach(el => {
-      const typeConfig = ELEMENT_TYPES[el.elementType]
-      if (typeConfig) {
-        const cat = typeConfig.category
-        if (!groups[cat]) groups[cat] = []
-        groups[cat].push(el)
+      ;(site.elements || []).forEach(el => {
+        const typeConfig = ELEMENT_TYPES[el.elementType]
+        if (typeConfig) {
+          const cat = typeConfig.category
+          if (!groups[cat]) groups[cat] = []
+          groups[cat].push({ ...el, siteId: site.id, siteIndex: index })
+        }
+      })
+
+      return {
+        site,
+        siteIndex: index,
+        sitePrefix,
+        groups,
+        totalElements: (site.elements || []).length
       }
     })
-
-    return groups
-  }, [elements])
+  }, [sites])
 
   const getCoordinateDisplay = (geometry) => {
     if (geometry.type === 'Point') {
@@ -1370,9 +1379,9 @@ function ElementTables({ elements, onUpdateElement, onDeleteElement, onHighlight
     return '-'
   }
 
-  const hasElements = Object.values(groupedElements).some(arr => arr.length > 0)
+  const totalElements = groupedBySite.reduce((sum, s) => sum + s.totalElements, 0)
 
-  if (!hasElements) {
+  if (totalElements === 0) {
     return (
       <div className="text-center py-8">
         <Layers className="w-12 h-12 mx-auto text-gray-300 mb-3" />
@@ -1385,116 +1394,138 @@ function ElementTables({ elements, onUpdateElement, onDeleteElement, onHighlight
   }
 
   return (
-    <div className="space-y-6">
-      {Object.entries(groupedElements).map(([category, items]) => {
-        if (items.length === 0) return null
-
-        const CategoryIcon = ELEMENT_CATEGORIES[category]?.icon || Square
+    <div className="space-y-8">
+      {groupedBySite.map(({ site, siteIndex, sitePrefix, groups, totalElements: siteTotal }) => {
+        if (siteTotal === 0) return null
 
         return (
-          <div key={category}>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2 uppercase tracking-wide">
-              <CategoryIcon className="w-4 h-4 text-gray-400" />
-              {ELEMENT_CATEGORIES[category]?.label || category}
-              <span className="text-xs font-normal text-gray-400">({items.length})</span>
-            </h4>
+          <div key={site.id} className="border border-gray-200 rounded-lg overflow-hidden">
+            {/* Site Header */}
+            <div className="bg-gradient-to-r from-brand-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                <span className="bg-brand-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                  {sitePrefix}
+                </span>
+                {site.name}
+                <span className="text-sm font-normal text-gray-500">({siteTotal} elements)</span>
+              </h3>
+            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-500 border-b border-gray-200">
-                    <th className="pb-2 w-10">Type</th>
-                    <th className="pb-2 w-8">Color</th>
-                    <th className="pb-2">Name</th>
-                    <th className="pb-2">Coordinates</th>
-                    <th className="pb-2">Notes</th>
-                    <th className="pb-2 w-20"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {items.map(el => {
-                    const typeConfig = ELEMENT_TYPES[el.elementType] || ELEMENT_TYPES.poi
-                    const TypeIcon = typeConfig.icon
+            {/* Categories within site */}
+            <div className="p-4 space-y-6">
+              {Object.entries(groups).map(([category, items]) => {
+                if (items.length === 0) return null
 
-                    return (
-                      <tr
-                        key={el.id}
-                        className="hover:bg-gray-50 cursor-pointer group"
-                        onClick={() => onHighlight?.(el.id)}
-                      >
-                        <td className="py-2 pr-2">
-                          <div
-                            className="w-7 h-7 rounded flex items-center justify-center"
-                            style={{ backgroundColor: el.color || typeConfig.defaultColor }}
-                            title={typeConfig.label}
-                          >
-                            <TypeIcon className="w-4 h-4 text-white" />
-                          </div>
-                        </td>
-                        <td className="py-2 pr-2">
-                          <input
-                            type="color"
-                            value={el.color || typeConfig.defaultColor}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              onUpdateElement(el.id, { color: e.target.value })
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-6 h-6 rounded cursor-pointer border-0"
-                          />
-                        </td>
-                        <td className="py-2 pr-2">
-                          <input
-                            type="text"
-                            value={el.name || ''}
-                            onChange={(e) => onUpdateElement(el.id, { name: e.target.value })}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-                            placeholder={typeConfig.label}
-                          />
-                        </td>
-                        <td className="py-2 pr-2 text-gray-500 text-xs font-mono">
-                          {getCoordinateDisplay(el.geometry)}
-                        </td>
-                        <td className="py-2 pr-2">
-                          <input
-                            type="text"
-                            value={el.notes || ''}
-                            onChange={(e) => onUpdateElement(el.id, { notes: e.target.value })}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                            placeholder="Notes..."
-                          />
-                        </td>
-                        <td className="py-2">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onHighlight?.(el.id)
-                              }}
-                              className="p-1 text-gray-400 hover:text-brand-600"
-                              title="Zoom to element"
-                            >
-                              <ZoomIn className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onDeleteElement(el.id)
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-500"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                const CategoryIcon = ELEMENT_CATEGORIES[category]?.icon || Square
+
+                return (
+                  <div key={category}>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                      <CategoryIcon className="w-4 h-4 text-gray-400" />
+                      {ELEMENT_CATEGORIES[category]?.label || category}
+                      <span className="text-xs font-normal text-gray-400">({items.length})</span>
+                    </h4>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-gray-500 border-b border-gray-200">
+                            <th className="pb-2 w-10">Type</th>
+                            <th className="pb-2 w-8">Color</th>
+                            <th className="pb-2">Name</th>
+                            <th className="pb-2">Coordinates</th>
+                            <th className="pb-2">Notes</th>
+                            <th className="pb-2 w-20"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {items.map(el => {
+                            const typeConfig = ELEMENT_TYPES[el.elementType] || ELEMENT_TYPES.poi
+                            const TypeIcon = typeConfig.icon
+
+                            return (
+                              <tr
+                                key={el.id}
+                                className="hover:bg-gray-50 cursor-pointer group"
+                                onClick={() => onHighlight?.(el.id)}
+                              >
+                                <td className="py-2 pr-2">
+                                  <div
+                                    className="w-7 h-7 rounded flex items-center justify-center"
+                                    style={{ backgroundColor: el.color || typeConfig.defaultColor }}
+                                    title={typeConfig.label}
+                                  >
+                                    <TypeIcon className="w-4 h-4 text-white" />
+                                  </div>
+                                </td>
+                                <td className="py-2 pr-2">
+                                  <input
+                                    type="color"
+                                    value={el.color || typeConfig.defaultColor}
+                                    onChange={(e) => {
+                                      e.stopPropagation()
+                                      onUpdateSiteElement(el.siteId, el.id, { color: e.target.value })
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-6 h-6 rounded cursor-pointer border-0"
+                                  />
+                                </td>
+                                <td className="py-2 pr-2">
+                                  <input
+                                    type="text"
+                                    value={el.name || ''}
+                                    onChange={(e) => onUpdateSiteElement(el.siteId, el.id, { name: e.target.value })}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                                    placeholder={typeConfig.label}
+                                  />
+                                </td>
+                                <td className="py-2 pr-2 text-gray-500 text-xs font-mono">
+                                  {getCoordinateDisplay(el.geometry)}
+                                </td>
+                                <td className="py-2 pr-2">
+                                  <input
+                                    type="text"
+                                    value={el.notes || ''}
+                                    onChange={(e) => onUpdateSiteElement(el.siteId, el.id, { notes: e.target.value })}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                                    placeholder="Notes..."
+                                  />
+                                </td>
+                                <td className="py-2">
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onHighlight?.(el.id)
+                                      }}
+                                      className="p-1 text-gray-400 hover:text-brand-600"
+                                      title="Zoom to element"
+                                    >
+                                      <ZoomIn className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onDeleteSiteElement(el.siteId, el.id)
+                                      }}
+                                      className="p-1 text-gray-400 hover:text-red-500"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )
@@ -2328,6 +2359,27 @@ export default function SiteTab({ project, onUpdate, equipment }) {
     updateActiveSite({ elements: elements.filter(el => el.id !== elementId) })
   }
 
+  // Update element in any site (for the element tables that show all sites)
+  const updateSiteElement = (siteId, elementId, updates) => {
+    updateSites(sites.map(s => {
+      if (s.id !== siteId) return s
+      const elements = s.elements || []
+      const newElements = elements.map(el =>
+        el.id === elementId ? { ...el, ...updates } : el
+      )
+      return { ...s, elements: newElements }
+    }))
+  }
+
+  // Delete element from any site
+  const deleteSiteElement = (siteId, elementId) => {
+    updateSites(sites.map(s => {
+      if (s.id !== siteId) return s
+      const elements = s.elements || []
+      return { ...s, elements: elements.filter(el => el.id !== elementId) }
+    }))
+  }
+
   const handleSelectType = (typeId) => {
     setSelectedElementType(typeId)
     setActiveTool(null) // Switch back to drawing mode
@@ -2497,9 +2549,9 @@ export default function SiteTab({ project, onUpdate, equipment }) {
                 Map Elements
               </h4>
               <ElementTables
-                elements={activeSite?.elements || []}
-                onUpdateElement={updateElement}
-                onDeleteElement={deleteElement}
+                sites={sites}
+                onUpdateSiteElement={updateSiteElement}
+                onDeleteSiteElement={deleteSiteElement}
                 onHighlight={handleHighlightElement}
               />
             </div>
