@@ -364,9 +364,76 @@ function NeedsSubSection({ title, children, defaultOpen = true }) {
 
 function NeedsAnalysisSection({ project, onUpdate }) {
   const needs = project.needs_analysis || {}
+  const [expandedPackage, setExpandedPackage] = useState(null)
+  const [expandedSite, setExpandedSite] = useState(null)
 
   const updateNeeds = (updates) => {
     onUpdate({ needs_analysis: { ...needs, ...updates } })
+  }
+
+  // Deliverable packages
+  const packages = needs.packages || []
+
+  const addPackage = () => {
+    const newPkg = {
+      id: Date.now(),
+      name: `Package ${packages.length + 1}`,
+      products: [],
+      gsd: '',
+      accuracy: '',
+      coordinate_system: '',
+      formats: ''
+    }
+    updateNeeds({ packages: [...packages, newPkg] })
+    setExpandedPackage(newPkg.id)
+  }
+
+  const updatePackage = (id, updates) => {
+    updateNeeds({
+      packages: packages.map(p => p.id === id ? { ...p, ...updates } : p)
+    })
+  }
+
+  const removePackage = (id) => {
+    updateNeeds({ packages: packages.filter(p => p.id !== id) })
+  }
+
+  const togglePackageProduct = (pkgId, productId) => {
+    const pkg = packages.find(p => p.id === pkgId)
+    if (!pkg) return
+    const products = pkg.products || []
+    const newProducts = products.includes(productId)
+      ? products.filter(p => p !== productId)
+      : [...products, productId]
+    updatePackage(pkgId, { products: newProducts })
+  }
+
+  // Site requirements
+  const siteReqs = needs.site_requirements || []
+
+  const addSiteReq = () => {
+    const newSite = {
+      id: Date.now(),
+      name: `Site ${siteReqs.length + 1}`,
+      area_size: '',
+      area_unit: 'ha',
+      terrain: '',
+      elevation_change: '',
+      gcp_required: '',
+      conditions: ''
+    }
+    updateNeeds({ site_requirements: [...siteReqs, newSite] })
+    setExpandedSite(newSite.id)
+  }
+
+  const updateSiteReq = (id, updates) => {
+    updateNeeds({
+      site_requirements: siteReqs.map(s => s.id === id ? { ...s, ...updates } : s)
+    })
+  }
+
+  const removeSiteReq = (id) => {
+    updateNeeds({ site_requirements: siteReqs.filter(s => s.id !== id) })
   }
 
   const toggleArrayItem = (field, itemId) => {
@@ -378,156 +445,238 @@ function NeedsAnalysisSection({ project, onUpdate }) {
     }
   }
 
-  const dataProducts = needs.data_products || []
   const flags = needs.flags || []
 
   return (
     <Section title="Needs Analysis">
       <div className="space-y-4">
 
-        {/* Data Requirements */}
-        <NeedsSubSection title="Data Requirements">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Required Data Products</label>
-              <div className="flex flex-wrap gap-2">
-                {DATA_PRODUCTS.map(product => (
-                  <button
-                    key={product.id}
-                    onClick={() => toggleArrayItem('data_products', product.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      dataProducts.includes(product.id)
-                        ? 'bg-brand-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+        {/* Deliverable Packages */}
+        <NeedsSubSection title={`Deliverable Packages (${packages.length})`}>
+          <div className="space-y-3">
+            {packages.length === 0 ? (
+              <p className="text-gray-500 text-sm py-2 text-center">No packages defined yet</p>
+            ) : (
+              packages.map((pkg, idx) => (
+                <div key={pkg.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div
+                    className="px-3 py-2 bg-gray-50 flex items-center gap-3 cursor-pointer hover:bg-gray-100"
+                    onClick={() => setExpandedPackage(expandedPackage === pkg.id ? null : pkg.id)}
                   >
-                    {product.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Resolution (GSD)</label>
-                <select
-                  value={needs.gsd || ''}
-                  onChange={(e) => updateNeeds({ gsd: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  {GSD_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Accuracy Requirement</label>
-                <select
-                  value={needs.accuracy || ''}
-                  onChange={(e) => updateNeeds({ accuracy: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  {ACCURACY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Coordinate System</label>
-                <input
-                  type="text"
-                  value={needs.coordinate_system || ''}
-                  onChange={(e) => updateNeeds({ coordinate_system: e.target.value })}
-                  placeholder="e.g., NAD83 UTM Zone 10N"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Deliverable Format Notes</label>
-              <input
-                type="text"
-                value={needs.deliverable_formats || ''}
-                onChange={(e) => updateNeeds({ deliverable_formats: e.target.value })}
-                placeholder="e.g., GeoTIFF, LAS 1.4, Shapefile, KML"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
+                    <span className="text-xs font-medium text-gray-400">#{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={pkg.name}
+                      onChange={(e) => { e.stopPropagation(); updatePackage(pkg.id, { name: e.target.value }) }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 px-2 py-1 text-sm font-medium bg-transparent border-0 focus:ring-0 focus:outline-none"
+                      placeholder="Package name..."
+                    />
+                    <span className="text-xs text-gray-500">{(pkg.products || []).length} products</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removePackage(pkg.id) }}
+                      className="p-1 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    {expandedPackage === pkg.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </div>
+                  {expandedPackage === pkg.id && (
+                    <div className="p-3 space-y-3 bg-white">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">Data Products</label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {DATA_PRODUCTS.map(product => (
+                            <button
+                              key={product.id}
+                              onClick={() => togglePackageProduct(pkg.id, product.id)}
+                              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                                (pkg.products || []).includes(product.id)
+                                  ? 'bg-brand-600 text-white'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {product.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">GSD</label>
+                          <select
+                            value={pkg.gsd || ''}
+                            onChange={(e) => updatePackage(pkg.id, { gsd: e.target.value })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          >
+                            {GSD_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Accuracy</label>
+                          <select
+                            value={pkg.accuracy || ''}
+                            onChange={(e) => updatePackage(pkg.id, { accuracy: e.target.value })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          >
+                            {ACCURACY_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Coordinate System</label>
+                          <input
+                            type="text"
+                            value={pkg.coordinate_system || ''}
+                            onChange={(e) => updatePackage(pkg.id, { coordinate_system: e.target.value })}
+                            placeholder="e.g., NAD83 UTM 10N"
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Formats</label>
+                          <input
+                            type="text"
+                            value={pkg.formats || ''}
+                            onChange={(e) => updatePackage(pkg.id, { formats: e.target.value })}
+                            placeholder="e.g., GeoTIFF, LAS"
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            <button
+              onClick={addPackage}
+              className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Add Deliverable Package
+            </button>
           </div>
         </NeedsSubSection>
 
-        {/* Site Assessment */}
-        <NeedsSubSection title="Site Assessment">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Coverage Area</label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={needs.area_size || ''}
-                  onChange={(e) => updateNeeds({ area_size: e.target.value })}
-                  placeholder="Size"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-                <select
-                  value={needs.area_unit || 'ha'}
-                  onChange={(e) => updateNeeds({ area_unit: e.target.value })}
-                  className="w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  <option value="ha">ha</option>
-                  <option value="ac">ac</option>
-                  <option value="km2">km²</option>
-                  <option value="m2">m²</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Terrain Type</label>
-              <select
-                value={needs.terrain || ''}
-                onChange={(e) => updateNeeds({ terrain: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="">Select...</option>
-                {TERRAIN_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Elevation Change</label>
-              <input
-                type="text"
-                value={needs.elevation_change || ''}
-                onChange={(e) => updateNeeds({ elevation_change: e.target.value })}
-                placeholder="e.g., 50m"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">GCPs Required?</label>
-              <select
-                value={needs.gcp_required || ''}
-                onChange={(e) => updateNeeds({ gcp_required: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="">Select...</option>
-                <option value="yes">Yes - we place</option>
-                <option value="client">Yes - client provides</option>
-                <option value="existing">Use existing control</option>
-                <option value="ppk">PPK/RTK only</option>
-                <option value="no">No - relative accuracy OK</option>
-              </select>
-            </div>
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Site Access & Conditions</label>
-            <textarea
-              value={needs.site_conditions || ''}
-              onChange={(e) => updateNeeds({ site_conditions: e.target.value })}
-              placeholder="Access routes, obstacles, vegetation, power lines, restricted areas, parking, permissions needed..."
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
+        {/* Site Requirements */}
+        <NeedsSubSection title={`Site Requirements (${siteReqs.length})`}>
+          <div className="space-y-3">
+            {siteReqs.length === 0 ? (
+              <p className="text-gray-500 text-sm py-2 text-center">No sites defined yet</p>
+            ) : (
+              siteReqs.map((site, idx) => (
+                <div key={site.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div
+                    className="px-3 py-2 bg-gray-50 flex items-center gap-3 cursor-pointer hover:bg-gray-100"
+                    onClick={() => setExpandedSite(expandedSite === site.id ? null : site.id)}
+                  >
+                    <span className="text-xs font-medium text-gray-400">#{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={site.name}
+                      onChange={(e) => { e.stopPropagation(); updateSiteReq(site.id, { name: e.target.value }) }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 px-2 py-1 text-sm font-medium bg-transparent border-0 focus:ring-0 focus:outline-none"
+                      placeholder="Site name..."
+                    />
+                    {site.area_size && <span className="text-xs text-gray-500">{site.area_size} {site.area_unit}</span>}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removeSiteReq(site.id) }}
+                      className="p-1 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    {expandedSite === site.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </div>
+                  {expandedSite === site.id && (
+                    <div className="p-3 space-y-3 bg-white">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Coverage Area</label>
+                          <div className="flex gap-1">
+                            <input
+                              type="number"
+                              value={site.area_size || ''}
+                              onChange={(e) => updateSiteReq(site.id, { area_size: e.target.value })}
+                              placeholder="Size"
+                              className="flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm"
+                            />
+                            <select
+                              value={site.area_unit || 'ha'}
+                              onChange={(e) => updateSiteReq(site.id, { area_unit: e.target.value })}
+                              className="w-16 px-1 py-1.5 border border-gray-200 rounded text-sm"
+                            >
+                              <option value="ha">ha</option>
+                              <option value="ac">ac</option>
+                              <option value="km2">km²</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Terrain</label>
+                          <select
+                            value={site.terrain || ''}
+                            onChange={(e) => updateSiteReq(site.id, { terrain: e.target.value })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          >
+                            <option value="">Select...</option>
+                            {TERRAIN_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Elevation Change</label>
+                          <input
+                            type="text"
+                            value={site.elevation_change || ''}
+                            onChange={(e) => updateSiteReq(site.id, { elevation_change: e.target.value })}
+                            placeholder="e.g., 50m"
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">GCPs</label>
+                          <select
+                            value={site.gcp_required || ''}
+                            onChange={(e) => updateSiteReq(site.id, { gcp_required: e.target.value })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                          >
+                            <option value="">Select...</option>
+                            <option value="yes">We place</option>
+                            <option value="client">Client provides</option>
+                            <option value="existing">Existing</option>
+                            <option value="ppk">PPK/RTK</option>
+                            <option value="no">None</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Access & Conditions</label>
+                        <input
+                          type="text"
+                          value={site.conditions || ''}
+                          onChange={(e) => updateSiteReq(site.id, { conditions: e.target.value })}
+                          placeholder="Access routes, obstacles, restrictions..."
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            <button
+              onClick={addSiteReq}
+              className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Add Site
+            </button>
           </div>
         </NeedsSubSection>
 
@@ -577,7 +726,7 @@ function NeedsAnalysisSection({ project, onUpdate }) {
               type="text"
               value={needs.permits_needed || ''}
               onChange={(e) => updateNeeds({ permits_needed: e.target.value })}
-              placeholder="e.g., SFOC, NAV CANADA authorization, land access permit, environmental permit"
+              placeholder="e.g., SFOC, NAV CANADA authorization, land access permit"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
           </div>
@@ -617,11 +766,11 @@ function NeedsAnalysisSection({ project, onUpdate }) {
             </div>
           </div>
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Seasonal / Timing Considerations</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Seasonal / Timing Notes</label>
             <textarea
               value={needs.timing_notes || ''}
               onChange={(e) => updateNeeds({ timing_notes: e.target.value })}
-              placeholder="e.g., Before leaf-on, during low tide, avoid nesting season, snow-free conditions..."
+              placeholder="e.g., Before leaf-on, during low tide, avoid nesting season..."
               rows={2}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
@@ -658,7 +807,7 @@ function NeedsAnalysisSection({ project, onUpdate }) {
             <textarea
               value={needs.objective || ''}
               onChange={(e) => updateNeeds({ objective: e.target.value })}
-              placeholder="Clear statement of what the client needs to achieve with this data..."
+              placeholder="Clear statement of what the client needs to achieve..."
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
@@ -671,7 +820,7 @@ function NeedsAnalysisSection({ project, onUpdate }) {
             <textarea
               value={needs.risks || ''}
               onChange={(e) => updateNeeds({ risks: e.target.value })}
-              placeholder="Weather windows, access issues, accuracy challenges, timeline pressure..."
+              placeholder="Weather, access, accuracy challenges, timeline..."
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
