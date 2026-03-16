@@ -987,7 +987,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   const selectedTypeRef = useRef(selectedType)
   const elementsRef = useRef(site?.elements || [])
   const onUpdateSiteRef = useRef(onUpdateSite)
-  const siteIndexRef = useRef(siteIndex)
+  const siteNameRef = useRef(site?.name || `Site ${siteIndex + 1}`)
 
   // Keep refs updated
   useEffect(() => {
@@ -1003,8 +1003,8 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   }, [onUpdateSite])
 
   useEffect(() => {
-    siteIndexRef.current = siteIndex
-  }, [siteIndex])
+    siteNameRef.current = site?.name || `Site ${siteIndex + 1}`
+  }, [site?.name, siteIndex])
 
   const mapStyles = [
     { value: 'satellite-streets-v12', label: 'Satellite' },
@@ -1406,7 +1406,10 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
 
       const newElements = newFeatures.map(f => {
         const existingOfType = currentElements.filter(el => el.elementType === currentType).length
-        const sitePrefix = `S${siteIndexRef.current + 1}`
+        // Extract number from site name (e.g., "Site 3" -> "S3")
+        const siteName = siteNameRef.current
+        const match = siteName?.match(/(\d+)/)
+        const sitePrefix = match ? `S${match[1]}` : 'S1'
         return {
           id: f.id,
           elementType: currentType || 'poi',
@@ -1869,7 +1872,9 @@ function ElementTables({ sites, onUpdateSiteElement, onDeleteSiteElement, onHigh
   // Group by site, then by category
   const groupedBySite = useMemo(() => {
     return (sites || []).map((site, index) => {
-      const sitePrefix = `S${index + 1}`
+      // Extract number from site name (e.g., "Site 3" -> "S3")
+      const match = site.name?.match(/(\d+)/)
+      const sitePrefix = match ? `S${match[1]}` : `S${index + 1}`
       const groups = {}
 
       Object.keys(ELEMENT_CATEGORIES).forEach(cat => {
