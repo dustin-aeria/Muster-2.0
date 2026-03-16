@@ -776,6 +776,10 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
         const typeConfig = ELEMENT_TYPES[el.elementType] || ELEMENT_TYPES.poi
         const color = el.color || typeConfig.defaultColor
 
+        // Flight areas and paths get altitude from site flight params
+        const isFlightElement = el.elementType === 'flight_area' || el.elementType === 'flight_path'
+        const elementAltitude = isFlightElement ? altitude : 0
+
         features.push({
           type: 'Feature',
           id: el.id,
@@ -789,7 +793,9 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
             name: el.name,
             color: color,
             notes: el.notes,
-            category: typeConfig.category
+            category: typeConfig.category,
+            altitude: elementAltitude,
+            isFlightElement: isFlightElement
           }
         })
 
@@ -810,7 +816,8 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
                   parentId: el.id,
                   siteId: s.id,
                   type: 'operational_volume',
-                  name: `${el.name} - Operational Volume`
+                  name: `${el.name} - Operational Volume`,
+                  altitude: altitude // Pass altitude for 3D rendering
                 }
               })
             }
@@ -997,6 +1004,62 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
           'text-color': '#374151',
           'text-halo-color': '#ffffff',
           'text-halo-width': 1.5
+        }
+      })
+
+      // 3D Flight Area Extrusion Layer (for 3D mode)
+      mapInstance.addLayer({
+        id: 'elements-flight-3d',
+        type: 'fill-extrusion',
+        source: 'elements-source',
+        filter: ['all',
+          ['==', '$type', 'Polygon'],
+          ['==', ['get', 'isFlightElement'], true]
+        ],
+        paint: {
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['get', 'altitude'],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.6
+        },
+        layout: {
+          'visibility': 'none' // Hidden by default, shown in 3D mode
+        }
+      })
+
+      // 3D Flight Path Walls (for 3D mode - lines rendered as thin walls)
+      mapInstance.addLayer({
+        id: 'elements-path-3d',
+        type: 'fill-extrusion',
+        source: 'elements-source',
+        filter: ['all',
+          ['==', '$type', 'Polygon'],
+          ['==', ['get', 'elementType'], 'flight_path_buffer']
+        ],
+        paint: {
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['get', 'altitude'],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.5
+        },
+        layout: {
+          'visibility': 'none'
+        }
+      })
+
+      // 3D Operational Volume Buffer (elevated dashed boundary)
+      mapInstance.addLayer({
+        id: 'buffers-3d',
+        type: 'fill-extrusion',
+        source: 'buffers-source',
+        paint: {
+          'fill-extrusion-color': '#F59E0B',
+          'fill-extrusion-height': ['coalesce', ['get', 'altitude'], 120],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.2
+        },
+        layout: {
+          'visibility': 'none'
         }
       })
 
@@ -1187,24 +1250,63 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
     }, 100)
   }, [isFullscreen])
 
-  // Toggle 3D terrain
+  // Toggle 3D terrain and layers
   useEffect(() => {
     if (!map.current || !mapLoaded) return
 
+    const m = map.current
+
     if (is3D) {
       // Enable terrain
-      map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
+      m.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
+
+      // Show 3D layers
+      if (m.getLayer('elements-flight-3d')) {
+        m.setLayoutProperty('elements-flight-3d', 'visibility', 'visible')
+      }
+      if (m.getLayer('buffers-3d')) {
+        m.setLayoutProperty('buffers-3d', 'visibility', 'visible')
+      }
+
+      // Hide 2D fill layers for flight elements (keep outlines visible)
+      if (m.getLayer('elements-polygon-fill')) {
+        m.setFilter('elements-polygon-fill', ['all',
+          ['==', '$type', 'Polygon'],
+          ['!=', ['get', 'isFlightElement'], true]
+        ])
+      }
+      if (m.getLayer('buffers-fill')) {
+        m.setLayoutProperty('buffers-fill', 'visibility', 'none')
+      }
+
       // Animate to 3D view
-      map.current.easeTo({
+      m.easeTo({
         pitch: 60,
         bearing: -20,
         duration: 1000
       })
     } else {
       // Disable terrain
-      map.current.setTerrain(null)
+      m.setTerrain(null)
+
+      // Hide 3D layers
+      if (m.getLayer('elements-flight-3d')) {
+        m.setLayoutProperty('elements-flight-3d', 'visibility', 'none')
+      }
+      if (m.getLayer('buffers-3d')) {
+        m.setLayoutProperty('buffers-3d', 'visibility', 'none')
+      }
+
+      // Show 2D fill layers for all polygons
+      if (m.getLayer('elements-polygon-fill')) {
+        m.setFilter('elements-polygon-fill', ['==', '$type', 'Polygon'])
+      }
+      if (m.getLayer('buffers-fill')) {
+        m.setLayoutProperty('buffers-fill', 'visibility', 'visible')
+      }
+
       // Animate to 2D view
-      map.current.easeTo({
+      m.easeTo({
         pitch: 0,
         bearing: 0,
         duration: 1000
