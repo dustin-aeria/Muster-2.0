@@ -3125,58 +3125,186 @@ function PPESelector({ site, onUpdateSite }) {
 // COMMUNICATIONS PLAN
 // ============================================
 
+const COMM_TYPES = [
+  // Radio
+  { id: 'vhf_radio', label: 'VHF Radio', category: 'Radio', placeholder: 'Frequency (e.g., 123.45 MHz)' },
+  { id: 'uhf_radio', label: 'UHF Radio', category: 'Radio', placeholder: 'Frequency (e.g., 450.25 MHz)' },
+  { id: 'hf_radio', label: 'HF Radio', category: 'Radio', placeholder: 'Frequency and schedule' },
+  { id: 'gmrs', label: 'GMRS Radio', category: 'Radio', placeholder: 'Channel number' },
+  { id: 'frs', label: 'FRS Radio', category: 'Radio', placeholder: 'Channel number' },
+  { id: 'cb_radio', label: 'CB Radio', category: 'Radio', placeholder: 'Channel (e.g., Channel 19)' },
+  { id: 'marine_vhf', label: 'Marine VHF', category: 'Radio', placeholder: 'Channel (e.g., Channel 16)' },
+  { id: 'ham_radio', label: 'Ham Radio', category: 'Radio', placeholder: 'Frequency and call sign' },
+
+  // Satellite
+  { id: 'starlink', label: 'Starlink', category: 'Satellite', placeholder: 'Network name, coverage notes' },
+  { id: 'iridium', label: 'Iridium Satellite', category: 'Satellite', placeholder: 'Phone number' },
+  { id: 'inreach', label: 'Garmin inReach', category: 'Satellite', placeholder: 'Device ID, check-in schedule' },
+  { id: 'spot', label: 'SPOT Messenger', category: 'Satellite', placeholder: 'Device ID' },
+  { id: 'thuraya', label: 'Thuraya', category: 'Satellite', placeholder: 'Phone number' },
+  { id: 'globalstar', label: 'Globalstar', category: 'Satellite', placeholder: 'Phone number' },
+  { id: 'bgan', label: 'BGAN Terminal', category: 'Satellite', placeholder: 'Terminal ID' },
+
+  // Mobile/Cellular
+  { id: 'cell_phone', label: 'Cell Phone', category: 'Mobile', placeholder: 'Phone number, carrier' },
+  { id: 'whatsapp', label: 'WhatsApp', category: 'Mobile', placeholder: 'Group name or contact numbers' },
+  { id: 'signal', label: 'Signal', category: 'Mobile', placeholder: 'Group name or contact numbers' },
+  { id: 'telegram', label: 'Telegram', category: 'Mobile', placeholder: 'Group/channel name' },
+  { id: 'teams', label: 'Microsoft Teams', category: 'Mobile', placeholder: 'Team/channel name' },
+  { id: 'slack', label: 'Slack', category: 'Mobile', placeholder: 'Workspace/channel' },
+  { id: 'discord', label: 'Discord', category: 'Mobile', placeholder: 'Server/channel' },
+
+  // Network
+  { id: 'wifi', label: 'WiFi Network', category: 'Network', placeholder: 'SSID, password location' },
+  { id: 'mesh_network', label: 'Mesh Network', category: 'Network', placeholder: 'Network name, nodes' },
+  { id: 'lte_hotspot', label: 'LTE Hotspot', category: 'Network', placeholder: 'Device, carrier' },
+
+  // Aviation
+  { id: 'atc', label: 'ATC Frequency', category: 'Aviation', placeholder: 'Frequency, facility name' },
+  { id: 'ctaf', label: 'CTAF', category: 'Aviation', placeholder: 'Frequency' },
+  { id: 'unicom', label: 'UNICOM', category: 'Aviation', placeholder: 'Frequency' },
+  { id: 'atis', label: 'ATIS', category: 'Aviation', placeholder: 'Frequency' },
+
+  // Other
+  { id: 'landline', label: 'Landline Phone', category: 'Other', placeholder: 'Phone number, location' },
+  { id: 'intercom', label: 'Intercom System', category: 'Other', placeholder: 'System details' },
+  { id: 'pa_system', label: 'PA System', category: 'Other', placeholder: 'Location, access' },
+  { id: 'visual_signals', label: 'Visual Signals', category: 'Other', placeholder: 'Signal types (flags, lights)' },
+  { id: 'runner', label: 'Runner/Messenger', category: 'Other', placeholder: 'Designated person' },
+  { id: 'other', label: 'Other', category: 'Other', placeholder: 'Details' }
+]
+
+const COMM_CATEGORIES = [...new Set(COMM_TYPES.map(t => t.category))]
+
 function CommunicationsPlan({ site, onUpdateSite }) {
   const emergency = site?.emergency || {}
-  const comms = emergency.comms || {}
+  const commMethods = emergency.commMethods || []
 
-  const updateComms = (field, value) => {
-    onUpdateSite({ emergency: { ...emergency, comms: { ...comms, [field]: value } } })
+  const updateEmergency = (updates) => {
+    onUpdateSite({ emergency: { ...emergency, ...updates } })
+  }
+
+  const addCommMethod = (typeId) => {
+    const commType = COMM_TYPES.find(t => t.id === typeId)
+    if (!commType) return
+
+    const newMethod = {
+      id: Date.now(),
+      type: typeId,
+      label: commType.label,
+      details: '',
+      isPrimary: commMethods.length === 0 // First one is primary
+    }
+    updateEmergency({ commMethods: [...commMethods, newMethod] })
+  }
+
+  const updateCommMethod = (id, field, value) => {
+    updateEmergency({
+      commMethods: commMethods.map(m => m.id === id ? { ...m, [field]: value } : m)
+    })
+  }
+
+  const removeCommMethod = (id) => {
+    updateEmergency({ commMethods: commMethods.filter(m => m.id !== id) })
+  }
+
+  const setPrimary = (id) => {
+    updateEmergency({
+      commMethods: commMethods.map(m => ({ ...m, isPrimary: m.id === id }))
+    })
   }
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Primary Radio Frequency</label>
-          <input
-            type="text"
-            value={comms.primary_freq || ''}
-            onChange={(e) => updateComms('primary_freq', e.target.value)}
-            placeholder="e.g., 123.45 MHz"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          />
+      {/* Communication Methods List */}
+      {commMethods.length > 0 && (
+        <div className="space-y-2">
+          {commMethods.map((method, idx) => {
+            const commType = COMM_TYPES.find(t => t.id === method.type)
+            return (
+              <div
+                key={method.id}
+                className={`flex items-start gap-3 p-3 rounded-lg border ${
+                  method.isPrimary ? 'bg-brand-50 border-brand-200' : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="flex-shrink-0 pt-1">
+                  <button
+                    onClick={() => setPrimary(method.id)}
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      method.isPrimary
+                        ? 'border-brand-600 bg-brand-600'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    title={method.isPrimary ? 'Primary method' : 'Set as primary'}
+                  >
+                    {method.isPrimary && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  </button>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-gray-500 uppercase">{commType?.category}</span>
+                    <span className="font-medium text-gray-800">{method.label}</span>
+                    {method.isPrimary && (
+                      <span className="px-1.5 py-0.5 bg-brand-600 text-white text-xs rounded">Primary</span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={method.details}
+                    onChange={(e) => updateCommMethod(method.id, 'details', e.target.value)}
+                    placeholder={commType?.placeholder || 'Details...'}
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm bg-white"
+                  />
+                </div>
+                <button
+                  onClick={() => removeCommMethod(method.id)}
+                  className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )
+          })}
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Backup Frequency</label>
-          <input
-            type="text"
-            value={comms.backup_freq || ''}
-            onChange={(e) => updateComms('backup_freq', e.target.value)}
-            placeholder="e.g., 121.50 MHz"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Team Channel</label>
-          <input
-            type="text"
-            value={comms.team_channel || ''}
-            onChange={(e) => updateComms('team_channel', e.target.value)}
-            placeholder="e.g., Channel 5"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Check-in Interval</label>
-          <input
-            type="text"
-            value={comms.checkin_interval || ''}
-            onChange={(e) => updateComms('checkin_interval', e.target.value)}
-            placeholder="e.g., Every 30 minutes"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          />
-        </div>
+      )}
+
+      {/* Add Communication Method Dropdown */}
+      <div className="flex items-center gap-2">
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              addCommMethod(e.target.value)
+              e.target.value = ''
+            }
+          }}
+          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          defaultValue=""
+        >
+          <option value="" disabled>+ Add communication method...</option>
+          {COMM_CATEGORIES.map(category => (
+            <optgroup key={category} label={category}>
+              {COMM_TYPES.filter(t => t.category === category).map(type => (
+                <option key={type.id} value={type.id}>{type.label}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
       </div>
+
+      {/* Check-in Schedule */}
+      <div className="pt-2 border-t border-gray-200">
+        <label className="block text-xs text-gray-500 mb-1">Check-in Schedule</label>
+        <input
+          type="text"
+          value={emergency.checkin_schedule || ''}
+          onChange={(e) => updateEmergency({ checkin_schedule: e.target.value })}
+          placeholder="e.g., Every 30 minutes, or at mission start/end"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+        />
+      </div>
+
+      {/* Emergency Signals Reference */}
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
         <p className="text-sm text-amber-800">
           <strong>Emergency Signals:</strong> MAYDAY (life threat), PAN PAN (urgency), ABORT (stop operations)
