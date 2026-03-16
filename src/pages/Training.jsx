@@ -12,18 +12,18 @@ import {
   ExternalLink,
   ClipboardCheck,
   Plane,
-  Shield,
   Briefcase,
   Plus,
   Trash2,
-  Pencil
+  Pencil,
+  Play
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getOperators, getDocuments } from '../lib/api'
 import { format, differenceInDays } from 'date-fns'
 
 // ============================================
-// TRAINING TRACKS CONFIGURATION
+// TRAINING TRACKS
 // ============================================
 
 const TRACKS = [
@@ -81,78 +81,64 @@ const TRACKS = [
 // API HELPERS
 // ============================================
 
-async function getOrCreateAssignment(operatorId, track) {
-  // Check if assignment exists
-  const { data: existing } = await supabase
-    .from('track_assignments')
-    .select('*')
-    .eq('operator_id', operatorId)
-    .eq('track', track)
-    .single()
-
-  if (existing) return existing
-
-  // Create new assignment
+async function createSession(track, traineeName) {
   const { data, error } = await supabase
     .from('track_assignments')
-    .insert({ operator_id: operatorId, track, status: 'in_progress' })
+    .insert({ track, trainee_name: traineeName, status: 'in_progress' })
     .select()
     .single()
-
   if (error) throw error
   return data
 }
 
-async function getAcknowledgments(assignmentId) {
-  const { data } = await supabase
-    .from('document_acknowledgments')
-    .select('document_id')
-    .eq('assignment_id', assignmentId)
-  return data || []
+async function getSession(id) {
+  const { data } = await supabase.from('track_assignments').select('*').eq('id', id).single()
+  return data
 }
 
-async function acknowledgeDoc(assignmentId, documentId) {
-  const { error } = await supabase
-    .from('document_acknowledgments')
-    .insert({ assignment_id: assignmentId, document_id: documentId })
-  if (error && !error.message.includes('duplicate')) throw error
-}
-
-async function getSkillSignoffs(assignmentId) {
-  const { data } = await supabase
-    .from('flight_skill_signoffs')
-    .select('*, supervisor:operators(name)')
-    .eq('assignment_id', assignmentId)
-  return data || []
-}
-
-async function signOffSkill(assignmentId, skillName, supervisorId, notes = null) {
-  const { error } = await supabase
-    .from('flight_skill_signoffs')
-    .insert({ assignment_id: assignmentId, skill_name: skillName, supervisor_id: supervisorId, notes })
-  if (error && !error.message.includes('duplicate')) throw error
-}
-
-async function completeAssignment(assignmentId) {
-  await supabase
-    .from('track_assignments')
-    .update({ status: 'completed', completed_at: new Date().toISOString() })
-    .eq('id', assignmentId)
-}
-
-async function getAllAssignments() {
+async function getSessions() {
   const { data } = await supabase
     .from('track_assignments')
-    .select('*, operators(name)')
+    .select('*')
     .order('assigned_at', { ascending: false })
   return data || []
 }
 
+async function updateSession(id, updates) {
+  await supabase.from('track_assignments').update(updates).eq('id', id)
+}
+
+async function deleteSession(id) {
+  // Delete related records first
+  await supabase.from('document_acknowledgments').delete().eq('assignment_id', id)
+  await supabase.from('flight_skill_signoffs').delete().eq('assignment_id', id)
+  await supabase.from('track_assignments').delete().eq('id', id)
+}
+
+async function getAcknowledgments(sessionId) {
+  const { data } = await supabase.from('document_acknowledgments').select('document_id').eq('assignment_id', sessionId)
+  return (data || []).map(a => a.document_id)
+}
+
+async function acknowledgeDoc(sessionId, docId) {
+  await supabase.from('document_acknowledgments').insert({ assignment_id: sessionId, document_id: docId })
+}
+
+async function getSkillSignoffs(sessionId) {
+  const { data } = await supabase.from('flight_skill_signoffs').select('*').eq('assignment_id', sessionId)
+  return data || []
+}
+
+async function signOffSkill(sessionId, skillName, supervisorName) {
+  await supabase.from('flight_skill_signoffs').insert({
+    assignment_id: sessionId,
+    skill_name: skillName,
+    notes: `Signed off by: ${supervisorName}`
+  })
+}
+
 async function getCertifications() {
-  const { data } = await supabase
-    .from('certifications')
-    .select('*, operators(name)')
-    .order('expiry_date', { ascending: true, nullsFirst: false })
+  const { data } = await supabase.from('certifications').select('*, operators(name)').order('expiry_date', { ascending: true, nullsFirst: false })
   return data || []
 }
 
@@ -163,58 +149,68 @@ async function createCertification(cert) {
 }
 
 async function updateCertification(id, updates) {
-  const { error } = await supabase.from('certifications').update(updates).eq('id', id)
-  if (error) throw error
+  await supabase.from('certifications').update(updates).eq('id', id)
 }
 
 async function deleteCertification(id) {
-  const { error } = await supabase.from('certifications').delete().eq('id', id)
-  if (error) throw error
+  await supabase.from('certifications').delete().eq('id', id)
 }
 
 // ============================================
-// TRACK SELECTION VIEW
+// TRACK SELECTION (HOME)
 // ============================================
 
-function TrackSelection({ onSelectTrack, operators, documents }) {
-  // Get recent/in-progress sessions
-  const [recentSessions, setRecentSessions] = useState([])
+function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
+  const [sessions, setSessions] = useState([])
 
   useEffect(() => {
-    loadRecent()
+    loadSessions()
   }, [])
 
-  const loadRecent = async () => {
-    const assignments = await getAllAssignments()
-    setRecentSessions(assignments.filter(a => a.status === 'in_progress').slice(0, 5))
+  const loadSessions = async () => {
+    const data = await getSessions()
+    setSessions(data.filter(s => s.status !== 'completed'))
+  }
+
+  const handleDelete = async (id, e) => {
+    e.stopPropagation()
+    if (!confirm('Delete this training session?')) return
+    await deleteSession(id)
+    loadSessions()
   }
 
   return (
     <div className="space-y-8">
-      {/* Recent/In Progress */}
-      {recentSessions.length > 0 && (
+      {/* In Progress Sessions */}
+      {sessions.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Continue Training</h2>
           <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {recentSessions.map(session => {
+            {sessions.map(session => {
               const track = TRACKS.find(t => t.id === session.track)
               if (!track) return null
               const Icon = track.icon
               return (
-                <button
+                <div
                   key={session.id}
-                  onClick={() => onSelectTrack(track.id, session.operator_id)}
-                  className="w-full px-4 py-3 flex items-center gap-4 hover:bg-gray-50 text-left"
+                  className="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onContinueSession(session)}
                 >
                   <div className={`p-2 rounded-lg ${track.lightColor}`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{track.name}</p>
-                    <p className="text-sm text-gray-500">{session.operators?.name}</p>
+                    <p className="text-sm text-gray-500">{session.trainee_name || 'Unknown'}</p>
                   </div>
-                  <span className="text-sm text-blue-600">Continue →</span>
-                </button>
+                  <button
+                    onClick={(e) => handleDelete(session.id, e)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm text-brand-600 font-medium">Continue →</span>
+                </div>
               )
             })}
           </div>
@@ -229,25 +225,31 @@ function TrackSelection({ onSelectTrack, operators, documents }) {
             const Icon = track.icon
             const docCount = documents.filter(d => track.docTypes.includes(d.doc_type)).length
             return (
-              <button
+              <div
                 key={track.id}
-                onClick={() => onSelectTrack(track.id, null)}
-                className="bg-white rounded-xl border border-gray-200 p-6 text-left hover:border-brand-300 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl border border-gray-200 p-6 hover:border-brand-300 hover:shadow-md transition-all"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 mb-4">
                   <div className={`p-3 rounded-xl ${track.color} text-white`}>
                     <Icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 group-hover:text-brand-600">{track.name}</h3>
+                    <h3 className="font-semibold text-gray-900">{track.name}</h3>
                     <p className="text-sm text-gray-500 mt-1">{track.description}</p>
-                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
                       <span>{docCount} documents</span>
                       {track.flightSkills && <span>{track.flightSkills.length} flight skills</span>}
                     </div>
                   </div>
                 </div>
-              </button>
+                <button
+                  onClick={() => onBeginTraining(track)}
+                  className="w-full py-2.5 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 flex items-center justify-center gap-2"
+                >
+                  <Play className="w-4 h-4" />
+                  Begin Training
+                </button>
+              </div>
             )
           })}
         </div>
@@ -257,119 +259,132 @@ function TrackSelection({ onSelectTrack, operators, documents }) {
 }
 
 // ============================================
-// TRAINING SESSION VIEW
+// TRAINING SESSION
 // ============================================
 
-function TrainingSession({ trackId, initialOperatorId, operators, documents, onBack }) {
-  const track = TRACKS.find(t => t.id === trackId)
-  const [operatorId, setOperatorId] = useState(initialOperatorId || '')
-  const [assignment, setAssignment] = useState(null)
+function TrainingSession({ track, existingSession, documents, operators, onBack, onComplete }) {
+  const [session, setSession] = useState(existingSession)
+  const [traineeName, setTraineeName] = useState(existingSession?.trainee_name || '')
+  const [started, setStarted] = useState(!!existingSession)
   const [acknowledgments, setAcknowledgments] = useState([])
   const [skillSignoffs, setSkillSignoffs] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [started, setStarted] = useState(!!initialOperatorId)
+  const [saving, setSaving] = useState(false)
 
   const trackDocs = documents.filter(d => track.docTypes.includes(d.doc_type))
+  const Icon = track.icon
 
   useEffect(() => {
-    if (initialOperatorId) {
-      startSession(initialOperatorId)
+    if (existingSession) {
+      loadProgress()
     }
   }, [])
 
-  const startSession = async (opId) => {
-    setLoading(true)
+  const loadProgress = async () => {
+    const acks = await getAcknowledgments(existingSession.id)
+    setAcknowledgments(acks)
+    if (track.flightSkills) {
+      const skills = await getSkillSignoffs(existingSession.id)
+      setSkillSignoffs(skills)
+    }
+  }
+
+  const handleStart = async () => {
+    if (!traineeName.trim()) {
+      alert('Please enter the trainee name')
+      return
+    }
+    setSaving(true)
     try {
-      const assign = await getOrCreateAssignment(opId, trackId)
-      setAssignment(assign)
-      const acks = await getAcknowledgments(assign.id)
-      setAcknowledgments(acks.map(a => a.document_id))
-      if (track.flightSkills) {
-        const skills = await getSkillSignoffs(assign.id)
-        setSkillSignoffs(skills)
-      }
+      const newSession = await createSession(track.id, traineeName.trim())
+      setSession(newSession)
       setStarted(true)
     } catch (err) {
       alert('Failed to start: ' + err.message)
-    } finally {
-      setLoading(false)
     }
+    setSaving(false)
   }
 
   const handleAcknowledge = async (docId) => {
     try {
-      await acknowledgeDoc(assignment.id, docId)
-      setAcknowledgments([...acknowledgments, docId])
-      checkCompletion([...acknowledgments, docId], skillSignoffs)
+      await acknowledgeDoc(session.id, docId)
+      const newAcks = [...acknowledgments, docId]
+      setAcknowledgments(newAcks)
+      checkCompletion(newAcks, skillSignoffs)
     } catch (err) {
-      alert('Failed: ' + err.message)
+      console.error(err)
     }
   }
 
-  const handleSignOff = async (skillName, supervisorId) => {
+  const handleSignOff = async (skillName) => {
+    const supervisorName = prompt('Supervisor name:')
+    if (!supervisorName) return
     try {
-      await signOffSkill(assignment.id, skillName, supervisorId)
-      const updated = [...skillSignoffs, { skill_name: skillName, supervisor_id: supervisorId }]
-      setSkillSignoffs(updated)
-      checkCompletion(acknowledgments, updated)
+      await signOffSkill(session.id, skillName, supervisorName)
+      const newSignoffs = [...skillSignoffs, { skill_name: skillName, notes: `Signed off by: ${supervisorName}` }]
+      setSkillSignoffs(newSignoffs)
+      checkCompletion(acknowledgments, newSignoffs)
     } catch (err) {
-      alert('Failed: ' + err.message)
+      console.error(err)
     }
   }
 
   const checkCompletion = async (acks, skills) => {
     const docsComplete = acks.length >= trackDocs.length
     const skillsComplete = !track.flightSkills || skills.length >= track.flightSkills.length
-    if (docsComplete && skillsComplete && assignment) {
-      await completeAssignment(assignment.id)
+    if (docsComplete && skillsComplete && trackDocs.length > 0) {
+      await updateSession(session.id, { status: 'completed', completed_at: new Date().toISOString() })
     }
   }
 
-  const Icon = track.icon
   const totalItems = trackDocs.length + (track.flightSkills?.length || 0)
   const completedItems = acknowledgments.length + skillSignoffs.length
   const isComplete = completedItems >= totalItems && totalItems > 0
 
-  // Not started yet - show operator selection
+  // Start screen
   if (!started) {
     return (
       <div className="space-y-6">
         <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-          <ChevronLeft className="w-5 h-5" /> Back to Training
+          <ChevronLeft className="w-5 h-5" /> Back
         </button>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-md">
+        <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-lg">
           <div className="flex items-center gap-4 mb-6">
-            <div className={`p-3 rounded-xl ${track.color} text-white`}>
-              <Icon className="w-6 h-6" />
+            <div className={`p-4 rounded-xl ${track.color} text-white`}>
+              <Icon className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{track.name}</h2>
-              <p className="text-sm text-gray-500">{track.description}</p>
+              <h2 className="text-2xl font-bold text-gray-900">{track.name}</h2>
+              <p className="text-gray-500">{track.description}</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Who is completing this training?</label>
-              <select
-                value={operatorId}
-                onChange={(e) => setOperatorId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="">Select person...</option>
-                {operators.map(op => (
-                  <option key={op.id} value={op.id}>{op.name}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Trainee Name
+              </label>
+              <input
+                type="text"
+                value={traineeName}
+                onChange={(e) => setTraineeName(e.target.value)}
+                placeholder="Enter name of person being trained"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                autoFocus
+              />
             </div>
 
             <button
-              onClick={() => startSession(operatorId)}
-              disabled={!operatorId || loading}
-              className="w-full py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleStart}
+              disabled={saving || !traineeName.trim()}
+              className="w-full py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? 'Starting...' : 'Start Training'}
+              {saving ? 'Starting...' : (
+                <>
+                  <Play className="w-5 h-5" />
+                  Start Training
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -378,40 +393,38 @@ function TrainingSession({ trackId, initialOperatorId, operators, documents, onB
   }
 
   // Training in progress
-  const currentOperator = operators.find(op => op.id === operatorId)
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-          <ChevronLeft className="w-5 h-5" /> Back to Training
+          <ChevronLeft className="w-5 h-5" /> Back
         </button>
         {isComplete && (
-          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1">
-            <Check className="w-4 h-4" /> Completed
+          <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium flex items-center gap-2">
+            <Check className="w-5 h-5" /> Training Complete
           </span>
         )}
       </div>
 
-      {/* Progress Card */}
-      <div className={`rounded-xl border p-4 ${track.lightColor}`}>
+      {/* Progress Header */}
+      <div className={`rounded-xl border-2 p-5 ${track.lightColor}`}>
         <div className="flex items-center gap-4">
           <div className={`p-3 rounded-xl ${track.color} text-white`}>
             <Icon className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold">{track.name}</h2>
-            <p className="text-sm opacity-75">Training: {currentOperator?.name}</p>
+            <h2 className="text-xl font-bold">{track.name}</h2>
+            <p className="text-sm opacity-80">Trainee: {traineeName}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold">{completedItems}/{totalItems}</p>
-            <p className="text-xs opacity-75">completed</p>
+            <p className="text-3xl font-bold">{completedItems}/{totalItems}</p>
+            <p className="text-sm opacity-80">items completed</p>
           </div>
         </div>
-        <div className="mt-4 h-2 bg-white/50 rounded-full overflow-hidden">
+        <div className="mt-4 h-3 bg-white/50 rounded-full overflow-hidden">
           <div
-            className={`h-full ${track.color} transition-all`}
+            className={`h-full ${track.color} transition-all duration-300`}
             style={{ width: `${totalItems > 0 ? (completedItems / totalItems) * 100 : 0}%` }}
           />
         </div>
@@ -419,70 +432,69 @@ function TrainingSession({ trackId, initialOperatorId, operators, documents, onB
 
       {/* Documents */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="font-medium text-gray-900 flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Documents to Read & Acknowledge ({acknowledgments.length}/{trackDocs.length})
+        <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-gray-400" />
+            Documents ({acknowledgments.length}/{trackDocs.length})
           </h3>
         </div>
-        <div className="divide-y divide-gray-100">
-          {trackDocs.length === 0 ? (
-            <p className="px-4 py-8 text-center text-gray-500">No documents in this track yet</p>
-          ) : (
-            trackDocs.map(doc => {
-              const isAcked = acknowledgments.includes(doc.id)
+        {trackDocs.length === 0 ? (
+          <p className="px-5 py-8 text-center text-gray-500">No documents for this track</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {trackDocs.map(doc => {
+              const done = acknowledgments.includes(doc.id)
               return (
-                <div key={doc.id} className="px-4 py-3 flex items-center gap-4">
+                <div key={doc.id} className="px-5 py-4 flex items-center gap-4">
                   <button
-                    onClick={() => !isAcked && handleAcknowledge(doc.id)}
-                    disabled={isAcked}
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                      isAcked
+                    onClick={() => !done && handleAcknowledge(doc.id)}
+                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      done
                         ? 'bg-green-500 border-green-500 text-white'
-                        : 'border-gray-300 hover:border-brand-500'
+                        : 'border-gray-300 hover:border-brand-500 hover:bg-brand-50'
                     }`}
                   >
-                    {isAcked && <Check className="w-4 h-4" />}
+                    {done && <Check className="w-4 h-4" />}
                   </button>
-                  <div className="flex-1">
-                    <p className={`font-medium ${isAcked ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium truncate ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                       {doc.title}
                     </p>
-                    <p className="text-xs text-gray-500">{doc.doc_type}</p>
+                    <p className="text-sm text-gray-500">{doc.doc_type}</p>
                   </div>
                   {doc.google_doc_url && (
                     <a
                       href={doc.google_doc_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
+                      className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      Open <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   )}
                 </div>
               )
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Flight Skills (Pilot track only) */}
+      {/* Flight Skills */}
       {track.flightSkills && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <Plane className="w-4 h-4" />
-              Flight Skills Checklist ({skillSignoffs.length}/{track.flightSkills.length})
+          <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Plane className="w-5 h-5 text-gray-400" />
+              Flight Skills ({skillSignoffs.length}/{track.flightSkills.length})
             </h3>
-            <p className="text-xs text-gray-500 mt-1">Requires supervisor sign-off for each skill</p>
+            <p className="text-sm text-gray-500 mt-1">Each skill requires supervisor sign-off</p>
           </div>
           <div className="divide-y divide-gray-100">
             {track.flightSkills.map(skill => {
               const signoff = skillSignoffs.find(s => s.skill_name === skill)
               return (
-                <div key={skill} className="px-4 py-3 flex items-center gap-4">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                <div key={skill} className="px-5 py-4 flex items-center gap-4">
+                  <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                     signoff ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
                   }`}>
                     {signoff && <Check className="w-4 h-4" />}
@@ -492,22 +504,16 @@ function TrainingSession({ trackId, initialOperatorId, operators, documents, onB
                       {skill}
                     </p>
                     {signoff && (
-                      <p className="text-xs text-gray-500">
-                        Signed off by {signoff.supervisor?.name || 'Supervisor'}
-                      </p>
+                      <p className="text-sm text-gray-500">{signoff.notes}</p>
                     )}
                   </div>
                   {!signoff && (
-                    <select
-                      onChange={(e) => e.target.value && handleSignOff(skill, e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-                      defaultValue=""
+                    <button
+                      onClick={() => handleSignOff(skill)}
+                      className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
                     >
-                      <option value="">Sign off as...</option>
-                      {operators.filter(op => op.id !== operatorId).map(op => (
-                        <option key={op.id} value={op.id}>{op.name}</option>
-                      ))}
-                    </select>
+                      Sign Off
+                    </button>
                   )}
                 </div>
               )
@@ -520,7 +526,7 @@ function TrainingSession({ trackId, initialOperatorId, operators, documents, onB
 }
 
 // ============================================
-// CERTIFICATIONS VIEW
+// CERTIFICATIONS
 // ============================================
 
 function CertificationsView({ operators }) {
@@ -542,9 +548,7 @@ function CertificationsView({ operators }) {
     load()
   }
 
-  if (loading) {
-    return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
-  }
+  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
 
   const expired = certs.filter(c => c.expiry_date && differenceInDays(new Date(c.expiry_date), new Date()) < 0)
   const expiring = certs.filter(c => c.expiry_date && differenceInDays(new Date(c.expiry_date), new Date()) >= 0 && differenceInDays(new Date(c.expiry_date), new Date()) <= 30)
@@ -609,14 +613,7 @@ function CertificationsView({ operators }) {
         </div>
       )}
 
-      {showModal && (
-        <CertModal
-          cert={editing}
-          operators={operators}
-          onClose={() => { setShowModal(false); setEditing(null) }}
-          onSave={() => { setShowModal(false); setEditing(null); load() }}
-        />
-      )}
+      {showModal && <CertModal cert={editing} operators={operators} onClose={() => { setShowModal(false); setEditing(null) }} onSave={() => { setShowModal(false); setEditing(null); load() }} />}
     </div>
   )
 }
@@ -635,15 +632,10 @@ function CertModal({ cert, operators, onClose, onSave }) {
     e.preventDefault()
     setSaving(true)
     try {
-      if (cert) {
-        await updateCertification(cert.id, form)
-      } else {
-        await createCertification(form)
-      }
+      if (cert) await updateCertification(cert.id, form)
+      else await createCertification(form)
       onSave()
-    } catch (err) {
-      alert('Failed: ' + err.message)
-    }
+    } catch (err) { alert('Failed: ' + err.message) }
     setSaving(false)
   }
 
@@ -664,11 +656,11 @@ function CertModal({ cert, operators, onClose, onSave }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Certification Name</label>
-            <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., Basic RPAS Certificate" />
+            <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Authority</label>
-            <input type="text" value={form.issuing_authority} onChange={e => setForm({ ...form, issuing_authority: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., Transport Canada" />
+            <input type="text" value={form.issuing_authority} onChange={e => setForm({ ...form, issuing_authority: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -682,9 +674,7 @@ function CertModal({ cert, operators, onClose, onSave }) {
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50">
-              {saving ? 'Saving...' : 'Save'}
-            </button>
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
           </div>
         </form>
       </div>
@@ -693,94 +683,62 @@ function CertModal({ cert, operators, onClose, onSave }) {
 }
 
 // ============================================
-// MAIN COMPONENT
+// MAIN
 // ============================================
 
 export default function Training() {
-  const [view, setView] = useState('tracks') // 'tracks', 'session', 'certs'
+  const [view, setView] = useState('home')
   const [selectedTrack, setSelectedTrack] = useState(null)
-  const [selectedOperator, setSelectedOperator] = useState(null)
+  const [selectedSession, setSelectedSession] = useState(null)
   const [operators, setOperators] = useState([])
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadData()
+    Promise.all([getOperators(), getDocuments()]).then(([ops, docs]) => {
+      setOperators(ops || [])
+      setDocuments(docs || [])
+      setLoading(false)
+    })
   }, [])
 
-  const loadData = async () => {
-    const [ops, docs] = await Promise.all([getOperators(), getDocuments()])
-    setOperators(ops || [])
-    setDocuments(docs || [])
-    setLoading(false)
-  }
-
-  const handleSelectTrack = (trackId, operatorId) => {
-    setSelectedTrack(trackId)
-    setSelectedOperator(operatorId)
-    setView('session')
-  }
-
-  const handleBack = () => {
-    setView('tracks')
-    setSelectedTrack(null)
-    setSelectedOperator(null)
-  }
-
-  if (loading) {
-    return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
-  }
+  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Training</h1>
           <p className="text-gray-500">Complete training tracks and manage certifications</p>
         </div>
-        {view === 'tracks' && (
-          <button
-            onClick={() => setView(view === 'certs' ? 'tracks' : 'certs')}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            <Award className="w-5 h-5" />
-            Certifications
-          </button>
-        )}
-        {view === 'certs' && (
-          <button
-            onClick={() => setView('tracks')}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            <GraduationCap className="w-5 h-5" />
-            Training Tracks
-          </button>
-        )}
+        <button
+          onClick={() => setView(view === 'certs' ? 'home' : 'certs')}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+        >
+          {view === 'certs' ? <GraduationCap className="w-5 h-5" /> : <Award className="w-5 h-5" />}
+          {view === 'certs' ? 'Training' : 'Certifications'}
+        </button>
       </div>
 
-      {/* Views */}
-      {view === 'tracks' && (
+      {view === 'home' && (
         <TrackSelection
-          onSelectTrack={handleSelectTrack}
-          operators={operators}
           documents={documents}
+          onBeginTraining={(track) => { setSelectedTrack(track); setSelectedSession(null); setView('session') }}
+          onContinueSession={(session) => { setSelectedTrack(TRACKS.find(t => t.id === session.track)); setSelectedSession(session); setView('session') }}
         />
       )}
 
-      {view === 'session' && (
+      {view === 'session' && selectedTrack && (
         <TrainingSession
-          trackId={selectedTrack}
-          initialOperatorId={selectedOperator}
-          operators={operators}
+          track={selectedTrack}
+          existingSession={selectedSession}
           documents={documents}
-          onBack={handleBack}
+          operators={operators}
+          onBack={() => { setView('home'); setSelectedTrack(null); setSelectedSession(null) }}
         />
       )}
 
-      {view === 'certs' && (
-        <CertificationsView operators={operators} />
-      )}
+      {view === 'certs' && <CertificationsView operators={operators} />}
     </div>
   )
 }
