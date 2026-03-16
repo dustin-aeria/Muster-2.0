@@ -97,12 +97,12 @@ function SaveIndicator({ status }) {
 }
 
 function Section({ title, children, className = '', variant = 'default' }) {
-  const bgColor = variant === 'alt' ? 'bg-slate-50' : 'bg-white'
-  const headerBg = variant === 'alt' ? 'bg-slate-100' : 'bg-gray-50'
+  const bgColor = variant === 'alt' ? 'bg-blue-50/50' : 'bg-white'
+  const headerBg = variant === 'alt' ? 'bg-blue-100/50' : 'bg-gray-50'
 
   return (
-    <div className={`${bgColor} rounded-xl border border-gray-200 overflow-hidden ${className}`}>
-      <div className={`px-6 py-4 border-b border-gray-100 ${headerBg}`}>
+    <div className={`${bgColor} rounded-xl border border-gray-200 shadow-sm overflow-hidden ${className}`}>
+      <div className={`px-6 py-4 border-b border-gray-200 ${headerBg}`}>
         <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
       </div>
       <div className="p-6">

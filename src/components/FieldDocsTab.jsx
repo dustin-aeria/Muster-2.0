@@ -31,11 +31,11 @@ const IMSAFE_ITEMS = [
 
 function Section({ title, children, defaultOpen = true, badge = null, icon: Icon, variant = 'default' }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
-  const bgColor = variant === 'alt' ? 'bg-slate-50' : 'bg-white'
-  const headerBg = variant === 'alt' ? 'bg-slate-100 hover:bg-slate-150' : 'bg-gray-50 hover:bg-gray-100'
+  const bgColor = variant === 'alt' ? 'bg-blue-50/50' : 'bg-white'
+  const headerBg = variant === 'alt' ? 'bg-blue-100/50 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'
 
   return (
-    <div className={`${bgColor} rounded-xl border border-gray-200 overflow-hidden`}>
+    <div className={`${bgColor} rounded-xl border border-gray-200 shadow-sm overflow-hidden`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full px-6 py-4 flex items-center justify-between ${headerBg} transition-colors`}
@@ -49,7 +49,7 @@ function Section({ title, children, defaultOpen = true, badge = null, icon: Icon
             </span>
           )}
         </div>
-        {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+        {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5" />}
       </button>
       {isOpen && <div className="p-6">{children}</div>}
     </div>
