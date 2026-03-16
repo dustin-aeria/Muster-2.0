@@ -1,91 +1,238 @@
 import { useState, useEffect } from 'react'
 import {
   GraduationCap,
-  BookOpen,
   Award,
   Users,
-  Plus,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Check,
   Clock,
   AlertTriangle,
   FileText,
-  Video,
-  ClipboardCheck,
   Pencil,
   X,
   Trash2,
-  Play,
   Calendar,
   User,
-  Building2,
-  RotateCcw,
-  Eye,
-  Search
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  ClipboardCheck,
+  Plane
 } from 'lucide-react'
-import {
-  getLearningPaths,
-  getFullLearningPath,
-  createLearningPath,
-  updateLearningPath,
-  deleteLearningPath,
-  createModule,
-  updateModule,
-  deleteModule,
-  createModuleItem,
-  updateModuleItem,
-  deleteModuleItem,
-  getTrainingRecordsForOperator,
-  getAllTrainingRecords,
-  assignTraining,
-  startTraining,
-  completeTraining,
-  completeItem,
-  completeModule,
-  getAllCertifications,
-  createCertification,
-  updateCertification,
-  deleteCertification,
-  getOperators,
-  getDocuments
-} from '../lib/api'
-import { format, parseISO, differenceInDays, addMonths } from 'date-fns'
+import { supabase } from '../lib/supabase'
+import { getOperators, getDocuments } from '../lib/api'
+import { format, differenceInDays } from 'date-fns'
 
 // ============================================
-// CONSTANTS
+// TRAINING TRACKS CONFIGURATION
 // ============================================
 
-const CATEGORIES = [
-  { value: 'onboarding', label: 'Onboarding', icon: Users, color: 'bg-blue-100 text-blue-700' },
-  { value: 'pilot', label: 'Pilot Recurrency', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' },
-  { value: 'safety', label: 'Safety', icon: AlertTriangle, color: 'bg-orange-100 text-orange-700' }
-]
+const TRACKS = {
+  onboarding: {
+    name: 'Onboarding',
+    description: 'Complete orientation for new team members',
+    icon: Users,
+    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    docTypes: ['policy', 'procedure', 'form'],
+    hasPractical: false
+  },
+  field: {
+    name: 'Field Operations',
+    description: 'Safety and field procedures for all crew',
+    icon: ClipboardCheck,
+    color: 'bg-green-100 text-green-700 border-green-200',
+    docTypes: ['procedure', 'fha'],
+    hasPractical: false
+  },
+  pilot: {
+    name: 'Pilot Recurrency',
+    description: 'Annual flight skills and regulations refresher',
+    icon: Plane,
+    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    docTypes: ['procedure'],
+    hasPractical: true,
+    practicalItems: [
+      'Pre-flight inspection',
+      'Takeoff and hover stability',
+      'Basic maneuvering (forward, backward, lateral)',
+      'Altitude hold and positioning',
+      'Point of interest orbits',
+      'Return to home procedures',
+      'Emergency procedures (motor out, signal loss)',
+      'Precision landing',
+      'Battery swap procedures',
+      'Post-flight inspection and logging'
+    ]
+  },
+  management: {
+    name: 'Management & SMS',
+    description: 'Safety management system oversight',
+    icon: Award,
+    color: 'bg-amber-100 text-amber-700 border-amber-200',
+    docTypes: ['policy'],
+    hasPractical: false
+  }
+}
 
-const RECURRENCE_OPTIONS = [
-  { value: 'none', label: 'One-time (no recurrence)' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly (every 3 months)' },
-  { value: 'annual', label: 'Annual (every 12 months)' }
-]
+// ============================================
+// API FUNCTIONS
+// ============================================
 
-const ITEM_TYPES = [
-  { value: 'document', label: 'Document', icon: FileText, description: 'Link to a policy or procedure to read' },
-  { value: 'video', label: 'Video', icon: Video, description: 'YouTube or external video link' },
-  { value: 'practical', label: 'Practical Task', icon: ClipboardCheck, description: 'In-person task with optional supervisor sign-off' },
-  { value: 'acknowledgment', label: 'Acknowledgment', icon: Check, description: 'Final sign-off for a module' }
-]
+async function getTrackAssignments(operatorId = null) {
+  let query = supabase
+    .from('track_assignments')
+    .select(`
+      *,
+      operators (id, name)
+    `)
+    .order('assigned_at', { ascending: false })
 
-const ROLES = [
-  { value: 'pic_basic', label: 'PIC - Basic' },
-  { value: 'pic_advanced', label: 'PIC - Advanced' },
-  { value: 'pic_complex', label: 'PIC - Complex' },
-  { value: 'pic_specialized', label: 'PIC - Specialized' },
-  { value: 'visual_observer', label: 'Visual Observer' },
-  { value: 'ground_supervisor', label: 'Ground Supervisor' },
-  { value: 'payload_operator', label: 'Payload Operator' }
-]
+  if (operatorId) {
+    query = query.eq('operator_id', operatorId)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+async function assignTrack(operatorId, track, dueDate = null) {
+  const { data, error } = await supabase
+    .from('track_assignments')
+    .insert({
+      operator_id: operatorId,
+      track,
+      due_date: dueDate,
+      status: 'assigned'
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function updateAssignment(id, updates) {
+  const { data, error } = await supabase
+    .from('track_assignments')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function deleteAssignment(id) {
+  const { error } = await supabase
+    .from('track_assignments')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+async function getDocumentAcknowledgments(assignmentId) {
+  const { data, error } = await supabase
+    .from('document_acknowledgments')
+    .select('*')
+    .eq('assignment_id', assignmentId)
+
+  if (error) throw error
+  return data
+}
+
+async function acknowledgeDocument(assignmentId, documentId) {
+  const { data, error } = await supabase
+    .from('document_acknowledgments')
+    .insert({
+      assignment_id: assignmentId,
+      document_id: documentId
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function getFlightSkillSignoffs(assignmentId) {
+  const { data, error } = await supabase
+    .from('flight_skill_signoffs')
+    .select(`
+      *,
+      supervisor:operators (id, name)
+    `)
+    .eq('assignment_id', assignmentId)
+
+  if (error) throw error
+  return data
+}
+
+async function signOffSkill(assignmentId, skillName, supervisorId, notes = null) {
+  const { data, error } = await supabase
+    .from('flight_skill_signoffs')
+    .insert({
+      assignment_id: assignmentId,
+      skill_name: skillName,
+      supervisor_id: supervisorId,
+      notes
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Certifications
+async function getCertifications(operatorId = null) {
+  let query = supabase
+    .from('certifications')
+    .select(`*, operators (id, name)`)
+    .order('expiry_date', { ascending: true, nullsFirst: false })
+
+  if (operatorId) {
+    query = query.eq('operator_id', operatorId)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+async function createCertification(cert) {
+  const { data, error } = await supabase
+    .from('certifications')
+    .insert(cert)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function updateCertification(id, updates) {
+  const { data, error } = await supabase
+    .from('certifications')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function deleteCertification(id) {
+  const { error } = await supabase
+    .from('certifications')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
 
 // ============================================
 // HELPER COMPONENTS
@@ -98,61 +245,27 @@ function TabButton({ active, onClick, children, icon: Icon }) {
       className={`flex items-center gap-2 px-4 py-2 font-medium rounded-lg transition-colors ${
         active
           ? 'bg-brand-600 text-white'
-          : 'text-gray-600 hover:bg-gray-100'
+          : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
       }`}
     >
-      {Icon && <Icon className="w-4 h-4" />}
+      {Icon && <Icon className="w-5 h-5" />}
       {children}
     </button>
   )
 }
 
-function StatusBadge({ status, dueDate }) {
-  const now = new Date()
-  const due = dueDate ? new Date(dueDate) : null
-  const daysUntilDue = due ? differenceInDays(due, now) : null
-
-  if (status === 'completed') {
-    return <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">Completed</span>
-  }
-  if (status === 'in_progress') {
-    if (daysUntilDue !== null && daysUntilDue < 0) {
-      return <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">Overdue</span>
-    }
-    if (daysUntilDue !== null && daysUntilDue <= 7) {
-      return <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">Due Soon</span>
-    }
-    return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">In Progress</span>
-  }
-  if (daysUntilDue !== null && daysUntilDue < 0) {
-    return <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">Overdue</span>
-  }
-  return <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">Not Started</span>
-}
-
-function ProgressBar({ completed, total }) {
-  const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+function ProgressBar({ current, total }) {
+  const percentage = total > 0 ? Math.round((current / total) * 100) : 0
   return (
     <div className="flex items-center gap-3">
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${percent === 100 ? 'bg-green-500' : 'bg-brand-500'}`}
-          style={{ width: `${percent}%` }}
+          className={`h-full transition-all ${percentage === 100 ? 'bg-green-500' : 'bg-brand-500'}`}
+          style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-sm text-gray-600 w-16 text-right">{completed}/{total}</span>
+      <span className="text-sm text-gray-600 whitespace-nowrap">{current}/{total}</span>
     </div>
-  )
-}
-
-function CategoryBadge({ category }) {
-  const cat = CATEGORIES.find(c => c.value === category)
-  if (!cat) return null
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${cat.color}`}>
-      <cat.icon className="w-3 h-3" />
-      {cat.label}
-    </span>
   )
 }
 
@@ -160,82 +273,92 @@ function CategoryBadge({ category }) {
 // MY TRAINING TAB
 // ============================================
 
-function MyTrainingTab({ operators, currentOperatorId, onSelectOperator }) {
-  const [records, setRecords] = useState([])
-  const [certifications, setCertifications] = useState([])
+function MyTrainingTab({ operators, documents, currentOperatorId, onSelectOperator }) {
+  const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [expandedRecord, setExpandedRecord] = useState(null)
-  const [fullPath, setFullPath] = useState(null)
+  const [expandedTrack, setExpandedTrack] = useState(null)
+  const [acknowledgments, setAcknowledgments] = useState({})
+  const [skillSignoffs, setSkillSignoffs] = useState({})
 
   useEffect(() => {
     if (currentOperatorId) {
-      loadData()
+      loadAssignments()
     }
   }, [currentOperatorId])
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadAssignments = async () => {
     try {
-      const [recordsData, certsData] = await Promise.all([
-        getTrainingRecordsForOperator(currentOperatorId),
-        getAllCertifications()
-      ])
-      setRecords(recordsData || [])
-      setCertifications((certsData || []).filter(c => c.operator_id === currentOperatorId))
+      const data = await getTrackAssignments(currentOperatorId)
+      setAssignments(data || [])
+
+      // Load acknowledgments and signoffs for each assignment
+      const acks = {}
+      const skills = {}
+      for (const a of data || []) {
+        acks[a.id] = await getDocumentAcknowledgments(a.id)
+        if (TRACKS[a.track]?.hasPractical) {
+          skills[a.id] = await getFlightSkillSignoffs(a.id)
+        }
+      }
+      setAcknowledgments(acks)
+      setSkillSignoffs(skills)
     } catch (err) {
-      console.error('Failed to load training data:', err)
+      console.error('Failed to load assignments:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleExpandRecord = async (record) => {
-    if (expandedRecord === record.id) {
-      setExpandedRecord(null)
-      setFullPath(null)
-      return
-    }
-    setExpandedRecord(record.id)
+  const getTrackDocuments = (track) => {
+    const trackConfig = TRACKS[track]
+    if (!trackConfig) return []
+    return documents.filter(d => trackConfig.docTypes.includes(d.doc_type))
+  }
+
+  const handleAcknowledge = async (assignmentId, docId) => {
     try {
-      const path = await getFullLearningPath(record.path_id)
-      setFullPath(path)
+      await acknowledgeDocument(assignmentId, docId)
+      await loadAssignments()
     } catch (err) {
-      console.error('Failed to load path:', err)
+      alert('Failed to acknowledge: ' + err.message)
     }
   }
 
-  const handleStartTraining = async (recordId) => {
+  const handleSignOff = async (assignmentId, skillName, supervisorId) => {
     try {
-      await startTraining(recordId)
-      loadData()
+      await signOffSkill(assignmentId, skillName, supervisorId)
+      await loadAssignments()
     } catch (err) {
-      console.error('Failed to start training:', err)
+      alert('Failed to sign off: ' + err.message)
     }
   }
 
-  const handleCompleteItem = async (recordId, itemId) => {
-    try {
-      await completeItem(recordId, itemId)
-      // Refresh the expanded path
-      if (fullPath) {
-        const path = await getFullLearningPath(fullPath.id)
-        setFullPath(path)
+  const checkCompletion = async (assignment) => {
+    const trackConfig = TRACKS[assignment.track]
+    const docs = getTrackDocuments(assignment.track)
+    const acks = acknowledgments[assignment.id] || []
+    const skills = skillSignoffs[assignment.id] || []
+
+    const docsComplete = docs.length > 0 && acks.length >= docs.length
+    const skillsComplete = !trackConfig.hasPractical ||
+      (trackConfig.practicalItems && skills.length >= trackConfig.practicalItems.length)
+
+    if (docsComplete && skillsComplete && assignment.status !== 'completed') {
+      await updateAssignment(assignment.id, {
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+      await loadAssignments()
+    }
+  }
+
+  useEffect(() => {
+    assignments.forEach(a => {
+      if (a.status !== 'completed') {
+        checkCompletion(a)
       }
-      loadData()
-    } catch (err) {
-      console.error('Failed to complete item:', err)
-    }
-  }
-
-  const inProgress = records.filter(r => r.status === 'in_progress')
-  const notStarted = records.filter(r => r.status === 'not_started')
-  const completed = records.filter(r => r.status === 'completed')
-
-  const expiringCerts = certifications.filter(c => {
-    if (!c.expiry_date) return false
-    const days = differenceInDays(new Date(c.expiry_date), new Date())
-    return days <= 30 && days >= 0
-  })
+    })
+  }, [acknowledgments, skillSignoffs])
 
   if (loading) {
     return (
@@ -247,251 +370,175 @@ function MyTrainingTab({ operators, currentOperatorId, onSelectOperator }) {
 
   return (
     <div className="space-y-6">
-      {/* Operator Selector (for admins) */}
-      {operators.length > 1 && (
-        <div className="flex items-center gap-3">
-          <User className="w-5 h-5 text-gray-400" />
-          <select
-            value={currentOperatorId || ''}
-            onChange={(e) => onSelectOperator(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-          >
-            {operators.map(op => (
-              <option key={op.id} value={op.id}>{op.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Operator selector */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Viewing training for:</label>
+        <select
+          value={currentOperatorId || ''}
+          onChange={(e) => onSelectOperator(e.target.value)}
+          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          {operators.map(op => (
+            <option key={op.id} value={op.id}>{op.name}</option>
+          ))}
+        </select>
+      </div>
 
-      {/* Alerts */}
-      {(inProgress.some(r => r.due_date && differenceInDays(new Date(r.due_date), new Date()) < 7) || expiringCerts.length > 0) && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <h3 className="font-medium text-amber-800 flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5" />
-            Action Required
-          </h3>
-          <ul className="space-y-1 text-sm text-amber-700">
-            {inProgress.filter(r => r.due_date && differenceInDays(new Date(r.due_date), new Date()) < 7).map(r => (
-              <li key={r.id}>• {r.learning_paths?.name} due {format(new Date(r.due_date), 'MMM d')}</li>
-            ))}
-            {expiringCerts.map(c => (
-              <li key={c.id}>• {c.name} certification expires {format(new Date(c.expiry_date), 'MMM d')}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* In Progress */}
-      {inProgress.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <Play className="w-4 h-4 text-blue-500" />
-              In Progress
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {inProgress.map(record => (
-              <div key={record.id}>
-                <button
-                  onClick={() => handleExpandRecord(record)}
-                  className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 text-left"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h4 className="font-medium text-gray-900">{record.learning_paths?.name}</h4>
-                      <CategoryBadge category={record.learning_paths?.category} />
-                      <StatusBadge status={record.status} dueDate={record.due_date} />
-                    </div>
-                    {record.due_date && (
-                      <p className="text-sm text-gray-500">Due: {format(new Date(record.due_date), 'MMMM d, yyyy')}</p>
-                    )}
-                    <div className="mt-2">
-                      <ProgressBar
-                        completed={record.module_completions?.length || 0}
-                        total={fullPath?.modules?.length || record.module_completions?.length || 1}
-                      />
-                    </div>
-                  </div>
-                  {expandedRecord === record.id ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
-
-                {/* Expanded Module View */}
-                {expandedRecord === record.id && fullPath && (
-                  <div className="px-4 pb-4 bg-gray-50 border-t border-gray-100">
-                    <div className="space-y-3 mt-3">
-                      {fullPath.modules.map((module, idx) => {
-                        const moduleCompleted = record.module_completions?.some(mc => mc.module_id === module.id)
-                        const completedItems = module.items.filter(item =>
-                          record.item_completions?.some(ic => ic.item_id === item.id)
-                        )
-                        const allItemsCompleted = completedItems.length === module.items.length
-
-                        return (
-                          <div key={module.id} className="bg-white rounded-lg border border-gray-200 p-4">
-                            <div className="flex items-center gap-3 mb-3">
-                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                                moduleCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {moduleCompleted ? <Check className="w-4 h-4" /> : idx + 1}
-                              </span>
-                              <h5 className="font-medium text-gray-900">{module.title}</h5>
-                              {moduleCompleted && (
-                                <span className="text-xs text-green-600">Completed</span>
-                              )}
-                            </div>
-
-                            <div className="space-y-2 ml-9">
-                              {module.items.map(item => {
-                                const itemCompleted = record.item_completions?.some(ic => ic.item_id === item.id)
-                                const ItemIcon = ITEM_TYPES.find(t => t.value === item.type)?.icon || FileText
-
-                                return (
-                                  <div key={item.id} className="flex items-center gap-3">
-                                    <button
-                                      onClick={() => !itemCompleted && handleCompleteItem(record.id, item.id)}
-                                      disabled={itemCompleted}
-                                      className={`w-5 h-5 rounded border flex items-center justify-center ${
-                                        itemCompleted
-                                          ? 'bg-green-100 border-green-300 text-green-600'
-                                          : 'border-gray-300 hover:border-brand-500 hover:bg-brand-50'
-                                      }`}
-                                    >
-                                      {itemCompleted && <Check className="w-3 h-3" />}
-                                    </button>
-                                    <ItemIcon className="w-4 h-4 text-gray-400" />
-                                    <span className={`text-sm ${itemCompleted ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
-                                      {item.title}
-                                    </span>
-                                    {item.type === 'document' && (
-                                      <button className="text-xs text-brand-600 hover:text-brand-700">View Doc</button>
-                                    )}
-                                    {item.type === 'video' && item.video_url && (
-                                      <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 hover:text-brand-700">Watch</a>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Not Started */}
-      {notStarted.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-500" />
-              Assigned Training
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {notStarted.map(record => (
-              <div key={record.id} className="px-4 py-4 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h4 className="font-medium text-gray-900">{record.learning_paths?.name}</h4>
-                    <CategoryBadge category={record.learning_paths?.category} />
-                  </div>
-                  {record.due_date && (
-                    <p className="text-sm text-gray-500">Due: {format(new Date(record.due_date), 'MMMM d, yyyy')}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleStartTraining(record.id)}
-                  className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-medium"
-                >
-                  Start
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Completed */}
-      {completed.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <Check className="w-4 h-4 text-green-500" />
-              Completed
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {completed.slice(0, 5).map(record => (
-              <div key={record.id} className="px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <h4 className="font-medium text-gray-900">{record.learning_paths?.name}</h4>
-                  <CategoryBadge category={record.learning_paths?.category} />
-                </div>
-                <span className="text-sm text-gray-500">
-                  {record.completed_at && format(new Date(record.completed_at), 'MMM d, yyyy')}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Certifications */}
-      {certifications.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-500" />
-              Certifications
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {certifications.map(cert => {
-              const daysUntilExpiry = cert.expiry_date ? differenceInDays(new Date(cert.expiry_date), new Date()) : null
-              return (
-                <div key={cert.id} className="px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{cert.name}</h4>
-                    {cert.issuing_authority && (
-                      <p className="text-sm text-gray-500">{cert.issuing_authority}</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    {cert.expiry_date ? (
-                      <span className={`text-sm ${
-                        daysUntilExpiry < 0 ? 'text-red-600' :
-                        daysUntilExpiry <= 30 ? 'text-amber-600' :
-                        'text-gray-600'
-                      }`}>
-                        {daysUntilExpiry < 0 ? 'Expired' : `Expires ${format(new Date(cert.expiry_date), 'MMM d, yyyy')}`}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-green-600">No expiry</span>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {records.length === 0 && (
+      {/* Assigned tracks */}
+      {assignments.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
           <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500">No training assigned yet</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {assignments.map(assignment => {
+            const trackConfig = TRACKS[assignment.track]
+            if (!trackConfig) return null
+
+            const Icon = trackConfig.icon
+            const trackDocs = getTrackDocuments(assignment.track)
+            const acks = acknowledgments[assignment.id] || []
+            const skills = skillSignoffs[assignment.id] || []
+            const isExpanded = expandedTrack === assignment.id
+
+            const totalItems = trackDocs.length + (trackConfig.practicalItems?.length || 0)
+            const completedItems = acks.length + skills.length
+
+            return (
+              <div key={assignment.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setExpandedTrack(isExpanded ? null : assignment.id)}
+                  className="w-full px-4 py-4 flex items-center gap-4 hover:bg-gray-50"
+                >
+                  <div className={`p-3 rounded-lg ${trackConfig.color}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{trackConfig.name}</h3>
+                      {assignment.status === 'completed' && (
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                          Completed
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500">{trackConfig.description}</p>
+                    <div className="mt-2 max-w-md">
+                      <ProgressBar current={completedItems} total={totalItems} />
+                    </div>
+                  </div>
+                  {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-gray-200 p-4 space-y-4">
+                    {/* Documents to read */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Documents to Read & Acknowledge
+                      </h4>
+                      <div className="space-y-2">
+                        {trackDocs.map(doc => {
+                          const isAcked = acks.some(a => a.document_id === doc.id)
+                          return (
+                            <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                {isAcked ? (
+                                  <Check className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <div className="w-5 h-5 border-2 border-gray-300 rounded" />
+                                )}
+                                <div>
+                                  <p className={`font-medium ${isAcked ? 'text-gray-500' : 'text-gray-900'}`}>{doc.title}</p>
+                                  <p className="text-xs text-gray-500">{doc.doc_type}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {doc.google_doc_url && (
+                                  <a
+                                    href={doc.google_doc_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
+                                    title="Open document"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                )}
+                                {!isAcked && (
+                                  <button
+                                    onClick={() => handleAcknowledge(assignment.id, doc.id)}
+                                    className="px-3 py-1 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+                                  >
+                                    Acknowledge
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {trackDocs.length === 0 && (
+                          <p className="text-sm text-gray-500 italic">No documents assigned to this track yet</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Flight skills (for pilot track) */}
+                    {trackConfig.hasPractical && trackConfig.practicalItems && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                          <Plane className="w-4 h-4" />
+                          Flight Skills Checklist (Supervisor Sign-off Required)
+                        </h4>
+                        <div className="space-y-2">
+                          {trackConfig.practicalItems.map(skill => {
+                            const signoff = skills.find(s => s.skill_name === skill)
+                            return (
+                              <div key={skill} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  {signoff ? (
+                                    <Check className="w-5 h-5 text-green-500" />
+                                  ) : (
+                                    <div className="w-5 h-5 border-2 border-gray-300 rounded" />
+                                  )}
+                                  <div>
+                                    <p className={`font-medium ${signoff ? 'text-gray-500' : 'text-gray-900'}`}>{skill}</p>
+                                    {signoff && (
+                                      <p className="text-xs text-gray-500">
+                                        Signed off by {signoff.supervisor?.name} on {format(new Date(signoff.signed_off_at), 'MMM d, yyyy')}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                {!signoff && (
+                                  <select
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        handleSignOff(assignment.id, skill, e.target.value)
+                                      }
+                                    }}
+                                    className="px-3 py-1 text-sm border border-gray-300 rounded-lg"
+                                    defaultValue=""
+                                  >
+                                    <option value="">Select supervisor...</option>
+                                    {operators.filter(op => op.id !== currentOperatorId).map(op => (
+                                      <option key={op.id} value={op.id}>{op.name}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -499,63 +546,38 @@ function MyTrainingTab({ operators, currentOperatorId, onSelectOperator }) {
 }
 
 // ============================================
-// LEARNING PATHS TAB
+// ASSIGN TRAINING TAB
 // ============================================
 
-function LearningPathsTab({ operators, documents }) {
-  const [paths, setPaths] = useState([])
+function AssignTrainingTab({ operators }) {
+  const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [expandedPath, setExpandedPath] = useState(null)
-  const [fullPath, setFullPath] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  const [editingPath, setEditingPath] = useState(null)
-  const [showAssignModal, setShowAssignModal] = useState(false)
-  const [assigningPath, setAssigningPath] = useState(null)
 
   useEffect(() => {
-    loadPaths()
+    loadAssignments()
   }, [])
 
-  const loadPaths = async () => {
+  const loadAssignments = async () => {
     try {
-      const data = await getLearningPaths(true)
-      setPaths(data || [])
+      const data = await getTrackAssignments()
+      setAssignments(data || [])
     } catch (err) {
-      console.error('Failed to load paths:', err)
+      console.error('Failed to load:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleExpandPath = async (path) => {
-    if (expandedPath === path.id) {
-      setExpandedPath(null)
-      setFullPath(null)
-      return
-    }
-    setExpandedPath(path.id)
+  const handleDelete = async (id) => {
+    if (!confirm('Remove this training assignment?')) return
     try {
-      const full = await getFullLearningPath(path.id)
-      setFullPath(full)
-    } catch (err) {
-      console.error('Failed to load full path:', err)
-    }
-  }
-
-  const handleDelete = async (pathId) => {
-    if (!confirm('Delete this learning path? This cannot be undone.')) return
-    try {
-      await deleteLearningPath(pathId)
-      loadPaths()
+      await deleteAssignment(id)
+      await loadAssignments()
     } catch (err) {
       alert('Failed to delete: ' + err.message)
     }
   }
-
-  const groupedPaths = CATEGORIES.map(cat => ({
-    ...cat,
-    paths: paths.filter(p => p.category === cat.value)
-  })).filter(g => g.paths.length > 0)
 
   if (loading) {
     return (
@@ -564,709 +586,120 @@ function LearningPathsTab({ operators, documents }) {
       </div>
     )
   }
+
+  // Group by operator
+  const byOperator = {}
+  assignments.forEach(a => {
+    const opId = a.operator_id
+    if (!byOperator[opId]) {
+      byOperator[opId] = { operator: a.operators, assignments: [] }
+    }
+    byOperator[opId].assignments.push(a)
+  })
 
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
         <button
-          onClick={() => { setEditingPath(null); setShowModal(true) }}
+          onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
         >
           <Plus className="w-5 h-5" />
-          New Learning Path
+          Assign Training
         </button>
       </div>
 
-      {groupedPaths.length === 0 ? (
+      {Object.keys(byOperator).length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No learning paths yet</p>
-          <p className="text-sm text-gray-400 mt-1">Create your first learning path to get started</p>
+          <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500">No training assigned yet</p>
         </div>
       ) : (
-        groupedPaths.map(group => (
-          <div key={group.value} className="space-y-3">
-            <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <group.icon className="w-5 h-5 text-gray-500" />
-              {group.label}
-            </h3>
-
-            <div className="space-y-2">
-              {group.paths.map(path => (
-                <div key={path.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div
-                    onClick={() => handleExpandPath(path)}
-                    className="px-4 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-medium text-gray-900">{path.name}</h4>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          path.status === 'active' ? 'bg-green-100 text-green-700' :
-                          path.status === 'draft' ? 'bg-gray-100 text-gray-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {path.status}
-                        </span>
-                        {path.recurrence !== 'none' && (
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <RotateCcw className="w-3 h-3" />
-                            {path.recurrence}
-                          </span>
-                        )}
-                      </div>
-                      {path.description && (
-                        <p className="text-sm text-gray-500 mt-1">{path.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setAssigningPath(path); setShowAssignModal(true) }}
-                        className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
-                        title="Assign to operator"
-                      >
-                        <Users className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setEditingPath(path); setShowModal(true) }}
-                        className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
-                        title="Edit"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(path.id) }}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      {expandedPath === path.id ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Expanded View with Modules */}
-                  {expandedPath === path.id && fullPath && (
-                    <PathBuilder
-                      path={fullPath}
-                      documents={documents}
-                      onUpdate={loadPaths}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))
-      )}
-
-      {/* Path Modal */}
-      {showModal && (
-        <LearningPathModal
-          path={editingPath}
-          onClose={() => { setShowModal(false); setEditingPath(null) }}
-          onSave={() => { setShowModal(false); setEditingPath(null); loadPaths() }}
-        />
-      )}
-
-      {/* Assign Modal */}
-      {showAssignModal && assigningPath && (
-        <AssignTrainingModal
-          path={assigningPath}
-          operators={operators}
-          onClose={() => { setShowAssignModal(false); setAssigningPath(null) }}
-          onSave={() => { setShowAssignModal(false); setAssigningPath(null) }}
-        />
-      )}
-    </div>
-  )
-}
-
-// ============================================
-// PATH BUILDER (MODULES & ITEMS)
-// ============================================
-
-function PathBuilder({ path, documents, onUpdate }) {
-  const [modules, setModules] = useState(path.modules || [])
-  const [showModuleModal, setShowModuleModal] = useState(false)
-  const [editingModule, setEditingModule] = useState(null)
-  const [showItemModal, setShowItemModal] = useState(false)
-  const [editingItem, setEditingItem] = useState(null)
-  const [activeModuleId, setActiveModuleId] = useState(null)
-
-  const handleAddModule = () => {
-    setEditingModule(null)
-    setShowModuleModal(true)
-  }
-
-  const handleEditModule = (module) => {
-    setEditingModule(module)
-    setShowModuleModal(true)
-  }
-
-  const handleDeleteModule = async (moduleId) => {
-    if (!confirm('Delete this module and all its items?')) return
-    try {
-      await deleteModule(moduleId)
-      onUpdate()
-    } catch (err) {
-      alert('Failed to delete: ' + err.message)
-    }
-  }
-
-  const handleAddItem = (moduleId) => {
-    setActiveModuleId(moduleId)
-    setEditingItem(null)
-    setShowItemModal(true)
-  }
-
-  const handleEditItem = (item, moduleId) => {
-    setActiveModuleId(moduleId)
-    setEditingItem(item)
-    setShowItemModal(true)
-  }
-
-  const handleDeleteItem = async (itemId) => {
-    if (!confirm('Delete this item?')) return
-    try {
-      await deleteModuleItem(itemId)
-      onUpdate()
-    } catch (err) {
-      alert('Failed to delete: ' + err.message)
-    }
-  }
-
-  return (
-    <div className="border-t border-gray-200 bg-gray-50 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h5 className="font-medium text-gray-700">Modules</h5>
-        <button
-          onClick={handleAddModule}
-          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
-        >
-          <Plus className="w-4 h-4" />
-          Add Module
-        </button>
-      </div>
-
-      {path.modules.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-4">No modules yet. Add your first module to get started.</p>
-      ) : (
-        <div className="space-y-3">
-          {path.modules.map((module, idx) => (
-            <div key={module.id} className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-medium">
-                    {idx + 1}
-                  </span>
-                  <h6 className="font-medium text-gray-900">{module.title}</h6>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleAddItem(module.id)}
-                    className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded"
-                    title="Add item"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleEditModule(module)}
-                    className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded"
-                    title="Edit module"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteModule(module.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                    title="Delete module"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+        <div className="space-y-4">
+          {Object.values(byOperator).map(({ operator, assignments }) => (
+            <div key={operator.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 className="font-medium text-gray-900">{operator.name}</h3>
               </div>
-
-              {module.description && (
-                <p className="text-sm text-gray-500 mb-3 ml-9">{module.description}</p>
-              )}
-
-              {/* Items */}
-              <div className="space-y-2 ml-9">
-                {(module.items || []).map(item => {
-                  const ItemIcon = ITEM_TYPES.find(t => t.value === item.type)?.icon || FileText
+              <div className="divide-y divide-gray-100">
+                {assignments.map(a => {
+                  const trackConfig = TRACKS[a.track]
+                  if (!trackConfig) return null
+                  const Icon = trackConfig.icon
                   return (
-                    <div key={item.id} className="flex items-center justify-between py-1.5 px-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <ItemIcon className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-700">{item.title}</span>
-                        <span className="text-xs text-gray-400">({item.type})</span>
+                    <div key={a.id} className="px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${trackConfig.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{trackConfig.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {a.status === 'completed' ? (
+                              <span className="text-green-600">Completed {a.completed_at && format(new Date(a.completed_at), 'MMM d, yyyy')}</span>
+                            ) : a.due_date ? (
+                              `Due ${format(new Date(a.due_date), 'MMM d, yyyy')}`
+                            ) : (
+                              'No due date'
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          a.status === 'completed' ? 'bg-green-100 text-green-700' :
+                          a.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {a.status === 'completed' ? 'Completed' : a.status === 'in_progress' ? 'In Progress' : 'Assigned'}
+                        </span>
                         <button
-                          onClick={() => handleEditItem(item, module.id)}
-                          className="p-1 text-gray-400 hover:text-brand-600"
+                          onClick={() => handleDelete(a.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                         >
-                          <Pencil className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="p-1 text-gray-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                   )
                 })}
-                {(module.items || []).length === 0 && (
-                  <p className="text-xs text-gray-400 italic">No items yet</p>
-                )}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Module Modal */}
-      {showModuleModal && (
-        <ModuleModal
-          module={editingModule}
-          pathId={path.id}
-          sequence={path.modules.length}
-          onClose={() => { setShowModuleModal(false); setEditingModule(null) }}
-          onSave={() => { setShowModuleModal(false); setEditingModule(null); onUpdate() }}
-        />
-      )}
-
-      {/* Item Modal */}
-      {showItemModal && (
-        <ItemModal
-          item={editingItem}
-          moduleId={activeModuleId}
-          sequence={(path.modules.find(m => m.id === activeModuleId)?.items || []).length}
-          documents={documents}
-          onClose={() => { setShowItemModal(false); setEditingItem(null); setActiveModuleId(null) }}
-          onSave={() => { setShowItemModal(false); setEditingItem(null); setActiveModuleId(null); onUpdate() }}
+      {showModal && (
+        <AssignModal
+          operators={operators}
+          existingAssignments={assignments}
+          onClose={() => setShowModal(false)}
+          onSave={() => { setShowModal(false); loadAssignments() }}
         />
       )}
     </div>
   )
 }
 
-// ============================================
-// MODALS
-// ============================================
-
-function LearningPathModal({ path, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    name: path?.name || '',
-    description: path?.description || '',
-    category: path?.category || 'onboarding',
-    status: path?.status || 'draft',
-    recurrence: path?.recurrence || 'none',
-    required_for_roles: path?.required_for_roles || []
-  })
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      if (path) {
-        await updateLearningPath(path.id, formData)
-      } else {
-        await createLearningPath(formData)
-      }
-      onSave()
-    } catch (err) {
-      alert('Failed to save: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const toggleRole = (role) => {
-    setFormData(prev => ({
-      ...prev,
-      required_for_roles: prev.required_for_roles.includes(role)
-        ? prev.required_for_roles.filter(r => r !== role)
-        : [...prev.required_for_roles, role]
-    }))
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-lg w-full">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{path ? 'Edit Learning Path' : 'New Learning Path'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="e.g., New Operator Onboarding"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="What does this training cover?"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              >
-                {CATEGORIES.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Recurrence</label>
-            <select
-              value={formData.recurrence}
-              onChange={(e) => setFormData({ ...formData, recurrence: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-            >
-              {RECURRENCE_OPTIONS.map(r => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Required for Roles</label>
-            <div className="flex flex-wrap gap-2">
-              {ROLES.map(role => (
-                <button
-                  key={role.value}
-                  type="button"
-                  onClick={() => toggleRole(role.value)}
-                  className={`px-3 py-1 rounded-lg text-sm ${
-                    formData.required_for_roles.includes(role.value)
-                      ? 'bg-brand-100 text-brand-700 border-brand-300 border'
-                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                  }`}
-                >
-                  {role.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : path ? 'Update' : 'Create'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-function ModuleModal({ module, pathId, sequence, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    title: module?.title || '',
-    description: module?.description || ''
-  })
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      if (module) {
-        await updateModule(module.id, formData)
-      } else {
-        await createModule({ ...formData, path_id: pathId, sequence })
-      }
-      onSave()
-    } catch (err) {
-      alert('Failed to save: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{module ? 'Edit Module' : 'New Module'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="e.g., Safety Fundamentals"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="What does this module cover?"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : module ? 'Update' : 'Create'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-function ItemModal({ item, moduleId, sequence, documents, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    type: item?.type || 'document',
-    title: item?.title || '',
-    description: item?.description || '',
-    document_id: item?.document_id || '',
-    video_url: item?.video_url || '',
-    practical_instructions: item?.practical_instructions || '',
-    requires_supervisor: item?.requires_supervisor || false
-  })
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const data = {
-        ...formData,
-        document_id: formData.document_id || null,
-        video_url: formData.video_url || null,
-        practical_instructions: formData.practical_instructions || null
-      }
-
-      if (item) {
-        await updateModuleItem(item.id, data)
-      } else {
-        await createModuleItem({ ...data, module_id: moduleId, sequence })
-      }
-      onSave()
-    } catch (err) {
-      alert('Failed to save: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 className="text-lg font-semibold">{item ? 'Edit Item' : 'New Item'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
-            <div className="grid grid-cols-2 gap-2">
-              {ITEM_TYPES.map(type => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, type: type.value })}
-                  className={`p-3 rounded-lg border text-left ${
-                    formData.type === type.value
-                      ? 'border-brand-500 bg-brand-50'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <type.icon className="w-4 h-4" />
-                    <span className="font-medium text-sm">{type.label}</span>
-                  </div>
-                  <p className="text-xs text-gray-500">{type.description}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="e.g., Read Safety Policy"
-            />
-          </div>
-
-          {formData.type === 'document' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Link to Document</label>
-              <select
-                value={formData.document_id}
-                onChange={(e) => setFormData({ ...formData, document_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="">Select a document...</option>
-                {(documents || []).map(doc => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.doc_number ? `${doc.doc_number} - ` : ''}{doc.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {formData.type === 'video' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Video URL</label>
-              <input
-                type="url"
-                value={formData.video_url}
-                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-                placeholder="https://youtube.com/watch?v=..."
-              />
-            </div>
-          )}
-
-          {formData.type === 'practical' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
-                <textarea
-                  value={formData.practical_instructions}
-                  onChange={(e) => setFormData({ ...formData, practical_instructions: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-                  placeholder="Describe what the trainee needs to do..."
-                />
-              </div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.requires_supervisor}
-                  onChange={(e) => setFormData({ ...formData, requires_supervisor: e.target.checked })}
-                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className="text-sm text-gray-700">Requires supervisor sign-off</span>
-              </label>
-            </>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="Additional notes..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : item ? 'Update' : 'Add Item'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-function AssignTrainingModal({ path, operators, onClose, onSave }) {
-  const [selectedOperator, setSelectedOperator] = useState('')
+function AssignModal({ operators, existingAssignments, onClose, onSave }) {
+  const [operatorId, setOperatorId] = useState('')
+  const [track, setTrack] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedOperator) return
+
+    // Check if already assigned
+    const exists = existingAssignments.some(a => a.operator_id === operatorId && a.track === track)
+    if (exists) {
+      alert('This operator is already assigned to this track')
+      return
+    }
 
     setSaving(true)
     try {
-      await assignTraining(selectedOperator, path.id, dueDate || null)
+      await assignTrack(operatorId, track, dueDate || null)
       onSave()
     } catch (err) {
       alert('Failed to assign: ' + err.message)
@@ -1286,22 +719,32 @@ function AssignTrainingModal({ path, operators, onClose, onSave }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-medium text-gray-900">{path.name}</p>
-            <p className="text-sm text-gray-500">{path.description}</p>
-          </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Assign to *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Operator *</label>
             <select
-              value={selectedOperator}
-              onChange={(e) => setSelectedOperator(e.target.value)}
+              value={operatorId}
+              onChange={(e) => setOperatorId(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             >
               <option value="">Select operator...</option>
               {operators.map(op => (
                 <option key={op.id} value={op.id}>{op.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Training Track *</label>
+            <select
+              value={track}
+              onChange={(e) => setTrack(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="">Select track...</option>
+              {Object.entries(TRACKS).map(([key, config]) => (
+                <option key={key} value={key}>{config.name}</option>
               ))}
             </select>
           </div>
@@ -1312,7 +755,7 @@ function AssignTrainingModal({ path, operators, onClose, onSave }) {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             />
           </div>
 
@@ -1322,7 +765,7 @@ function AssignTrainingModal({ path, operators, onClose, onSave }) {
             </button>
             <button
               type="submit"
-              disabled={saving || !selectedOperator}
+              disabled={saving}
               className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
             >
               {saving ? 'Assigning...' : 'Assign'}
@@ -1350,34 +793,34 @@ function CertificationsTab({ operators }) {
 
   const loadCertifications = async () => {
     try {
-      const data = await getAllCertifications()
+      const data = await getCertifications()
       setCertifications(data || [])
     } catch (err) {
-      console.error('Failed to load certifications:', err)
+      console.error('Failed to load:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (certId) => {
+  const handleDelete = async (id) => {
     if (!confirm('Delete this certification?')) return
     try {
-      await deleteCertification(certId)
-      loadCertifications()
+      await deleteCertification(id)
+      await loadCertifications()
     } catch (err) {
       alert('Failed to delete: ' + err.message)
     }
   }
 
-  const expiring = certifications.filter(c => {
-    if (!c.expiry_date) return false
-    const days = differenceInDays(new Date(c.expiry_date), new Date())
-    return days <= 30 && days >= 0
-  })
-
   const expired = certifications.filter(c => {
     if (!c.expiry_date) return false
     return differenceInDays(new Date(c.expiry_date), new Date()) < 0
+  })
+
+  const expiring = certifications.filter(c => {
+    if (!c.expiry_date) return false
+    const days = differenceInDays(new Date(c.expiry_date), new Date())
+    return days >= 0 && days <= 30
   })
 
   const current = certifications.filter(c => {
@@ -1389,6 +832,37 @@ function CertificationsTab({ operators }) {
     return (
       <div className="flex justify-center py-12">
         <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  const CertRow = ({ cert }) => {
+    const daysUntil = cert.expiry_date ? differenceInDays(new Date(cert.expiry_date), new Date()) : null
+    return (
+      <div className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-900">{cert.name}</span>
+            <span className="text-sm text-gray-500">- {cert.operators?.name}</span>
+          </div>
+          <div className="text-sm text-gray-500">
+            {cert.issuing_authority && <span>{cert.issuing_authority} | </span>}
+            Issued {format(new Date(cert.issued_date), 'MMM d, yyyy')}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {cert.expiry_date && (
+            <span className={`text-sm ${daysUntil < 0 ? 'text-red-600 font-medium' : daysUntil <= 30 ? 'text-amber-600' : 'text-gray-600'}`}>
+              {daysUntil < 0 ? 'Expired' : `Expires ${format(new Date(cert.expiry_date), 'MMM d, yyyy')}`}
+            </span>
+          )}
+          <button onClick={() => { setEditingCert(cert); setShowModal(true) }} className="p-2 text-gray-400 hover:text-brand-600 rounded-lg">
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button onClick={() => handleDelete(cert.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-lg">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     )
   }
@@ -1405,53 +879,41 @@ function CertificationsTab({ operators }) {
         </button>
       </div>
 
-      {/* Expired */}
       {expired.length > 0 && (
-        <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-red-200 overflow-hidden">
           <div className="px-4 py-3 bg-red-50 border-b border-red-200">
             <h3 className="font-medium text-red-800 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Expired ({expired.length})
+              <AlertTriangle className="w-4 h-4" /> Expired ({expired.length})
             </h3>
           </div>
           <div className="divide-y divide-gray-100">
-            {expired.map(cert => (
-              <CertificationRow key={cert.id} cert={cert} onEdit={() => { setEditingCert(cert); setShowModal(true) }} onDelete={() => handleDelete(cert.id)} />
-            ))}
+            {expired.map(c => <CertRow key={c.id} cert={c} />)}
           </div>
         </div>
       )}
 
-      {/* Expiring Soon */}
       {expiring.length > 0 && (
-        <div className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-amber-200 overflow-hidden">
           <div className="px-4 py-3 bg-amber-50 border-b border-amber-200">
             <h3 className="font-medium text-amber-800 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Expiring Soon ({expiring.length})
+              <Clock className="w-4 h-4" /> Expiring Soon ({expiring.length})
             </h3>
           </div>
           <div className="divide-y divide-gray-100">
-            {expiring.map(cert => (
-              <CertificationRow key={cert.id} cert={cert} onEdit={() => { setEditingCert(cert); setShowModal(true) }} onDelete={() => handleDelete(cert.id)} />
-            ))}
+            {expiring.map(c => <CertRow key={c.id} cert={c} />)}
           </div>
         </div>
       )}
 
-      {/* Current */}
       {current.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <Award className="w-4 h-4 text-green-500" />
-              Current ({current.length})
+              <Award className="w-4 h-4 text-green-500" /> Current ({current.length})
             </h3>
           </div>
           <div className="divide-y divide-gray-100">
-            {current.map(cert => (
-              <CertificationRow key={cert.id} cert={cert} onEdit={() => { setEditingCert(cert); setShowModal(true) }} onDelete={() => handleDelete(cert.id)} />
-            ))}
+            {current.map(c => <CertRow key={c.id} cert={c} />)}
           </div>
         </div>
       )}
@@ -1464,7 +926,7 @@ function CertificationsTab({ operators }) {
       )}
 
       {showModal && (
-        <CertificationModal
+        <CertModal
           cert={editingCert}
           operators={operators}
           onClose={() => { setShowModal(false); setEditingCert(null) }}
@@ -1475,43 +937,7 @@ function CertificationsTab({ operators }) {
   )
 }
 
-function CertificationRow({ cert, onEdit, onDelete }) {
-  const daysUntilExpiry = cert.expiry_date ? differenceInDays(new Date(cert.expiry_date), new Date()) : null
-
-  return (
-    <div className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
-      <div className="flex-1">
-        <div className="flex items-center gap-3">
-          <h4 className="font-medium text-gray-900">{cert.name}</h4>
-          <span className="text-sm text-gray-500">{cert.operators?.name}</span>
-        </div>
-        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-          {cert.issuing_authority && <span>{cert.issuing_authority}</span>}
-          <span>Issued: {format(new Date(cert.issued_date), 'MMM d, yyyy')}</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        {cert.expiry_date && (
-          <span className={`text-sm ${
-            daysUntilExpiry < 0 ? 'text-red-600 font-medium' :
-            daysUntilExpiry <= 30 ? 'text-amber-600' :
-            'text-gray-600'
-          }`}>
-            {daysUntilExpiry < 0 ? 'Expired' : `Expires ${format(new Date(cert.expiry_date), 'MMM d, yyyy')}`}
-          </span>
-        )}
-        <button onClick={onEdit} className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg">
-          <Pencil className="w-4 h-4" />
-        </button>
-        <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function CertificationModal({ cert, operators, onClose, onSave }) {
+function CertModal({ cert, operators, onClose, onSave }) {
   const [formData, setFormData] = useState({
     operator_id: cert?.operator_id || '',
     name: cert?.name || '',
@@ -1526,14 +952,10 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
     e.preventDefault()
     setSaving(true)
     try {
-      const data = {
-        ...formData,
-        expiry_date: formData.expiry_date || null
-      }
       if (cert) {
-        await updateCertification(cert.id, data)
+        await updateCertification(cert.id, formData)
       } else {
-        await createCertification(data)
+        await createCertification(formData)
       }
       onSave()
     } catch (err) {
@@ -1560,12 +982,10 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
               value={formData.operator_id}
               onChange={(e) => setFormData({ ...formData, operator_id: e.target.value })}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             >
-              <option value="">Select operator...</option>
-              {operators.map(op => (
-                <option key={op.id} value={op.id}>{op.name}</option>
-              ))}
+              <option value="">Select...</option>
+              {operators.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
             </select>
           </div>
 
@@ -1576,8 +996,8 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="e.g., L1C Basic, First Aid, WHMIS"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              placeholder="e.g., Basic RPAS Certificate"
             />
           </div>
 
@@ -1587,8 +1007,8 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
               type="text"
               value={formData.issuing_authority}
               onChange={(e) => setFormData({ ...formData, issuing_authority: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="e.g., Transport Canada, Red Cross"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              placeholder="e.g., Transport Canada"
             />
           </div>
 
@@ -1600,7 +1020,7 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
                 required
                 value={formData.issued_date}
                 onChange={(e) => setFormData({ ...formData, issued_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
             </div>
             <div>
@@ -1609,31 +1029,16 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
                 type="date"
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-              placeholder="Additional notes..."
-            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
-            >
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50">
               {saving ? 'Saving...' : cert ? 'Update' : 'Add'}
             </button>
           </div>
@@ -1648,7 +1053,7 @@ function CertificationModal({ cert, operators, onClose, onSave }) {
 // ============================================
 
 function ComplianceTab({ operators }) {
-  const [records, setRecords] = useState([])
+  const [assignments, setAssignments] = useState([])
   const [certifications, setCertifications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -1658,42 +1063,32 @@ function ComplianceTab({ operators }) {
 
   const loadData = async () => {
     try {
-      const [recordsData, certsData] = await Promise.all([
-        getAllTrainingRecords(),
-        getAllCertifications()
+      const [assignData, certData] = await Promise.all([
+        getTrackAssignments(),
+        getCertifications()
       ])
-      setRecords(recordsData || [])
-      setCertifications(certsData || [])
+      setAssignments(assignData || [])
+      setCertifications(certData || [])
     } catch (err) {
-      console.error('Failed to load data:', err)
+      console.error('Failed to load:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const overdue = records.filter(r => {
-    if (r.status === 'completed') return false
-    if (!r.due_date) return false
-    return differenceInDays(new Date(r.due_date), new Date()) < 0
-  })
-
-  const dueSoon = records.filter(r => {
-    if (r.status === 'completed') return false
-    if (!r.due_date) return false
-    const days = differenceInDays(new Date(r.due_date), new Date())
-    return days >= 0 && days <= 14
-  })
-
-  const expiringCerts = certifications.filter(c => {
-    if (!c.expiry_date) return false
-    const days = differenceInDays(new Date(c.expiry_date), new Date())
-    return days <= 30 && days >= 0
+  const overdue = assignments.filter(a => {
+    if (a.status === 'completed') return false
+    if (!a.due_date) return false
+    return differenceInDays(new Date(a.due_date), new Date()) < 0
   })
 
   const expiredCerts = certifications.filter(c => {
     if (!c.expiry_date) return false
     return differenceInDays(new Date(c.expiry_date), new Date()) < 0
   })
+
+  const completed = assignments.filter(a => a.status === 'completed').length
+  const inProgress = assignments.filter(a => a.status !== 'completed').length
 
   if (loading) {
     return (
@@ -1703,107 +1098,66 @@ function ComplianceTab({ operators }) {
     )
   }
 
-  const issueCount = overdue.length + dueSoon.length + expiringCerts.length + expiredCerts.length
+  const issues = overdue.length + expiredCerts.length
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="text-3xl font-bold text-gray-900">{operators.length}</div>
-          <div className="text-sm text-gray-500">Total Operators</div>
+          <div className="text-sm text-gray-500">Operators</div>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="text-3xl font-bold text-green-600">{records.filter(r => r.status === 'completed').length}</div>
-          <div className="text-sm text-gray-500">Completed Training</div>
+          <div className="text-3xl font-bold text-green-600">{completed}</div>
+          <div className="text-sm text-gray-500">Completed</div>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="text-3xl font-bold text-blue-600">{records.filter(r => r.status === 'in_progress').length}</div>
+          <div className="text-3xl font-bold text-blue-600">{inProgress}</div>
           <div className="text-sm text-gray-500">In Progress</div>
         </div>
-        <div className={`rounded-xl border p-4 ${issueCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
-          <div className={`text-3xl font-bold ${issueCount > 0 ? 'text-red-600' : 'text-gray-900'}`}>{issueCount}</div>
+        <div className={`rounded-xl border p-4 ${issues > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+          <div className={`text-3xl font-bold ${issues > 0 ? 'text-red-600' : 'text-gray-900'}`}>{issues}</div>
           <div className="text-sm text-gray-500">Action Required</div>
         </div>
       </div>
 
-      {/* Action Required */}
+      {/* Issues */}
       {(overdue.length > 0 || expiredCerts.length > 0) && (
-        <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-red-200 overflow-hidden">
           <div className="px-4 py-3 bg-red-50 border-b border-red-200">
             <h3 className="font-medium text-red-800 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Overdue / Expired
+              <AlertTriangle className="w-4 h-4" /> Action Required
             </h3>
           </div>
           <div className="divide-y divide-gray-100">
-            {overdue.map(r => (
-              <div key={r.id} className="px-4 py-3 flex items-center justify-between">
+            {overdue.map(a => (
+              <div key={a.id} className="px-4 py-3 flex items-center justify-between">
                 <div>
-                  <span className="font-medium text-gray-900">{r.operators?.name}</span>
+                  <span className="font-medium">{a.operators?.name}</span>
                   <span className="text-gray-500 mx-2">-</span>
-                  <span className="text-gray-700">{r.learning_paths?.name}</span>
+                  <span>{TRACKS[a.track]?.name}</span>
                 </div>
                 <span className="text-sm text-red-600 font-medium">
-                  Overdue {Math.abs(differenceInDays(new Date(r.due_date), new Date()))} days
+                  Overdue {Math.abs(differenceInDays(new Date(a.due_date), new Date()))} days
                 </span>
               </div>
             ))}
             {expiredCerts.map(c => (
               <div key={c.id} className="px-4 py-3 flex items-center justify-between">
                 <div>
-                  <span className="font-medium text-gray-900">{c.operators?.name}</span>
+                  <span className="font-medium">{c.operators?.name}</span>
                   <span className="text-gray-500 mx-2">-</span>
-                  <span className="text-gray-700">{c.name} (certification)</span>
+                  <span>{c.name}</span>
                 </div>
-                <span className="text-sm text-red-600 font-medium">
-                  Expired {Math.abs(differenceInDays(new Date(c.expiry_date), new Date()))} days ago
-                </span>
+                <span className="text-sm text-red-600 font-medium">Certificate expired</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Due Soon */}
-      {(dueSoon.length > 0 || expiringCerts.length > 0) && (
-        <div className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-amber-50 border-b border-amber-200">
-            <h3 className="font-medium text-amber-800 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Due Soon / Expiring
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {dueSoon.map(r => (
-              <div key={r.id} className="px-4 py-3 flex items-center justify-between">
-                <div>
-                  <span className="font-medium text-gray-900">{r.operators?.name}</span>
-                  <span className="text-gray-500 mx-2">-</span>
-                  <span className="text-gray-700">{r.learning_paths?.name}</span>
-                </div>
-                <span className="text-sm text-amber-600">
-                  Due in {differenceInDays(new Date(r.due_date), new Date())} days
-                </span>
-              </div>
-            ))}
-            {expiringCerts.map(c => (
-              <div key={c.id} className="px-4 py-3 flex items-center justify-between">
-                <div>
-                  <span className="font-medium text-gray-900">{c.operators?.name}</span>
-                  <span className="text-gray-500 mx-2">-</span>
-                  <span className="text-gray-700">{c.name} (certification)</span>
-                </div>
-                <span className="text-sm text-amber-600">
-                  Expires in {differenceInDays(new Date(c.expiry_date), new Date())} days
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {issueCount === 0 && (
+      {issues === 0 && (
         <div className="text-center py-12 bg-green-50 rounded-xl border border-green-200">
           <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
           <p className="text-green-700 font-medium">All training is up to date!</p>
@@ -1830,17 +1184,17 @@ export default function Training() {
 
   const loadData = async () => {
     try {
-      const [opsData, docsData] = await Promise.all([
+      const [ops, docs] = await Promise.all([
         getOperators(),
         getDocuments()
       ])
-      setOperators(opsData || [])
-      setDocuments(docsData || [])
-      if (opsData?.length > 0) {
-        setCurrentOperatorId(opsData[0].id)
+      setOperators(ops || [])
+      setDocuments(docs || [])
+      if (ops?.length > 0) {
+        setCurrentOperatorId(ops[0].id)
       }
     } catch (err) {
-      console.error('Failed to load data:', err)
+      console.error('Failed to load:', err)
     } finally {
       setLoading(false)
     }
@@ -1856,61 +1210,37 @@ export default function Training() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Training</h1>
-        <p className="text-gray-500">Manage learning paths, track progress, and certifications</p>
+        <p className="text-gray-500">Track training progress and certifications</p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
-        <TabButton
-          active={activeTab === 'my-training'}
-          onClick={() => setActiveTab('my-training')}
-          icon={GraduationCap}
-        >
+        <TabButton active={activeTab === 'my-training'} onClick={() => setActiveTab('my-training')} icon={GraduationCap}>
           My Training
         </TabButton>
-        <TabButton
-          active={activeTab === 'paths'}
-          onClick={() => setActiveTab('paths')}
-          icon={BookOpen}
-        >
-          Learning Paths
+        <TabButton active={activeTab === 'assign'} onClick={() => setActiveTab('assign')} icon={Users}>
+          Assign Training
         </TabButton>
-        <TabButton
-          active={activeTab === 'certifications'}
-          onClick={() => setActiveTab('certifications')}
-          icon={Award}
-        >
+        <TabButton active={activeTab === 'certifications'} onClick={() => setActiveTab('certifications')} icon={Award}>
           Certifications
         </TabButton>
-        <TabButton
-          active={activeTab === 'compliance'}
-          onClick={() => setActiveTab('compliance')}
-          icon={Users}
-        >
+        <TabButton active={activeTab === 'compliance'} onClick={() => setActiveTab('compliance')} icon={ClipboardCheck}>
           Compliance
         </TabButton>
       </div>
 
-      {/* Tab Content */}
       {activeTab === 'my-training' && (
         <MyTrainingTab
           operators={operators}
+          documents={documents}
           currentOperatorId={currentOperatorId}
           onSelectOperator={setCurrentOperatorId}
         />
       )}
-      {activeTab === 'paths' && (
-        <LearningPathsTab operators={operators} documents={documents} />
-      )}
-      {activeTab === 'certifications' && (
-        <CertificationsTab operators={operators} />
-      )}
-      {activeTab === 'compliance' && (
-        <ComplianceTab operators={operators} />
-      )}
+      {activeTab === 'assign' && <AssignTrainingTab operators={operators} />}
+      {activeTab === 'certifications' && <CertificationsTab operators={operators} />}
+      {activeTab === 'compliance' && <ComplianceTab operators={operators} />}
     </div>
   )
 }
