@@ -3570,14 +3570,23 @@ export default function SiteTab({ project, onUpdate, equipment }) {
   }
 
   const addSite = () => {
-    // Find the highest existing site number to avoid duplicates
+    // Find existing site numbers and fill gaps first, then increment
     const existingNumbers = sites
       .map(s => {
         const match = s.name?.match(/^Site (\d+)$/)
         return match ? parseInt(match[1], 10) : 0
       })
       .filter(n => n > 0)
-    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1
+      .sort((a, b) => a - b)
+
+    // Find the first gap, or use max + 1 if no gaps
+    let nextNumber = 1
+    for (let i = 1; i <= existingNumbers.length + 1; i++) {
+      if (!existingNumbers.includes(i)) {
+        nextNumber = i
+        break
+      }
+    }
 
     const newSite = {
       id: `site-${Date.now()}`,
