@@ -96,10 +96,13 @@ function SaveIndicator({ status }) {
   return null
 }
 
-function Section({ title, children, className = '' }) {
+function Section({ title, children, className = '', variant = 'default' }) {
+  const bgColor = variant === 'alt' ? 'bg-slate-50' : 'bg-white'
+  const headerBg = variant === 'alt' ? 'bg-slate-100' : 'bg-gray-50'
+
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+    <div className={`${bgColor} rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+      <div className={`px-6 py-4 border-b border-gray-100 ${headerBg}`}>
         <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
       </div>
       <div className="p-6">
@@ -181,11 +184,11 @@ const PROJECT_CONSTRAINTS = [
   { id: 'client_onsite', label: 'Client On-Site' }
 ]
 
-function ProjectOverviewSection({ project, onUpdate, operators }) {
+function ProjectOverviewSection({ project, onUpdate, operators, variant = 'default' }) {
   const statusOption = STATUS_OPTIONS.find(s => s.value === project.status) || STATUS_OPTIONS[0]
 
   return (
-    <Section title="Project Overview">
+    <Section title="Project Overview" variant={variant}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Project Author</label>
@@ -250,9 +253,9 @@ function ProjectOverviewSection({ project, onUpdate, operators }) {
   )
 }
 
-function ClientInfoSection({ project, onUpdate }) {
+function ClientInfoSection({ project, onUpdate, variant = 'default' }) {
   return (
-    <Section title="Client Information">
+    <Section title="Client Information" variant={variant}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <InputField
           label="Client / Company"
@@ -470,7 +473,7 @@ function NeedsSubSection({ title, children, defaultOpen = true }) {
   )
 }
 
-function NeedsAnalysisSection({ project, onUpdate }) {
+function NeedsAnalysisSection({ project, onUpdate, variant = 'default' }) {
   const needs = project.needs_analysis || {}
   const [expandedPackage, setExpandedPackage] = useState(null)
   const [expandedSite, setExpandedSite] = useState(null)
@@ -556,7 +559,7 @@ function NeedsAnalysisSection({ project, onUpdate }) {
   const flags = needs.flags || []
 
   return (
-    <Section title="Needs Analysis">
+    <Section title="Needs Analysis" variant={variant}>
       <div className="space-y-4">
 
         {/* Deliverable Packages */}
@@ -1053,7 +1056,7 @@ function NeedsAnalysisSection({ project, onUpdate }) {
   )
 }
 
-function NotificationContactsSection({ project, onUpdate }) {
+function NotificationContactsSection({ project, onUpdate, variant = 'default' }) {
   const contacts = project.notification_contacts || []
 
   const addContact = () => {
@@ -1073,7 +1076,7 @@ function NotificationContactsSection({ project, onUpdate }) {
   }
 
   return (
-    <Section title="Notification Contacts">
+    <Section title="Notification Contacts" variant={variant}>
       <p className="text-sm text-gray-500 mb-4">
         These contacts will receive GO/NO-GO notifications via email and SMS.
       </p>
@@ -1145,7 +1148,7 @@ function NotificationContactsSection({ project, onUpdate }) {
   )
 }
 
-function CrewSection({ project, onUpdate, operators, modifiers }) {
+function CrewSection({ project, onUpdate, operators, modifiers, variant = 'default' }) {
   const crew = project.crew || []
   const [showLibrary, setShowLibrary] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -1264,7 +1267,7 @@ function CrewSection({ project, onUpdate, operators, modifiers }) {
   const crewTotal = crew.reduce((sum, m) => sum + calculateSubtotal(m), 0)
 
   return (
-    <Section title="Crew">
+    <Section title="Crew" variant={variant}>
       <div className="space-y-4">
         {crew.length === 0 ? (
           <p className="text-gray-500 text-sm py-4 text-center">No crew assigned</p>
@@ -1451,7 +1454,7 @@ function CrewSection({ project, onUpdate, operators, modifiers }) {
   )
 }
 
-function EquipmentSection({ project, onUpdate, equipment, modifiers }) {
+function EquipmentSection({ project, onUpdate, equipment, modifiers, variant = 'default' }) {
   const assigned = project.equipment || []
   const [showLibrary, setShowLibrary] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -1544,7 +1547,7 @@ function EquipmentSection({ project, onUpdate, equipment, modifiers }) {
   const equipmentTotal = assigned.reduce((sum, e) => sum + calculateSubtotal(e), 0)
 
   return (
-    <Section title="Equipment">
+    <Section title="Equipment" variant={variant}>
       <div className="space-y-4">
         {assigned.length === 0 ? (
           <p className="text-gray-500 text-sm py-4 text-center">No equipment assigned</p>
@@ -1709,7 +1712,7 @@ function EquipmentSection({ project, onUpdate, equipment, modifiers }) {
   )
 }
 
-function ServicesSection({ project, onUpdate, services, modifiers }) {
+function ServicesSection({ project, onUpdate, services, modifiers, variant = 'default' }) {
   const assigned = project.services || []
   const [showLibrary, setShowLibrary] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -1791,7 +1794,7 @@ function ServicesSection({ project, onUpdate, services, modifiers }) {
   }
 
   return (
-    <Section title="Services">
+    <Section title="Services" variant={variant}>
       <div className="space-y-4">
         {assigned.length === 0 ? (
           <p className="text-gray-500 text-sm py-4 text-center">No services assigned</p>
@@ -1944,7 +1947,7 @@ function ServicesSection({ project, onUpdate, services, modifiers }) {
   )
 }
 
-function CostSummarySection({ project, onUpdate }) {
+function CostSummarySection({ project, onUpdate, variant = 'default' }) {
   // Calculate totals
   const crewTotal = (project.crew || []).reduce((sum, m) => sum + (m.rate || 0) * (m.quantity || 0), 0)
   const equipmentTotal = (project.equipment || []).reduce((sum, e) => sum + (e.rate || 0) * (e.quantity || 0), 0)
@@ -2033,7 +2036,7 @@ function CostSummarySection({ project, onUpdate }) {
   }
 
   return (
-    <Section title="Cost Summary">
+    <Section title="Cost Summary" variant={variant}>
       <div className="space-y-6">
         {/* Labour Section */}
         <div>
@@ -2221,9 +2224,9 @@ function CostSummarySection({ project, onUpdate }) {
   )
 }
 
-function PostFieldSection({ project, onUpdate }) {
+function PostFieldSection({ project, onUpdate, variant = 'default' }) {
   return (
-    <Section title="Post-Field Notes">
+    <Section title="Post-Field Notes" variant={variant}>
       <div className="space-y-4">
         <TextArea
           label="Processing Requirements"
@@ -2258,18 +2261,18 @@ function PostFieldSection({ project, onUpdate }) {
 function AdminTab({ project, onUpdate, operators, equipment, services, modifiers }) {
   return (
     <div className="space-y-8">
-      <ProjectOverviewSection project={project} onUpdate={onUpdate} operators={operators} />
-      <ClientInfoSection project={project} onUpdate={onUpdate} />
-      <NeedsAnalysisSection project={project} onUpdate={onUpdate} />
-      <NotificationContactsSection project={project} onUpdate={onUpdate} />
-      <CrewSection project={project} onUpdate={onUpdate} operators={operators} modifiers={modifiers} />
-      <EquipmentSection project={project} onUpdate={onUpdate} equipment={equipment} modifiers={modifiers} />
-      <ServicesSection project={project} onUpdate={onUpdate} services={services} modifiers={modifiers} />
-      <CostSummarySection project={project} onUpdate={onUpdate} />
-      <PostFieldSection project={project} onUpdate={onUpdate} />
+      <ProjectOverviewSection project={project} onUpdate={onUpdate} operators={operators} variant="default" />
+      <ClientInfoSection project={project} onUpdate={onUpdate} variant="alt" />
+      <NeedsAnalysisSection project={project} onUpdate={onUpdate} variant="default" />
+      <NotificationContactsSection project={project} onUpdate={onUpdate} variant="alt" />
+      <CrewSection project={project} onUpdate={onUpdate} operators={operators} modifiers={modifiers} variant="default" />
+      <EquipmentSection project={project} onUpdate={onUpdate} equipment={equipment} modifiers={modifiers} variant="alt" />
+      <ServicesSection project={project} onUpdate={onUpdate} services={services} modifiers={modifiers} variant="default" />
+      <CostSummarySection project={project} onUpdate={onUpdate} variant="alt" />
+      <PostFieldSection project={project} onUpdate={onUpdate} variant="default" />
 
       {/* Calendar Sync */}
-      <Section title="Calendar Sync">
+      <Section title="Calendar Sync" variant="alt">
         <CalendarSync project={project} />
       </Section>
     </div>

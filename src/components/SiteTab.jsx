@@ -586,14 +586,16 @@ const PPE_CATEGORIES = [...new Set(PPE_ITEMS.map(item => item.category))]
 // HELPER COMPONENTS
 // ============================================
 
-function Section({ title, children, defaultOpen = true, badge = null, icon: Icon = null }) {
+function Section({ title, children, defaultOpen = true, badge = null, icon: Icon = null, variant = 'default' }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
+  const bgColor = variant === 'alt' ? 'bg-slate-50' : 'bg-white'
+  const headerBg = variant === 'alt' ? 'bg-slate-100 hover:bg-slate-150' : 'bg-gray-50 hover:bg-gray-100'
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className={`${bgColor} rounded-xl border border-gray-200 overflow-hidden`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+        className={`w-full px-6 py-4 flex items-center justify-between ${headerBg} transition-colors`}
       >
         <div className="flex items-center gap-3">
           {Icon && <Icon className="w-5 h-5 text-gray-500" />}
@@ -3757,6 +3759,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
         title="Map & Flight Planning"
         icon={Plane}
         badge={`${elementCounts.total} elements`}
+        variant="default"
       >
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left sidebar: Toolbar */}
@@ -3804,7 +3807,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
       </Section>
 
       {/* SORA Calculator */}
-      <Section title="SORA Assessment" icon={Shield} badge={`SAIL ${getSiteSAIL(activeSite)}`}>
+      <Section title="SORA Assessment" icon={Shield} badge={`SAIL ${getSiteSAIL(activeSite)}`} variant="alt">
         <SORACalculator
           site={activeSite}
           onUpdateSite={updateActiveSite}
@@ -3813,7 +3816,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
       </Section>
 
       {/* Hazard Identification */}
-      <Section title="Hazard Identification" icon={AlertTriangle} badge={`${(activeSite?.hazards || []).length} hazards`}>
+      <Section title="Hazard Identification" icon={AlertTriangle} badge={`${(activeSite?.hazards || []).length} hazards`} variant="default">
         <HazardTable
           site={activeSite}
           onUpdateSite={updateActiveSite}
@@ -3825,6 +3828,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
         title="PPE Requirements"
         icon={HardHat}
         badge={`${(activeSite?.emergency?.ppe || []).length} items`}
+        variant="alt"
       >
         <PPESelector
           site={activeSite}
@@ -3833,7 +3837,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
       </Section>
 
       {/* Communications Plan */}
-      <Section title="Communications" icon={Radio}>
+      <Section title="Communications" icon={Radio} variant="default">
         <CommunicationsPlan
           site={activeSite}
           onUpdateSite={updateActiveSite}
@@ -3841,7 +3845,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
       </Section>
 
       {/* Emergency Contacts & Facilities */}
-      <Section title="Emergency Response" icon={ShieldAlert} defaultOpen={false}>
+      <Section title="Emergency Response" icon={ShieldAlert} defaultOpen={false} variant="alt">
         <EmergencyContacts
           site={activeSite}
           onUpdateSite={updateActiveSite}
