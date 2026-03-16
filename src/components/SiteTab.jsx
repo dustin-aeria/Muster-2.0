@@ -696,13 +696,12 @@ function FlightParameters({ site, onUpdateSite }) {
 // MAP COMPONENT (REBUILT WITH ALL FEATURES)
 // ============================================
 
-function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, flightParams }) {
+function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, flightParams, isFullscreen, onToggleFullscreen }) {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const draw = useRef(null)
   const [mapStyle, setMapStyle] = useState('satellite-streets-v12')
   const [mapLoaded, setMapLoaded] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [drawingMode, setDrawingMode] = useState(null)
   const selectedTypeRef = useRef(selectedType)
   const elementsRef = useRef(site?.elements || [])
@@ -1153,14 +1152,12 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
     }
   }, [])
 
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen)
-    // Resize map after state change
+  // Resize map when fullscreen changes
+  useEffect(() => {
     setTimeout(() => {
       map.current?.resize()
     }, 100)
-  }
+  }, [isFullscreen])
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -1175,9 +1172,9 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   }
 
   return (
-    <div className={`space-y-3 ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-4' : ''}`}>
+    <div className={`flex flex-col ${isFullscreen ? 'h-full' : 'space-y-3'}`}>
       {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Style:</span>
           {mapStyles.map(style => (
@@ -1212,7 +1209,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
             <Trash2 className="w-4 h-4" />
           </button>
           <button
-            onClick={toggleFullscreen}
+            onClick={onToggleFullscreen}
             className="p-1.5 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
@@ -1224,7 +1221,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       {/* Map Container */}
       <div
         ref={mapContainer}
-        className={`rounded-lg overflow-hidden border border-gray-200 ${isFullscreen ? 'flex-1 h-[calc(100vh-120px)]' : 'h-[500px]'}`}
+        className={`rounded-lg overflow-hidden border border-gray-200 ${isFullscreen ? 'flex-1 min-h-0' : 'h-[500px]'}`}
       />
 
       {/* Legend */}
@@ -2267,6 +2264,11 @@ export default function SiteTab({ project, onUpdate, equipment }) {
   const [activeSiteId, setActiveSiteId] = useState(sites[0]?.id || 'site-1')
   const [selectedElementType, setSelectedElementType] = useState('flight_area')
   const [activeTool, setActiveTool] = useState(null) // 'select', 'delete', or null (drawing)
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false)
+
+  const toggleMapFullscreen = useCallback(() => {
+    setIsMapFullscreen(prev => !prev)
+  }, [])
 
   // Placeholder for element highlighting - can be expanded later
   const handleHighlightElement = useCallback((elementId) => {
@@ -2398,7 +2400,55 @@ export default function SiteTab({ project, onUpdate, equipment }) {
         </div>
       </div>
 
-      {/* Map Section with Toolbar */}
+      {/* Fullscreen Map Overlay */}
+      {isMapFullscreen && (
+        <div className="fixed inset-0 z-50 bg-white flex">
+          {/* Left sidebar in fullscreen */}
+          <div className="w-80 border-r border-gray-200 p-4 overflow-y-auto flex-shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                <Plane className="w-5 h-5 text-brand-600" />
+                Flight Planning
+              </h3>
+              <button
+                onClick={toggleMapFullscreen}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                title="Exit fullscreen"
+              >
+                <Minimize2 className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <ElementToolbar
+                selectedType={selectedElementType}
+                onSelectType={handleSelectType}
+                activeTool={activeTool}
+                onSelectTool={handleSelectTool}
+              />
+              <FlightParameters
+                site={activeSite}
+                onUpdateSite={updateActiveSite}
+              />
+            </div>
+          </div>
+
+          {/* Map in fullscreen */}
+          <div className="flex-1 p-4 flex flex-col min-w-0">
+            <SiteMap
+              site={activeSite}
+              allSites={sites}
+              onUpdateSite={updateActiveSite}
+              selectedType={selectedElementType}
+              activeTool={activeTool}
+              flightParams={activeSite?.flightParams}
+              isFullscreen={true}
+              onToggleFullscreen={toggleMapFullscreen}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Map Section with Toolbar (normal view) */}
       <Section
         title="Map & Flight Planning"
         icon={Plane}
@@ -2428,6 +2478,8 @@ export default function SiteTab({ project, onUpdate, equipment }) {
               selectedType={selectedElementType}
               activeTool={activeTool}
               flightParams={activeSite?.flightParams}
+              isFullscreen={false}
+              onToggleFullscreen={toggleMapFullscreen}
             />
 
             <div className="border-t pt-6">
