@@ -18,7 +18,14 @@ import {
   Plus,
   Trash2,
   Pencil,
-  Play
+  Play,
+  HelpCircle,
+  Zap,
+  Wrench,
+  BookOpen,
+  Target,
+  CircleCheck,
+  CircleX
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getOperators, getDocuments } from '../lib/api'
@@ -26,43 +33,139 @@ import { format, differenceInDays } from 'date-fns'
 import { MarkdownPreview } from '../components/MarkdownEditor'
 
 // ============================================
-// TRAINING TRACKS
+// TRAINING TRACKS - REDESIGNED
 // ============================================
 
 const TRACKS = [
   {
     id: 'onboarding',
     name: 'Onboarding',
-    description: 'New team member orientation - policies, procedures, and forms',
+    description: 'New team member orientation - read and acknowledge all company documents',
     icon: Users,
     color: 'bg-blue-500',
     lightColor: 'bg-blue-50 text-blue-700 border-blue-200',
+    // Onboarding requires reading all docs - this makes sense for new people
+    requireDocs: true,
     docTypes: ['policy', 'procedure', 'form']
   },
   {
     id: 'field',
     name: 'Field Operations',
-    description: 'Safety procedures and hazard assessments for field work',
+    description: 'Hands-on readiness check for field work',
     icon: ClipboardCheck,
     color: 'bg-green-500',
     lightColor: 'bg-green-50 text-green-700 border-green-200',
-    docTypes: ['procedure', 'fha']
+    requireDocs: false, // No doc re-reads
+    // Equipment inspection checklist - hands-on verification
+    equipmentChecklist: [
+      { item: 'First aid kit', check: 'Present, sealed, not expired' },
+      { item: 'Fire extinguisher', check: 'Charged, inspection current' },
+      { item: 'PPE (vest, hard hat, safety glasses)', check: 'Present and in good condition' },
+      { item: 'Communication devices', check: 'Charged, signal confirmed' },
+      { item: 'Vehicle inspection', check: 'Fluids, tires, lights checked' },
+      { item: 'Weather briefing', check: 'Conditions reviewed for site' }
+    ],
+    // Decision scenarios - what would you do?
+    scenarios: [
+      {
+        situation: 'You arrive at a job site and notice unmarked power lines within 50 feet of the planned flight area.',
+        question: 'What do you do?',
+        options: [
+          'Proceed carefully, keeping distance from the lines',
+          'Stop work, document the hazard, contact supervisor before proceeding',
+          'Move the takeoff point further away and continue',
+          'Fly higher to avoid the lines'
+        ],
+        correct: 1,
+        explanation: 'Always stop and reassess when you encounter an undocumented hazard. The FHA may need updating.'
+      },
+      {
+        situation: 'Mid-flight, a bystander walks into your operational area despite the cones and tape.',
+        question: 'What is your immediate action?',
+        options: [
+          'Shout at them to leave',
+          'Land immediately in place',
+          'Hover in position and have your VO address the person',
+          'Continue the mission, they will leave'
+        ],
+        correct: 2,
+        explanation: 'Maintain aircraft control while your visual observer handles ground personnel. Never land on someone.'
+      },
+      {
+        situation: 'Weather conditions are deteriorating faster than forecast. Wind is picking up.',
+        question: 'At what point do you scrub the mission?',
+        options: [
+          'When the aircraft becomes hard to control',
+          'When winds exceed aircraft or your personal limits, whichever is lower',
+          'When the client asks you to stop',
+          'Never - the show must go on'
+        ],
+        correct: 1,
+        explanation: 'Your personal limits may be lower than aircraft limits. Know both and respect the lower threshold.'
+      }
+    ],
+    // Reference docs - optional, not required
+    referenceDocs: ['procedure', 'fha']
   },
   {
     id: 'pilot',
     name: 'Pilot Recurrency',
-    description: 'Annual flight skills demonstration and regulations refresher',
+    description: 'Annual flight certification - demonstrate skills, not re-read docs',
     icon: Plane,
     color: 'bg-purple-500',
     lightColor: 'bg-purple-50 text-purple-700 border-purple-200',
-    docTypes: ['procedure'],
+    requireDocs: false, // No doc re-reads
+    // Knowledge quiz - verify understanding
+    quiz: [
+      {
+        question: 'What is the maximum altitude for Part 107 operations without a waiver?',
+        options: ['500 feet AGL', '400 feet AGL', '400 feet MSL', '600 feet AGL'],
+        correct: 1
+      },
+      {
+        question: 'You need to fly over people for a roof inspection. What is required?',
+        options: [
+          'Nothing, inspections are exempt',
+          'Part 107.39 waiver or compliant drone category',
+          'Just verbal consent from the people',
+          'A safety pilot'
+        ],
+        correct: 1
+      },
+      {
+        question: 'Your aircraft loses GPS signal mid-flight. What happens and what do you do?',
+        options: [
+          'Aircraft will auto-land immediately',
+          'Switch to ATTI mode, manually control, land when safe',
+          'RTH will still work via compass',
+          'Increase altitude to regain signal'
+        ],
+        correct: 1
+      },
+      {
+        question: 'When must you report a drone accident to the FAA?',
+        options: [
+          'Any crash',
+          'Serious injury or property damage over $500',
+          'Only if someone complains',
+          'Never for Part 107'
+        ],
+        correct: 1
+      },
+      {
+        question: 'What is the minimum weather visibility for Part 107 flight?',
+        options: ['1 statute mile', '2 statute miles', '3 statute miles', '5 statute miles'],
+        correct: 2
+      }
+    ],
+    // Flight skills demonstration - supervisor observed
     flightSkills: [
       {
         name: 'Pre-flight inspection',
-        description: 'Complete walk-around and systems check before flight',
+        description: 'Complete walk-around and systems check',
         checkpoints: [
           'Propellers secure, no damage',
-          'Battery charged, seated properly',
+          'Battery charged and seated',
           'Camera/gimbal operational',
           'GPS lock confirmed',
           'Control surfaces responsive'
@@ -70,17 +173,17 @@ const TRACKS = [
       },
       {
         name: 'Takeoff and hover stability',
-        description: 'Demonstrate controlled vertical takeoff and stable hover',
+        description: 'Controlled vertical takeoff and stable hover',
         checkpoints: [
           'Smooth throttle application',
           'Stable hover at 10ft for 30 seconds',
-          'Minimal drift correction needed',
+          'Minimal drift correction',
           'Proper altitude awareness'
         ]
       },
       {
-        name: 'Basic maneuvering (forward, backward, lateral)',
-        description: 'Execute controlled flight in all directions',
+        name: 'Basic maneuvering',
+        description: 'Controlled flight in all directions',
         checkpoints: [
           'Smooth transitions between directions',
           'Consistent altitude maintenance',
@@ -89,85 +192,153 @@ const TRACKS = [
         ]
       },
       {
-        name: 'Altitude hold and positioning',
-        description: 'Maintain precise altitude and position over a point',
-        checkpoints: [
-          'Hold altitude within 3ft tolerance',
-          'Station keeping over ground marker',
-          'Smooth altitude transitions',
-          'Wind compensation demonstrated'
-        ]
-      },
-      {
-        name: 'Point of interest orbits',
-        description: 'Execute circular flight pattern around a fixed point',
+        name: 'Point of interest orbit',
+        description: 'Circular pattern around a fixed point',
         checkpoints: [
           'Consistent radius maintained',
-          'Camera/nose pointed at POI',
-          'Steady speed throughout orbit',
+          'Camera pointed at POI',
+          'Steady speed throughout',
           'Smooth entry and exit'
         ]
       },
       {
-        name: 'Return to home procedures',
-        description: 'Demonstrate RTH activation and monitoring',
-        checkpoints: [
-          'RTH altitude set appropriately',
-          'Correct home point verification',
-          'Safe return path observed',
-          'Proper landing approach'
-        ]
-      },
-      {
-        name: 'Emergency procedures (motor out, signal loss)',
-        description: 'Demonstrate knowledge of emergency response protocols',
+        name: 'Emergency procedures',
+        description: 'Demonstrate knowledge of emergency response',
         checkpoints: [
           'Motor failure response verbalized',
           'Signal loss behavior understood',
           'Low battery actions known',
-          'Emergency landing site awareness'
+          'Emergency landing site identified'
         ]
       },
       {
         name: 'Precision landing',
-        description: 'Land accurately on a designated target',
+        description: 'Land accurately on designated target',
         checkpoints: [
-          'Approach path planning',
+          'Approach path planned',
           'Speed control on descent',
           'Landing within 3ft of target',
-          'Soft touchdown, no bouncing'
-        ]
-      },
-      {
-        name: 'Battery swap procedures',
-        description: 'Safely change batteries following proper protocol',
-        checkpoints: [
-          'Power down before removal',
-          'Battery condition check',
-          'Proper insertion and lock',
-          'System restart verification'
-        ]
-      },
-      {
-        name: 'Post-flight inspection and logging',
-        description: 'Complete post-flight checks and documentation',
-        checkpoints: [
-          'Aircraft condition assessment',
-          'Battery storage state set',
-          'Flight log completed',
-          'Any issues documented'
+          'Soft touchdown'
         ]
       }
-    ]
+    ],
+    // Scenarios for decision making
+    scenarios: [
+      {
+        situation: 'During flight, you notice battery voltage dropping faster than expected.',
+        question: 'What is your response?',
+        options: [
+          'Continue until low battery warning',
+          'Immediately initiate RTH and monitor closely',
+          'Land wherever you are right now',
+          'Increase altitude to reduce power draw'
+        ],
+        correct: 1,
+        explanation: 'Unexpected battery behavior requires conservative response. RTH gives you options while heading home.'
+      },
+      {
+        situation: 'A manned helicopter appears in your area, about 1 mile away and at similar altitude.',
+        question: 'What do you do?',
+        options: [
+          'Continue, you have right of way as you were there first',
+          'Descend and land immediately, yielding to manned aircraft',
+          'Climb higher to be more visible',
+          'Hold position and flash your lights'
+        ],
+        correct: 1,
+        explanation: 'Always yield to manned aircraft. Descend and land to remove any conflict.'
+      }
+    ],
+    // Reference docs - optional
+    referenceDocs: ['procedure']
   },
   {
     id: 'management',
     name: 'Management & SMS',
-    description: 'Safety management system and oversight responsibilities',
+    description: 'Safety oversight and trend analysis',
     icon: Briefcase,
     color: 'bg-amber-500',
     lightColor: 'bg-amber-50 text-amber-700 border-amber-200',
-    docTypes: ['policy']
+    requireDocs: false, // No doc re-reads
+    // SMS Knowledge quiz
+    quiz: [
+      {
+        question: 'What is the primary purpose of a Safety Management System?',
+        options: [
+          'To document accidents after they happen',
+          'To proactively identify and mitigate hazards before incidents occur',
+          'To satisfy regulatory requirements',
+          'To assign blame when things go wrong'
+        ],
+        correct: 1
+      },
+      {
+        question: 'An employee reports a near-miss. What is the correct management response?',
+        options: [
+          'Investigate who is at fault',
+          'Thank them, investigate the hazard, implement controls if needed',
+          'Add it to the file but take no action unless it happens again',
+          'Counsel the employee on being more careful'
+        ],
+        correct: 1
+      },
+      {
+        question: 'You notice a pattern: 3 similar battery incidents in 2 months. What action?',
+        options: [
+          'Wait for a fourth to confirm the pattern',
+          'Review all battery procedures, consider equipment changes, brief team',
+          'Replace the batteries and move on',
+          'Document it for the annual review'
+        ],
+        correct: 1
+      },
+      {
+        question: 'When should safety policies be reviewed and updated?',
+        options: [
+          'Only after an accident',
+          'Annually or when operations/regulations change',
+          'Every 5 years',
+          'Never - once written they are final'
+        ],
+        correct: 1
+      }
+    ],
+    // Management scenarios
+    scenarios: [
+      {
+        situation: 'A pilot pushes back on a new safety procedure, saying it slows down operations.',
+        question: 'How do you handle this?',
+        options: [
+          'Override them - safety comes first, no discussion',
+          'Listen to their concern, evaluate if procedure can be improved while maintaining safety',
+          'Remove the procedure since it is causing friction',
+          'Document their resistance for their personnel file'
+        ],
+        correct: 1,
+        explanation: 'Good SMS involves listening. Procedures should be practical. But safety intent must be preserved.'
+      },
+      {
+        situation: 'Client is pressuring your team to fly in marginal weather to meet their deadline.',
+        question: 'What do you do?',
+        options: [
+          'Let the pilot decide',
+          'Support your pilot in declining, offer to reschedule',
+          'Ask the pilot to try and see how it goes',
+          'Agree to the client demand - customer is always right'
+        ],
+        correct: 1,
+        explanation: 'Management must back safety decisions. Never put pilots in position of choosing between job and safety.'
+      }
+    ],
+    // Review tasks - tie into actual system data
+    reviewTasks: [
+      'Review any open safety reports from the past quarter',
+      'Check for expiring certifications on your team',
+      'Review recent flight logs for any noted issues',
+      'Confirm all FHAs are current for active job sites'
+    ],
+    // Reference docs - optional
+    referenceDocs: ['policy']
   }
 ]
 
@@ -178,15 +349,15 @@ const TRACKS = [
 async function createSession(track, traineeName) {
   const { data, error } = await supabase
     .from('track_assignments')
-    .insert({ track, trainee_name: traineeName, status: 'in_progress' })
+    .insert({
+      track,
+      trainee_name: traineeName,
+      status: 'in_progress',
+      progress_data: {} // Store quiz answers, checklist completions, etc.
+    })
     .select()
     .single()
   if (error) throw error
-  return data
-}
-
-async function getSession(id) {
-  const { data } = await supabase.from('track_assignments').select('*').eq('id', id).single()
   return data
 }
 
@@ -203,7 +374,6 @@ async function updateSession(id, updates) {
 }
 
 async function deleteSession(id) {
-  // Delete related records first
   await supabase.from('document_acknowledgments').delete().eq('assignment_id', id)
   await supabase.from('flight_skill_signoffs').delete().eq('assignment_id', id)
   await supabase.from('track_assignments').delete().eq('id', id)
@@ -251,15 +421,13 @@ async function deleteCertification(id) {
 }
 
 // ============================================
-// TRACK SELECTION (HOME)
+// TRACK SELECTION
 // ============================================
 
 function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
   const [sessions, setSessions] = useState([])
 
-  useEffect(() => {
-    loadSessions()
-  }, [])
+  useEffect(() => { loadSessions() }, [])
 
   const loadSessions = async () => {
     const data = await getSessions()
@@ -273,9 +441,22 @@ function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
     loadSessions()
   }
 
+  const getTrackSummary = (track) => {
+    const items = []
+    if (track.requireDocs) {
+      const docCount = documents.filter(d => track.docTypes?.includes(d.doc_type)).length
+      items.push(`${docCount} documents`)
+    }
+    if (track.quiz) items.push(`${track.quiz.length} quiz questions`)
+    if (track.scenarios) items.push(`${track.scenarios.length} scenarios`)
+    if (track.flightSkills) items.push(`${track.flightSkills.length} flight skills`)
+    if (track.equipmentChecklist) items.push(`${track.equipmentChecklist.length} equipment checks`)
+    if (track.reviewTasks) items.push(`${track.reviewTasks.length} review tasks`)
+    return items.join(' • ')
+  }
+
   return (
     <div className="space-y-8">
-      {/* In Progress Sessions */}
       {sessions.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Continue Training</h2>
@@ -295,7 +476,7 @@ function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{track.name}</p>
-                    <p className="text-sm text-gray-500">{session.trainee_name || 'Unknown'}</p>
+                    <p className="text-sm text-gray-500">{session.trainee_name}</p>
                   </div>
                   <button
                     onClick={(e) => handleDelete(session.id, e)}
@@ -311,13 +492,11 @@ function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
         </div>
       )}
 
-      {/* Track Cards */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Start New Training</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {TRACKS.map(track => {
             const Icon = track.icon
-            const docCount = documents.filter(d => track.docTypes.includes(d.doc_type)).length
             return (
               <div
                 key={track.id}
@@ -330,10 +509,7 @@ function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{track.name}</h3>
                     <p className="text-sm text-gray-500 mt-1">{track.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                      <span>{docCount} documents</span>
-                      {track.flightSkills && <span>{track.flightSkills.length} flight skills</span>}
-                    </div>
+                    <p className="text-xs text-gray-400 mt-2">{getTrackSummary(track)}</p>
                   </div>
                 </div>
                 <button
@@ -353,26 +529,564 @@ function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
 }
 
 // ============================================
+// QUIZ SECTION
+// ============================================
+
+function QuizSection({ quiz, completedQuestions, onComplete }) {
+  const [currentQ, setCurrentQ] = useState(0)
+  const [selected, setSelected] = useState(null)
+  const [showResult, setShowResult] = useState(false)
+  const [answers, setAnswers] = useState([])
+
+  const question = quiz[currentQ]
+  const isLastQuestion = currentQ === quiz.length - 1
+  const allDone = completedQuestions.length === quiz.length
+
+  if (allDone) {
+    const correct = completedQuestions.filter(a => a.correct).length
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 text-gray-400" />
+            Knowledge Quiz
+            <span className="ml-auto text-green-600 flex items-center gap-1">
+              <Check className="w-4 h-4" /> Complete
+            </span>
+          </h3>
+        </div>
+        <div className="p-6 text-center">
+          <div className="text-4xl font-bold text-gray-900 mb-2">{correct}/{quiz.length}</div>
+          <p className="text-gray-500">Questions answered correctly</p>
+        </div>
+      </div>
+    )
+  }
+
+  const handleSubmit = () => {
+    if (selected === null) return
+    const isCorrect = selected === question.correct
+    const newAnswers = [...answers, { questionIndex: currentQ, selected, correct: isCorrect }]
+    setAnswers(newAnswers)
+    setShowResult(true)
+  }
+
+  const handleNext = () => {
+    if (isLastQuestion) {
+      onComplete(answers.concat({ questionIndex: currentQ, selected, correct: selected === question.correct }))
+    } else {
+      setCurrentQ(currentQ + 1)
+      setSelected(null)
+      setShowResult(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <HelpCircle className="w-5 h-5 text-gray-400" />
+          Knowledge Quiz ({currentQ + 1}/{quiz.length})
+        </h3>
+      </div>
+      <div className="p-6">
+        <p className="text-lg font-medium text-gray-900 mb-4">{question.question}</p>
+        <div className="space-y-2">
+          {question.options.map((opt, idx) => {
+            let style = 'border-gray-200 hover:border-brand-300 hover:bg-brand-50'
+            if (showResult) {
+              if (idx === question.correct) style = 'border-green-500 bg-green-50'
+              else if (idx === selected && idx !== question.correct) style = 'border-red-500 bg-red-50'
+              else style = 'border-gray-200 opacity-50'
+            } else if (selected === idx) {
+              style = 'border-brand-500 bg-brand-50'
+            }
+            return (
+              <button
+                key={idx}
+                onClick={() => !showResult && setSelected(idx)}
+                disabled={showResult}
+                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${style}`}
+              >
+                <div className="flex items-center gap-3">
+                  {showResult && idx === question.correct && <CircleCheck className="w-5 h-5 text-green-600" />}
+                  {showResult && idx === selected && idx !== question.correct && <CircleX className="w-5 h-5 text-red-600" />}
+                  <span>{opt}</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+        {showResult && question.explanation && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">{question.explanation}</p>
+          </div>
+        )}
+        <div className="flex justify-end mt-6">
+          {!showResult ? (
+            <button
+              onClick={handleSubmit}
+              disabled={selected === null}
+              className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50"
+            >
+              Submit Answer
+            </button>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700"
+            >
+              {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// SCENARIO SECTION
+// ============================================
+
+function ScenarioSection({ scenarios, completedScenarios, onComplete }) {
+  const [expanded, setExpanded] = useState(null)
+  const [selected, setSelected] = useState(null)
+  const [showResult, setShowResult] = useState(false)
+
+  const handleSubmit = (scenario, idx) => {
+    setShowResult(true)
+  }
+
+  const handleComplete = (scenario, idx) => {
+    onComplete(idx)
+    setExpanded(null)
+    setSelected(null)
+    setShowResult(false)
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-gray-400" />
+          Decision Scenarios ({completedScenarios.length}/{scenarios.length})
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">What would you do in these situations?</p>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {scenarios.map((scenario, idx) => {
+          const done = completedScenarios.includes(idx)
+          const isExpanded = expanded === idx
+          return (
+            <div key={idx} className="overflow-hidden">
+              <div
+                className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
+                onClick={() => {
+                  if (!done) {
+                    setExpanded(isExpanded ? null : idx)
+                    setSelected(null)
+                    setShowResult(false)
+                  }
+                }}
+              >
+                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                }`}>
+                  {done && <Check className="w-4 h-4" />}
+                </div>
+                <div className="flex-1">
+                  <p className={`font-medium ${done ? 'text-gray-400' : 'text-gray-900'}`}>
+                    Scenario {idx + 1}
+                  </p>
+                  <p className={`text-sm ${done ? 'text-gray-400' : 'text-gray-500'} line-clamp-1`}>
+                    {scenario.situation.slice(0, 80)}...
+                  </p>
+                </div>
+                {!done && (isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />)}
+              </div>
+
+              {isExpanded && (
+                <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
+                    <p className="text-gray-800 mb-4">{scenario.situation}</p>
+                    <p className="font-medium text-gray-900 mb-3">{scenario.question}</p>
+                    <div className="space-y-2">
+                      {scenario.options.map((opt, optIdx) => {
+                        let style = 'border-gray-200 hover:border-brand-300'
+                        if (showResult) {
+                          if (optIdx === scenario.correct) style = 'border-green-500 bg-green-50'
+                          else if (optIdx === selected) style = 'border-red-500 bg-red-50'
+                          else style = 'border-gray-200 opacity-50'
+                        } else if (selected === optIdx) {
+                          style = 'border-brand-500 bg-brand-50'
+                        }
+                        return (
+                          <button
+                            key={optIdx}
+                            onClick={() => !showResult && setSelected(optIdx)}
+                            disabled={showResult}
+                            className={`w-full text-left px-4 py-2 rounded-lg border-2 text-sm ${style}`}
+                          >
+                            {opt}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {showResult && scenario.explanation && (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">{scenario.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-3 mt-4">
+                    {!showResult ? (
+                      <button
+                        onClick={() => handleSubmit(scenario, idx)}
+                        disabled={selected === null}
+                        className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
+                      >
+                        Check Answer
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleComplete(scenario, idx)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
+                      >
+                        <Check className="w-4 h-4" /> Mark Complete
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// EQUIPMENT CHECKLIST SECTION
+// ============================================
+
+function EquipmentChecklistSection({ checklist, completedItems, onToggle }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <Wrench className="w-5 h-5 text-gray-400" />
+          Equipment Inspection ({completedItems.length}/{checklist.length})
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">Physically verify each item before proceeding</p>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {checklist.map((item, idx) => {
+          const done = completedItems.includes(idx)
+          return (
+            <div
+              key={idx}
+              className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
+              onClick={() => onToggle(idx)}
+            >
+              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-brand-500'
+              }`}>
+                {done && <Check className="w-4 h-4" />}
+              </div>
+              <div className="flex-1">
+                <p className={`font-medium ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                  {item.item}
+                </p>
+                <p className="text-sm text-gray-500">{item.check}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// REVIEW TASKS SECTION
+// ============================================
+
+function ReviewTasksSection({ tasks, completedTasks, onToggle }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <Target className="w-5 h-5 text-gray-400" />
+          Review Tasks ({completedTasks.length}/{tasks.length})
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">Complete these management review items</p>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {tasks.map((task, idx) => {
+          const done = completedTasks.includes(idx)
+          return (
+            <div
+              key={idx}
+              className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
+              onClick={() => onToggle(idx)}
+            >
+              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-brand-500'
+              }`}>
+                {done && <Check className="w-4 h-4" />}
+              </div>
+              <p className={`flex-1 ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                {task}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// FLIGHT SKILLS SECTION
+// ============================================
+
+function FlightSkillsSection({ skills, signoffs, onSignOff }) {
+  const [expanded, setExpanded] = useState(null)
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <Plane className="w-5 h-5 text-gray-400" />
+          Flight Skills ({signoffs.length}/{skills.length})
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">Supervisor observes and signs off each skill</p>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {skills.map(skill => {
+          const signoff = signoffs.find(s => s.skill_name === skill.name)
+          const isExpanded = expanded === skill.name
+
+          return (
+            <div key={skill.name} className="overflow-hidden">
+              <div
+                className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
+                onClick={() => setExpanded(isExpanded ? null : skill.name)}
+              >
+                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  signoff ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                }`}>
+                  {signoff && <Check className="w-4 h-4" />}
+                </div>
+                <div className="flex-1">
+                  <p className={`font-medium ${signoff ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                    {skill.name}
+                  </p>
+                  <p className="text-sm text-gray-500">{signoff ? signoff.notes : skill.description}</p>
+                </div>
+                {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+              </div>
+
+              {isExpanded && (
+                <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Observer Checkpoints</h4>
+                    <div className="space-y-2">
+                      {skill.checkpoints.map((cp, idx) => (
+                        <div key={idx} className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded border border-gray-300 flex-shrink-0 mt-0.5 flex items-center justify-center">
+                            {signoff && <Check className="w-3 h-3 text-green-600" />}
+                          </div>
+                          <span className={`text-sm ${signoff ? 'text-gray-400' : 'text-gray-700'}`}>{cp}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {!signoff && (
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={() => {
+                          onSignOff(skill.name)
+                          setExpanded(null)
+                        }}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2"
+                      >
+                        <Check className="w-4 h-4" /> Supervisor Sign-Off
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// DOCUMENTS SECTION (for onboarding)
+// ============================================
+
+function DocumentsSection({ documents, acknowledgments, onAcknowledge }) {
+  const [expanded, setExpanded] = useState(null)
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-gray-400" />
+          Documents ({acknowledgments.length}/{documents.length})
+        </h3>
+      </div>
+      {documents.length === 0 ? (
+        <p className="px-5 py-8 text-center text-gray-500">No documents for this track</p>
+      ) : (
+        <div className="divide-y divide-gray-100">
+          {documents.map(doc => {
+            const done = acknowledgments.includes(doc.id)
+            const isExpanded = expanded === doc.id
+            return (
+              <div key={doc.id} className="overflow-hidden">
+                <div
+                  className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
+                  onClick={() => setExpanded(isExpanded ? null : doc.id)}
+                >
+                  <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                  }`}>
+                    {done && <Check className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{doc.title}</p>
+                    <p className="text-sm text-gray-500">{doc.doc_type}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {doc.google_doc_url && (
+                      <a
+                        href={doc.google_doc_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
+                      >
+                        Open <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
+                    <div className="bg-white rounded-lg border border-gray-200 p-6 mt-4 max-h-96 overflow-y-auto">
+                      {doc.content ? (
+                        <MarkdownPreview content={doc.content} />
+                      ) : (
+                        <p className="text-gray-400 italic">No inline content. Use the external link to view.</p>
+                      )}
+                    </div>
+                    {!done && (
+                      <div className="flex justify-end mt-4">
+                        <button
+                          onClick={() => {
+                            onAcknowledge(doc.id)
+                            setExpanded(null)
+                          }}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
+                        >
+                          <Check className="w-4 h-4" /> I have read this document
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// REFERENCE DOCS (optional, collapsible)
+// ============================================
+
+function ReferenceDocsSection({ documents }) {
+  const [expanded, setExpanded] = useState(false)
+
+  if (documents.length === 0) return null
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div
+        className="px-5 py-4 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <h3 className="font-semibold text-gray-500 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-gray-400" />
+          Reference Documents ({documents.length})
+          <span className="text-xs font-normal ml-2">Optional - for reference only</span>
+          <span className="ml-auto">
+            {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </span>
+        </h3>
+      </div>
+      {expanded && (
+        <div className="divide-y divide-gray-100">
+          {documents.map(doc => (
+            <div key={doc.id} className="px-5 py-3 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-700">{doc.title}</p>
+                <p className="text-sm text-gray-400">{doc.doc_type}</p>
+              </div>
+              {doc.google_doc_url && (
+                <a
+                  href={doc.google_doc_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
+                >
+                  View <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
 // TRAINING SESSION
 // ============================================
 
-function TrainingSession({ track, existingSession, documents, operators, onBack, onComplete }) {
+function TrainingSession({ track, existingSession, documents, operators, onBack }) {
   const [session, setSession] = useState(existingSession)
   const [traineeName, setTraineeName] = useState(existingSession?.trainee_name || '')
   const [started, setStarted] = useState(!!existingSession)
+  const [saving, setSaving] = useState(false)
+
+  // Progress states
   const [acknowledgments, setAcknowledgments] = useState([])
   const [skillSignoffs, setSkillSignoffs] = useState([])
-  const [saving, setSaving] = useState(false)
-  const [expandedDoc, setExpandedDoc] = useState(null)
-  const [expandedSkill, setExpandedSkill] = useState(null)
+  const [quizCompleted, setQuizCompleted] = useState([])
+  const [scenariosCompleted, setScenariosCompleted] = useState([])
+  const [equipmentCompleted, setEquipmentCompleted] = useState([])
+  const [reviewTasksCompleted, setReviewTasksCompleted] = useState([])
 
-  const trackDocs = documents.filter(d => track.docTypes.includes(d.doc_type))
+  const trackDocs = documents.filter(d => track.docTypes?.includes(d.doc_type))
+  const referenceDocs = documents.filter(d => track.referenceDocs?.includes(d.doc_type))
   const Icon = track.icon
 
   useEffect(() => {
-    if (existingSession) {
-      loadProgress()
-    }
+    if (existingSession) loadProgress()
   }, [])
 
   const loadProgress = async () => {
@@ -382,6 +1096,23 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
       const skills = await getSkillSignoffs(existingSession.id)
       setSkillSignoffs(skills)
     }
+    // Load other progress from session.progress_data if stored
+    if (existingSession.progress_data) {
+      setQuizCompleted(existingSession.progress_data.quiz || [])
+      setScenariosCompleted(existingSession.progress_data.scenarios || [])
+      setEquipmentCompleted(existingSession.progress_data.equipment || [])
+      setReviewTasksCompleted(existingSession.progress_data.reviewTasks || [])
+    }
+  }
+
+  const saveProgress = async (updates) => {
+    const progressData = {
+      quiz: updates.quiz ?? quizCompleted,
+      scenarios: updates.scenarios ?? scenariosCompleted,
+      equipment: updates.equipment ?? equipmentCompleted,
+      reviewTasks: updates.reviewTasks ?? reviewTasksCompleted
+    }
+    await updateSession(session.id, { progress_data: progressData })
   }
 
   const handleStart = async () => {
@@ -401,40 +1132,81 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
   }
 
   const handleAcknowledge = async (docId) => {
-    try {
-      await acknowledgeDoc(session.id, docId)
-      const newAcks = [...acknowledgments, docId]
-      setAcknowledgments(newAcks)
-      checkCompletion(newAcks, skillSignoffs)
-    } catch (err) {
-      console.error(err)
-    }
+    await acknowledgeDoc(session.id, docId)
+    setAcknowledgments([...acknowledgments, docId])
   }
 
   const handleSignOff = async (skillName) => {
     const supervisorName = prompt('Supervisor name:')
     if (!supervisorName) return
-    try {
-      await signOffSkill(session.id, skillName, supervisorName)
-      const newSignoffs = [...skillSignoffs, { skill_name: skillName, notes: `Signed off by: ${supervisorName}` }]
-      setSkillSignoffs(newSignoffs)
-      checkCompletion(acknowledgments, newSignoffs)
-    } catch (err) {
-      console.error(err)
-    }
+    await signOffSkill(session.id, skillName, supervisorName)
+    setSkillSignoffs([...skillSignoffs, { skill_name: skillName, notes: `Signed off by: ${supervisorName}` }])
   }
 
-  const checkCompletion = async (acks, skills) => {
-    const docsComplete = acks.length >= trackDocs.length
-    const skillsComplete = !track.flightSkills || skills.length >= track.flightSkills.length
-    if (docsComplete && skillsComplete && trackDocs.length > 0) {
-      await updateSession(session.id, { status: 'completed', completed_at: new Date().toISOString() })
-    }
+  const handleQuizComplete = async (answers) => {
+    setQuizCompleted(answers)
+    await saveProgress({ quiz: answers })
   }
 
-  const totalItems = trackDocs.length + (track.flightSkills?.length || 0)
-  const completedItems = acknowledgments.length + skillSignoffs.length
+  const handleScenarioComplete = async (idx) => {
+    const updated = [...scenariosCompleted, idx]
+    setScenariosCompleted(updated)
+    await saveProgress({ scenarios: updated })
+  }
+
+  const handleEquipmentToggle = async (idx) => {
+    const updated = equipmentCompleted.includes(idx)
+      ? equipmentCompleted.filter(i => i !== idx)
+      : [...equipmentCompleted, idx]
+    setEquipmentCompleted(updated)
+    await saveProgress({ equipment: updated })
+  }
+
+  const handleReviewTaskToggle = async (idx) => {
+    const updated = reviewTasksCompleted.includes(idx)
+      ? reviewTasksCompleted.filter(i => i !== idx)
+      : [...reviewTasksCompleted, idx]
+    setReviewTasksCompleted(updated)
+    await saveProgress({ reviewTasks: updated })
+  }
+
+  // Calculate progress
+  let totalItems = 0
+  let completedItems = 0
+
+  if (track.requireDocs) {
+    totalItems += trackDocs.length
+    completedItems += acknowledgments.length
+  }
+  if (track.quiz) {
+    totalItems += track.quiz.length
+    completedItems += quizCompleted.length
+  }
+  if (track.scenarios) {
+    totalItems += track.scenarios.length
+    completedItems += scenariosCompleted.length
+  }
+  if (track.equipmentChecklist) {
+    totalItems += track.equipmentChecklist.length
+    completedItems += equipmentCompleted.length
+  }
+  if (track.flightSkills) {
+    totalItems += track.flightSkills.length
+    completedItems += skillSignoffs.length
+  }
+  if (track.reviewTasks) {
+    totalItems += track.reviewTasks.length
+    completedItems += reviewTasksCompleted.length
+  }
+
   const isComplete = completedItems >= totalItems && totalItems > 0
+
+  // Mark complete when done
+  useEffect(() => {
+    if (isComplete && session) {
+      updateSession(session.id, { status: 'completed', completed_at: new Date().toISOString() })
+    }
+  }, [isComplete])
 
   // Start screen
   if (!started) {
@@ -443,7 +1215,6 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
         <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
           <ChevronLeft className="w-5 h-5" /> Back
         </button>
-
         <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-lg">
           <div className="flex items-center gap-4 mb-6">
             <div className={`p-4 rounded-xl ${track.color} text-white`}>
@@ -454,33 +1225,24 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
               <p className="text-gray-500">{track.description}</p>
             </div>
           </div>
-
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Trainee Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Trainee Name</label>
               <input
                 type="text"
                 value={traineeName}
-                onChange={(e) => setTraineeName(e.target.value)}
-                placeholder="Enter name of person being trained"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                onChange={e => setTraineeName(e.target.value)}
+                placeholder="Enter name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
                 autoFocus
               />
             </div>
-
             <button
               onClick={handleStart}
               disabled={saving || !traineeName.trim()}
-              className="w-full py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {saving ? 'Starting...' : (
-                <>
-                  <Play className="w-5 h-5" />
-                  Start Training
-                </>
-              )}
+              {saving ? 'Starting...' : <><Play className="w-5 h-5" /> Start Training</>}
             </button>
           </div>
         </div>
@@ -488,7 +1250,6 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
     )
   }
 
-  // Training in progress
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -526,209 +1287,62 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
         </div>
       </div>
 
-      {/* Documents */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-gray-400" />
-            Documents ({acknowledgments.length}/{trackDocs.length})
-          </h3>
-        </div>
-        {trackDocs.length === 0 ? (
-          <p className="px-5 py-8 text-center text-gray-500">No documents for this track</p>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {trackDocs.map(doc => {
-              const done = acknowledgments.includes(doc.id)
-              const isExpanded = expandedDoc === doc.id
-              return (
-                <div key={doc.id} className="overflow-hidden">
-                  {/* Document header row */}
-                  <div
-                    className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors ${isExpanded ? 'bg-gray-50' : ''}`}
-                    onClick={() => setExpandedDoc(isExpanded ? null : doc.id)}
-                  >
-                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                      done
-                        ? 'bg-green-500 border-green-500 text-white'
-                        : 'border-gray-300'
-                    }`}>
-                      {done && <Check className="w-4 h-4" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                        {doc.title}
-                      </p>
-                      <p className="text-sm text-gray-500">{doc.doc_type}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {doc.google_doc_url && (
-                        <a
-                          href={doc.google_doc_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
-                        >
-                          Open <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-                  </div>
+      {/* Documents (only for onboarding) */}
+      {track.requireDocs && (
+        <DocumentsSection
+          documents={trackDocs}
+          acknowledgments={acknowledgments}
+          onAcknowledge={handleAcknowledge}
+        />
+      )}
 
-                  {/* Expanded content */}
-                  {isExpanded && (
-                    <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
-                      <div className="bg-white rounded-lg border border-gray-200 p-6 mt-4 max-h-96 overflow-y-auto">
-                        {doc.content ? (
-                          <MarkdownPreview content={doc.content} />
-                        ) : (
-                          <p className="text-gray-400 italic">No content available. Use the external link to view this document.</p>
-                        )}
-                      </div>
-                      <div className="flex justify-end gap-3 mt-4">
-                        <button
-                          onClick={() => setExpandedDoc(null)}
-                          className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium"
-                        >
-                          Collapse
-                        </button>
-                        {!done && (
-                          <button
-                            onClick={() => {
-                              handleAcknowledge(doc.id)
-                              setExpandedDoc(null)
-                            }}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
-                          >
-                            <Check className="w-4 h-4" />
-                            Mark Complete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+      {/* Quiz */}
+      {track.quiz && (
+        <QuizSection
+          quiz={track.quiz}
+          completedQuestions={quizCompleted}
+          onComplete={handleQuizComplete}
+        />
+      )}
+
+      {/* Equipment Checklist */}
+      {track.equipmentChecklist && (
+        <EquipmentChecklistSection
+          checklist={track.equipmentChecklist}
+          completedItems={equipmentCompleted}
+          onToggle={handleEquipmentToggle}
+        />
+      )}
+
+      {/* Scenarios */}
+      {track.scenarios && (
+        <ScenarioSection
+          scenarios={track.scenarios}
+          completedScenarios={scenariosCompleted}
+          onComplete={handleScenarioComplete}
+        />
+      )}
 
       {/* Flight Skills */}
       {track.flightSkills && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Plane className="w-5 h-5 text-gray-400" />
-              Flight Skills ({skillSignoffs.length}/{track.flightSkills.length})
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">Each skill requires supervisor sign-off after observing checkpoints</p>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {track.flightSkills.map(skill => {
-              const skillName = typeof skill === 'string' ? skill : skill.name
-              const skillDesc = typeof skill === 'string' ? null : skill.description
-              const skillCheckpoints = typeof skill === 'string' ? [] : (skill.checkpoints || [])
-              const signoff = skillSignoffs.find(s => s.skill_name === skillName)
-              const isExpanded = expandedSkill === skillName
-
-              return (
-                <div key={skillName} className="overflow-hidden">
-                  {/* Skill header row */}
-                  <div
-                    className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors ${isExpanded ? 'bg-gray-50' : ''}`}
-                    onClick={() => setExpandedSkill(isExpanded ? null : skillName)}
-                  >
-                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      signoff ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
-                    }`}>
-                      {signoff && <Check className="w-4 h-4" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${signoff ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                        {skillName}
-                      </p>
-                      {signoff && (
-                        <p className="text-sm text-gray-500">{signoff.notes}</p>
-                      )}
-                      {!signoff && skillDesc && (
-                        <p className="text-sm text-gray-500">{skillDesc}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!signoff && !isExpanded && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleSignOff(skillName)
-                          }}
-                          className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                        >
-                          Sign Off
-                        </button>
-                      )}
-                      {skillCheckpoints.length > 0 && (
-                        isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Expanded checkpoints */}
-                  {isExpanded && skillCheckpoints.length > 0 && (
-                    <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
-                      <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Observer Checkpoints</h4>
-                        <div className="space-y-2">
-                          {skillCheckpoints.map((checkpoint, idx) => (
-                            <div key={idx} className="flex items-start gap-3">
-                              <div className="w-5 h-5 rounded border border-gray-300 flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                {signoff && <Check className="w-3 h-3 text-green-600" />}
-                              </div>
-                              <span className={`text-sm ${signoff ? 'text-gray-400' : 'text-gray-700'}`}>
-                                {checkpoint}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-3 mt-4">
-                        <button
-                          onClick={() => setExpandedSkill(null)}
-                          className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium"
-                        >
-                          Collapse
-                        </button>
-                        {!signoff && (
-                          <button
-                            onClick={() => {
-                              handleSignOff(skillName)
-                              setExpandedSkill(null)
-                            }}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2"
-                          >
-                            <Check className="w-4 h-4" />
-                            Supervisor Sign-Off
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <FlightSkillsSection
+          skills={track.flightSkills}
+          signoffs={skillSignoffs}
+          onSignOff={handleSignOff}
+        />
       )}
+
+      {/* Review Tasks */}
+      {track.reviewTasks && (
+        <ReviewTasksSection
+          tasks={track.reviewTasks}
+          completedTasks={reviewTasksCompleted}
+          onToggle={handleReviewTaskToggle}
+        />
+      )}
+
+      {/* Reference Docs */}
+      <ReferenceDocsSection documents={referenceDocs} />
     </div>
   )
 }
