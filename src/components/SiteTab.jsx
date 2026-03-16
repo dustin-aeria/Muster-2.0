@@ -501,17 +501,86 @@ const CONTROL_TYPES = [
 ]
 
 const PPE_ITEMS = [
-  { id: 'hivis', label: 'Hi-Vis Vest' },
-  { id: 'safety_glasses', label: 'Safety Glasses' },
-  { id: 'hard_hat', label: 'Hard Hat' },
-  { id: 'steel_toe', label: 'Steel-toe Boots' },
-  { id: 'hearing', label: 'Hearing Protection' },
-  { id: 'gloves', label: 'Work Gloves' },
-  { id: 'first_aid', label: 'First Aid Kit' },
-  { id: 'fire_ext', label: 'Fire Extinguisher' },
-  { id: 'sun_protection', label: 'Sun Protection' },
-  { id: 'bug_spray', label: 'Insect Repellent' }
+  // Head Protection
+  { id: 'hard_hat', label: 'Hard Hat', category: 'Head' },
+  { id: 'bump_cap', label: 'Bump Cap', category: 'Head' },
+  { id: 'welding_helmet', label: 'Welding Helmet', category: 'Head' },
+  { id: 'face_shield', label: 'Face Shield', category: 'Head' },
+
+  // Eye Protection
+  { id: 'safety_glasses', label: 'Safety Glasses', category: 'Eye' },
+  { id: 'safety_goggles', label: 'Safety Goggles', category: 'Eye' },
+  { id: 'tinted_glasses', label: 'Tinted Safety Glasses', category: 'Eye' },
+  { id: 'prescription_safety', label: 'Prescription Safety Glasses', category: 'Eye' },
+
+  // Hearing Protection
+  { id: 'ear_plugs', label: 'Ear Plugs', category: 'Hearing' },
+  { id: 'ear_muffs', label: 'Ear Muffs', category: 'Hearing' },
+  { id: 'comms_headset', label: 'Communications Headset', category: 'Hearing' },
+
+  // Respiratory
+  { id: 'dust_mask', label: 'Dust Mask', category: 'Respiratory' },
+  { id: 'n95_mask', label: 'N95 Respirator', category: 'Respiratory' },
+  { id: 'half_face_respirator', label: 'Half-Face Respirator', category: 'Respiratory' },
+  { id: 'full_face_respirator', label: 'Full-Face Respirator', category: 'Respiratory' },
+
+  // Hand Protection
+  { id: 'work_gloves', label: 'Work Gloves', category: 'Hand' },
+  { id: 'leather_gloves', label: 'Leather Gloves', category: 'Hand' },
+  { id: 'nitrile_gloves', label: 'Nitrile Gloves', category: 'Hand' },
+  { id: 'cut_resistant', label: 'Cut-Resistant Gloves', category: 'Hand' },
+  { id: 'insulated_gloves', label: 'Insulated Gloves', category: 'Hand' },
+  { id: 'chemical_gloves', label: 'Chemical-Resistant Gloves', category: 'Hand' },
+
+  // Foot Protection
+  { id: 'steel_toe', label: 'Steel-Toe Boots', category: 'Foot' },
+  { id: 'composite_toe', label: 'Composite-Toe Boots', category: 'Foot' },
+  { id: 'rubber_boots', label: 'Rubber Boots', category: 'Foot' },
+  { id: 'snake_gaiters', label: 'Snake Gaiters', category: 'Foot' },
+  { id: 'hiking_boots', label: 'Hiking Boots', category: 'Foot' },
+
+  // Body Protection
+  { id: 'hivis_vest', label: 'Hi-Vis Vest', category: 'Body' },
+  { id: 'hivis_jacket', label: 'Hi-Vis Jacket', category: 'Body' },
+  { id: 'coveralls', label: 'Coveralls', category: 'Body' },
+  { id: 'rain_gear', label: 'Rain Gear', category: 'Body' },
+  { id: 'cold_weather', label: 'Cold Weather Gear', category: 'Body' },
+  { id: 'flame_resistant', label: 'Flame-Resistant Clothing', category: 'Body' },
+  { id: 'life_jacket', label: 'Life Jacket/PFD', category: 'Body' },
+
+  // Fall Protection
+  { id: 'safety_harness', label: 'Safety Harness', category: 'Fall' },
+  { id: 'lanyard', label: 'Fall Arrest Lanyard', category: 'Fall' },
+  { id: 'anchor_point', label: 'Anchor Point System', category: 'Fall' },
+
+  // Environmental
+  { id: 'sunscreen', label: 'Sunscreen', category: 'Environmental' },
+  { id: 'sunglasses', label: 'UV Sunglasses', category: 'Environmental' },
+  { id: 'sun_hat', label: 'Sun Hat/Neck Shade', category: 'Environmental' },
+  { id: 'bug_spray', label: 'Insect Repellent', category: 'Environmental' },
+  { id: 'bear_spray', label: 'Bear Spray', category: 'Environmental' },
+  { id: 'tick_repellent', label: 'Tick Repellent', category: 'Environmental' },
+  { id: 'hydration', label: 'Hydration Pack', category: 'Environmental' },
+
+  // Safety Equipment
+  { id: 'first_aid_kit', label: 'First Aid Kit', category: 'Safety' },
+  { id: 'trauma_kit', label: 'Trauma Kit', category: 'Safety' },
+  { id: 'fire_extinguisher', label: 'Fire Extinguisher', category: 'Safety' },
+  { id: 'fire_blanket', label: 'Fire Blanket', category: 'Safety' },
+  { id: 'emergency_beacon', label: 'Emergency Beacon (PLB)', category: 'Safety' },
+  { id: 'satellite_comm', label: 'Satellite Communicator', category: 'Safety' },
+  { id: 'whistle', label: 'Emergency Whistle', category: 'Safety' },
+  { id: 'signal_mirror', label: 'Signal Mirror', category: 'Safety' },
+  { id: 'flashlight', label: 'Flashlight/Headlamp', category: 'Safety' },
+  { id: 'flares', label: 'Emergency Flares', category: 'Safety' },
+  { id: 'radio', label: 'Two-Way Radio', category: 'Safety' },
+  { id: 'air_horn', label: 'Air Horn', category: 'Safety' },
+  { id: 'safety_cones', label: 'Safety Cones', category: 'Safety' },
+  { id: 'caution_tape', label: 'Caution Tape', category: 'Safety' },
+  { id: 'safety_flags', label: 'Safety Flags', category: 'Safety' }
 ]
+
+const PPE_CATEGORIES = [...new Set(PPE_ITEMS.map(item => item.category))]
 
 // ============================================
 // HELPER COMPONENTS
@@ -2809,10 +2878,292 @@ function HazardTable({ site, onUpdateSite }) {
 }
 
 // ============================================
-// EMERGENCY PLANNING (kept from original)
+// PPE SELECTOR (Dropdown Multi-Select)
 // ============================================
 
-function EmergencyPlanning({ site, onUpdateSite }) {
+function PPESelector({ site, onUpdateSite }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [customPPE, setCustomPPE] = useState('')
+  const dropdownRef = useRef(null)
+
+  const emergency = site?.emergency || {}
+  const selectedPPE = emergency.ppe || []
+  const customItems = emergency.customPPE || []
+
+  const updateEmergency = (updates) => {
+    onUpdateSite({ emergency: { ...emergency, ...updates } })
+  }
+
+  const togglePPE = (itemId) => {
+    if (selectedPPE.includes(itemId)) {
+      updateEmergency({ ppe: selectedPPE.filter(p => p !== itemId) })
+    } else {
+      updateEmergency({ ppe: [...selectedPPE, itemId] })
+    }
+  }
+
+  const addCustomPPE = () => {
+    if (customPPE.trim() && !customItems.includes(customPPE.trim())) {
+      const newCustom = [...customItems, customPPE.trim()]
+      updateEmergency({ customPPE: newCustom, ppe: [...selectedPPE, `custom_${customPPE.trim()}`] })
+      setCustomPPE('')
+    }
+  }
+
+  const removeCustomPPE = (item) => {
+    updateEmergency({
+      customPPE: customItems.filter(c => c !== item),
+      ppe: selectedPPE.filter(p => p !== `custom_${item}`)
+    })
+  }
+
+  // Filter PPE items by search
+  const filteredItems = PPE_ITEMS.filter(item =>
+    item.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Group by category
+  const groupedItems = PPE_CATEGORIES.reduce((acc, cat) => {
+    const items = filteredItems.filter(item => item.category === cat)
+    if (items.length > 0) acc[cat] = items
+    return acc
+  }, {})
+
+  // Get selected item labels
+  const getSelectedLabels = () => {
+    const labels = selectedPPE
+      .filter(id => !id.startsWith('custom_'))
+      .map(id => PPE_ITEMS.find(item => item.id === id)?.label)
+      .filter(Boolean)
+    const customLabels = customItems.filter(c => selectedPPE.includes(`custom_${c}`))
+    return [...labels, ...customLabels]
+  }
+
+  const selectedLabels = getSelectedLabels()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="space-y-4">
+      {/* Dropdown Selector */}
+      <div ref={dropdownRef} className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white text-left flex items-center justify-between hover:border-gray-300"
+        >
+          <div className="flex-1 min-w-0">
+            {selectedLabels.length === 0 ? (
+              <span className="text-gray-400">Select required PPE...</span>
+            ) : (
+              <span className="text-gray-700">{selectedLabels.length} items selected</span>
+            )}
+          </div>
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {isOpen && (
+          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-hidden">
+            {/* Search */}
+            <div className="p-2 border-b border-gray-100">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search PPE..."
+                className="w-full px-3 py-2 border border-gray-200 rounded text-sm"
+                autoFocus
+              />
+            </div>
+
+            {/* PPE List by Category */}
+            <div className="max-h-64 overflow-y-auto">
+              {Object.entries(groupedItems).map(([category, items]) => (
+                <div key={category}>
+                  <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {category}
+                  </div>
+                  {items.map(item => (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedPPE.includes(item.id)}
+                        onChange={() => togglePPE(item.id)}
+                        className="rounded text-brand-600"
+                      />
+                      <span className="text-sm text-gray-700">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+              ))}
+
+              {/* Custom Items */}
+              {customItems.length > 0 && (
+                <div>
+                  <div className="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Custom Items
+                  </div>
+                  {customItems.map(item => (
+                    <label
+                      key={item}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedPPE.includes(`custom_${item}`)}
+                        onChange={() => togglePPE(`custom_${item}`)}
+                        className="rounded text-brand-600"
+                      />
+                      <span className="text-sm text-gray-700 flex-1">{item}</span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); removeCustomPPE(item) }}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add Custom */}
+            <div className="p-2 border-t border-gray-100">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customPPE}
+                  onChange={(e) => setCustomPPE(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addCustomPPE()}
+                  placeholder="Add custom PPE item..."
+                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm"
+                />
+                <button
+                  onClick={addCustomPPE}
+                  disabled={!customPPE.trim()}
+                  className="px-3 py-1.5 bg-brand-600 text-white rounded text-sm hover:bg-brand-700 disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Selected Items Display */}
+      {selectedLabels.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedLabels.map(label => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-brand-50 text-brand-700 rounded-full text-sm"
+            >
+              {label}
+              <button
+                onClick={() => {
+                  const item = PPE_ITEMS.find(i => i.label === label)
+                  if (item) {
+                    togglePPE(item.id)
+                  } else {
+                    togglePPE(`custom_${label}`)
+                  }
+                }}
+                className="hover:text-brand-900"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// COMMUNICATIONS PLAN
+// ============================================
+
+function CommunicationsPlan({ site, onUpdateSite }) {
+  const emergency = site?.emergency || {}
+  const comms = emergency.comms || {}
+
+  const updateComms = (field, value) => {
+    onUpdateSite({ emergency: { ...emergency, comms: { ...comms, [field]: value } } })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Primary Radio Frequency</label>
+          <input
+            type="text"
+            value={comms.primary_freq || ''}
+            onChange={(e) => updateComms('primary_freq', e.target.value)}
+            placeholder="e.g., 123.45 MHz"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Backup Frequency</label>
+          <input
+            type="text"
+            value={comms.backup_freq || ''}
+            onChange={(e) => updateComms('backup_freq', e.target.value)}
+            placeholder="e.g., 121.50 MHz"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Team Channel</label>
+          <input
+            type="text"
+            value={comms.team_channel || ''}
+            onChange={(e) => updateComms('team_channel', e.target.value)}
+            placeholder="e.g., Channel 5"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Check-in Interval</label>
+          <input
+            type="text"
+            value={comms.checkin_interval || ''}
+            onChange={(e) => updateComms('checkin_interval', e.target.value)}
+            placeholder="e.g., Every 30 minutes"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          />
+        </div>
+      </div>
+      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <p className="text-sm text-amber-800">
+          <strong>Emergency Signals:</strong> MAYDAY (life threat), PAN PAN (urgency), ABORT (stop operations)
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// EMERGENCY CONTACTS & FACILITIES
+// ============================================
+
+function EmergencyContacts({ site, onUpdateSite }) {
   const emergency = site?.emergency || {}
 
   const updateEmergency = (updates) => {
@@ -2841,27 +3192,13 @@ function EmergencyPlanning({ site, onUpdateSite }) {
     updateEmergency({ facilities: facilities.filter(f => f.id !== id) })
   }
 
-  const ppe = emergency.ppe || []
-  const togglePPE = (itemId) => {
-    if (ppe.includes(itemId)) {
-      updateEmergency({ ppe: ppe.filter(p => p !== itemId) })
-    } else {
-      updateEmergency({ ppe: [...ppe, itemId] })
-    }
-  }
-
-  const comms = emergency.comms || {}
-  const updateComms = (field, value) => {
-    updateEmergency({ comms: { ...comms, [field]: value } })
-  }
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Emergency Contacts */}
       <div>
         <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
           <Phone className="w-4 h-4" />
-          Emergency Contacts
+          Key Contacts
         </h4>
         <div className="space-y-2">
           {contacts.length === 0 ? (
@@ -2926,83 +3263,52 @@ function EmergencyPlanning({ site, onUpdateSite }) {
       <div>
         <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
           <Hospital className="w-4 h-4" />
-          Emergency Facilities
+          Nearby Facilities
         </h4>
         <div className="space-y-2">
           {facilities.length === 0 ? (
             <p className="text-gray-500 text-sm py-2">No facilities added</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="pb-2 w-24">Type</th>
-                  <th className="pb-2">Name</th>
-                  <th className="pb-2">Address</th>
-                  <th className="pb-2 w-20">Distance</th>
-                  <th className="pb-2">Phone</th>
-                  <th className="pb-2 w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {facilities.map(f => (
-                  <tr key={f.id}>
-                    <td className="py-2 pr-2">
-                      <select
-                        value={f.type}
-                        onChange={(e) => updateFacility(f.id, 'type', e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      >
-                        <option value="hospital">Hospital</option>
-                        <option value="fire">Fire Station</option>
-                        <option value="police">Police</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <input
-                        type="text"
-                        value={f.name}
-                        onChange={(e) => updateFacility(f.id, 'name', e.target.value)}
-                        placeholder="Facility name"
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      />
-                    </td>
-                    <td className="py-2 pr-2">
-                      <input
-                        type="text"
-                        value={f.address}
-                        onChange={(e) => updateFacility(f.id, 'address', e.target.value)}
-                        placeholder="Address"
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      />
-                    </td>
-                    <td className="py-2 pr-2">
-                      <input
-                        type="text"
-                        value={f.distance}
-                        onChange={(e) => updateFacility(f.id, 'distance', e.target.value)}
-                        placeholder="e.g., 5 km"
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      />
-                    </td>
-                    <td className="py-2 pr-2">
-                      <input
-                        type="tel"
-                        value={f.phone}
-                        onChange={(e) => updateFacility(f.id, 'phone', e.target.value)}
-                        placeholder="Phone"
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      />
-                    </td>
-                    <td className="py-2">
-                      <button onClick={() => removeFacility(f.id)} className="p-1 text-gray-400 hover:text-red-500">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {facilities.map(f => (
+                <div key={f.id} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                  <select
+                    value={f.type}
+                    onChange={(e) => updateFacility(f.id, 'type', e.target.value)}
+                    className="w-28 px-2 py-1 border border-gray-200 rounded text-sm bg-white"
+                  >
+                    <option value="hospital">Hospital</option>
+                    <option value="fire">Fire Station</option>
+                    <option value="police">Police</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={f.name}
+                    onChange={(e) => updateFacility(f.id, 'name', e.target.value)}
+                    placeholder="Name"
+                    className="flex-1 px-2 py-1 border border-gray-200 rounded text-sm"
+                  />
+                  <input
+                    type="text"
+                    value={f.distance}
+                    onChange={(e) => updateFacility(f.id, 'distance', e.target.value)}
+                    placeholder="Distance"
+                    className="w-20 px-2 py-1 border border-gray-200 rounded text-sm"
+                  />
+                  <input
+                    type="tel"
+                    value={f.phone}
+                    onChange={(e) => updateFacility(f.id, 'phone', e.target.value)}
+                    placeholder="Phone"
+                    className="w-32 px-2 py-1 border border-gray-200 rounded text-sm"
+                  />
+                  <button onClick={() => removeFacility(f.id)} className="p-1 text-gray-400 hover:text-red-500">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
           <button onClick={addFacility} className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700">
             <Plus className="w-4 h-4" /> Add Facility
@@ -3010,93 +3316,10 @@ function EmergencyPlanning({ site, onUpdateSite }) {
         </div>
       </div>
 
-      {/* PPE Checklist */}
+      {/* Site Access Notes */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-          <HardHat className="w-4 h-4" />
-          PPE Requirements
-        </h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-          {PPE_ITEMS.map(item => (
-            <label
-              key={item.id}
-              className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                ppe.includes(item.id)
-                  ? 'bg-brand-50 border-brand-300'
-                  : 'bg-white border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={ppe.includes(item.id)}
-                onChange={() => togglePPE(item.id)}
-                className="rounded text-brand-600"
-              />
-              <span className="text-sm">{item.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Communications */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-          <Radio className="w-4 h-4" />
-          Communications Plan
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Primary Radio Frequency</label>
-            <input
-              type="text"
-              value={comms.primary_freq || ''}
-              onChange={(e) => updateComms('primary_freq', e.target.value)}
-              placeholder="e.g., 123.45 MHz"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Backup Frequency</label>
-            <input
-              type="text"
-              value={comms.backup_freq || ''}
-              onChange={(e) => updateComms('backup_freq', e.target.value)}
-              placeholder="e.g., 121.50 MHz"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Team Channel</label>
-            <input
-              type="text"
-              value={comms.team_channel || ''}
-              onChange={(e) => updateComms('team_channel', e.target.value)}
-              placeholder="e.g., Channel 5"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Check-in Interval</label>
-            <input
-              type="text"
-              value={comms.checkin_interval || ''}
-              onChange={(e) => updateComms('checkin_interval', e.target.value)}
-              placeholder="e.g., Every 30 minutes"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-            />
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800">
-            <strong>Emergency Signals:</strong> MAYDAY (life threat), PAN PAN (urgency), ABORT (stop operations)
-          </p>
-        </div>
-      </div>
-
-      {/* Site-Specific Notes */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Site-Specific Notes</h4>
-        <div className="space-y-4">
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Site Access</h4>
+        <div className="space-y-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Entry Plan</label>
             <textarea
@@ -3407,9 +3630,29 @@ export default function SiteTab({ project, onUpdate, equipment }) {
         />
       </Section>
 
-      {/* Emergency Planning */}
-      <Section title="Emergency Planning" icon={ShieldAlert} defaultOpen={false}>
-        <EmergencyPlanning
+      {/* PPE Requirements */}
+      <Section
+        title="PPE Requirements"
+        icon={HardHat}
+        badge={`${(activeSite?.emergency?.ppe || []).length} items`}
+      >
+        <PPESelector
+          site={activeSite}
+          onUpdateSite={updateActiveSite}
+        />
+      </Section>
+
+      {/* Communications Plan */}
+      <Section title="Communications" icon={Radio}>
+        <CommunicationsPlan
+          site={activeSite}
+          onUpdateSite={updateActiveSite}
+        />
+      </Section>
+
+      {/* Emergency Contacts & Facilities */}
+      <Section title="Emergency Response" icon={ShieldAlert} defaultOpen={false}>
+        <EmergencyContacts
           site={activeSite}
           onUpdateSite={updateActiveSite}
         />
