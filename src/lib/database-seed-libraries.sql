@@ -9,12 +9,34 @@
 ALTER TABLE services ADD COLUMN IF NOT EXISTS output_deliverables TEXT[] DEFAULT '{}';
 
 -- ============================================
+-- CLEAR EXISTING SEED DATA FIRST
+-- This removes duplicates and old template names
+-- ============================================
+DELETE FROM operators WHERE name LIKE 'PIC -%' OR name LIKE 'Visual Observer%' OR name LIKE 'Ground Supervisor%'
+  OR name LIKE 'Payload Operator%' OR name LIKE 'Field Biologist%' OR name LIKE 'Marine Mammal%'
+  OR name LIKE 'HSE Officer%' OR name LIKE 'Boat Operator%' OR name LIKE 'Field Technician%'
+  OR name LIKE 'Project Manager%' OR name LIKE 'HSE Planning%' OR name LIKE 'Compliance Officer%'
+  OR name LIKE 'Technical Officer%' OR name LIKE 'Logistics Coordinator%' OR name LIKE 'RPAS Operations%'
+  OR name LIKE 'Data Analyst%';
+
+DELETE FROM equipment WHERE name LIKE 'RPAS System%' OR name LIKE 'Backup RPAS%'
+  OR name LIKE 'Jet Boat%' OR name LIKE 'Rowing Raft%' OR name LIKE 'Zodiac%'
+  OR name LIKE 'LiDAR Payload%' OR name LIKE 'Thermal%' OR name LIKE 'RGB Camera%'
+  OR name LIKE 'Multispectral%' OR name LIKE 'ADCP%' OR name LIKE 'Bathymetric%'
+  OR name LIKE 'Side-Scan%' OR name LIKE 'GNSS%' OR name LIKE 'Ground Control%'
+  OR name LIKE 'Additional Batteries%';
+
+DELETE FROM services WHERE category IN ('Consulting', 'Training', 'Field Operations', 'Mob/Demob', 'Data Processing');
+
+DELETE FROM service_modifiers WHERE name IN ('Week Rate (5d)', 'Week Rate Equipment (5d)', 'Travel Day',
+  'Half-Day Rate', 'Hourly from Day', 'Rush Processing (+50%)', 'Rush Processing (+100%)',
+  'After Hours', 'Remote Location Premium', 'Holiday Rate', 'Volume Discount (10+)',
+  'Volume Discount (20+)', 'Annual Contract Discount');
+
+-- ============================================
 -- OPERATORS (Personnel Roles)
 -- Day rates are base, other rates auto-calculated in app
 -- ============================================
-
--- Clear existing data (optional, comment out if you want to preserve)
--- TRUNCATE operators CASCADE;
 
 -- PIC Roles
 INSERT INTO operators (name, roles, rate_day, rate_half_day, rate_hourly, rate_week, travel_rate_day, notes) VALUES
