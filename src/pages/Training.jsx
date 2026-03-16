@@ -9,6 +9,8 @@ import {
   FileText,
   X,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   ClipboardCheck,
   Plane,
@@ -21,6 +23,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { getOperators, getDocuments } from '../lib/api'
 import { format, differenceInDays } from 'date-fns'
+import { MarkdownPreview } from '../components/MarkdownEditor'
 
 // ============================================
 // TRAINING TRACKS
@@ -54,16 +57,107 @@ const TRACKS = [
     lightColor: 'bg-purple-50 text-purple-700 border-purple-200',
     docTypes: ['procedure'],
     flightSkills: [
-      'Pre-flight inspection',
-      'Takeoff and hover stability',
-      'Basic maneuvering (forward, backward, lateral)',
-      'Altitude hold and positioning',
-      'Point of interest orbits',
-      'Return to home procedures',
-      'Emergency procedures (motor out, signal loss)',
-      'Precision landing',
-      'Battery swap procedures',
-      'Post-flight inspection and logging'
+      {
+        name: 'Pre-flight inspection',
+        description: 'Complete walk-around and systems check before flight',
+        checkpoints: [
+          'Propellers secure, no damage',
+          'Battery charged, seated properly',
+          'Camera/gimbal operational',
+          'GPS lock confirmed',
+          'Control surfaces responsive'
+        ]
+      },
+      {
+        name: 'Takeoff and hover stability',
+        description: 'Demonstrate controlled vertical takeoff and stable hover',
+        checkpoints: [
+          'Smooth throttle application',
+          'Stable hover at 10ft for 30 seconds',
+          'Minimal drift correction needed',
+          'Proper altitude awareness'
+        ]
+      },
+      {
+        name: 'Basic maneuvering (forward, backward, lateral)',
+        description: 'Execute controlled flight in all directions',
+        checkpoints: [
+          'Smooth transitions between directions',
+          'Consistent altitude maintenance',
+          'Proper speed control',
+          'Coordinated stick inputs'
+        ]
+      },
+      {
+        name: 'Altitude hold and positioning',
+        description: 'Maintain precise altitude and position over a point',
+        checkpoints: [
+          'Hold altitude within 3ft tolerance',
+          'Station keeping over ground marker',
+          'Smooth altitude transitions',
+          'Wind compensation demonstrated'
+        ]
+      },
+      {
+        name: 'Point of interest orbits',
+        description: 'Execute circular flight pattern around a fixed point',
+        checkpoints: [
+          'Consistent radius maintained',
+          'Camera/nose pointed at POI',
+          'Steady speed throughout orbit',
+          'Smooth entry and exit'
+        ]
+      },
+      {
+        name: 'Return to home procedures',
+        description: 'Demonstrate RTH activation and monitoring',
+        checkpoints: [
+          'RTH altitude set appropriately',
+          'Correct home point verification',
+          'Safe return path observed',
+          'Proper landing approach'
+        ]
+      },
+      {
+        name: 'Emergency procedures (motor out, signal loss)',
+        description: 'Demonstrate knowledge of emergency response protocols',
+        checkpoints: [
+          'Motor failure response verbalized',
+          'Signal loss behavior understood',
+          'Low battery actions known',
+          'Emergency landing site awareness'
+        ]
+      },
+      {
+        name: 'Precision landing',
+        description: 'Land accurately on a designated target',
+        checkpoints: [
+          'Approach path planning',
+          'Speed control on descent',
+          'Landing within 3ft of target',
+          'Soft touchdown, no bouncing'
+        ]
+      },
+      {
+        name: 'Battery swap procedures',
+        description: 'Safely change batteries following proper protocol',
+        checkpoints: [
+          'Power down before removal',
+          'Battery condition check',
+          'Proper insertion and lock',
+          'System restart verification'
+        ]
+      },
+      {
+        name: 'Post-flight inspection and logging',
+        description: 'Complete post-flight checks and documentation',
+        checkpoints: [
+          'Aircraft condition assessment',
+          'Battery storage state set',
+          'Flight log completed',
+          'Any issues documented'
+        ]
+      }
     ]
   },
   {
@@ -269,6 +363,8 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
   const [acknowledgments, setAcknowledgments] = useState([])
   const [skillSignoffs, setSkillSignoffs] = useState([])
   const [saving, setSaving] = useState(false)
+  const [expandedDoc, setExpandedDoc] = useState(null)
+  const [expandedSkill, setExpandedSkill] = useState(null)
 
   const trackDocs = documents.filter(d => track.docTypes.includes(d.doc_type))
   const Icon = track.icon
@@ -444,33 +540,78 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
           <div className="divide-y divide-gray-100">
             {trackDocs.map(doc => {
               const done = acknowledgments.includes(doc.id)
+              const isExpanded = expandedDoc === doc.id
               return (
-                <div key={doc.id} className="px-5 py-4 flex items-center gap-4">
-                  <button
-                    onClick={() => !done && handleAcknowledge(doc.id)}
-                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                <div key={doc.id} className="overflow-hidden">
+                  {/* Document header row */}
+                  <div
+                    className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors ${isExpanded ? 'bg-gray-50' : ''}`}
+                    onClick={() => setExpandedDoc(isExpanded ? null : doc.id)}
+                  >
+                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                       done
                         ? 'bg-green-500 border-green-500 text-white'
-                        : 'border-gray-300 hover:border-brand-500 hover:bg-brand-50'
-                    }`}
-                  >
-                    {done && <Check className="w-4 h-4" />}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-medium truncate ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                      {doc.title}
-                    </p>
-                    <p className="text-sm text-gray-500">{doc.doc_type}</p>
+                        : 'border-gray-300'
+                    }`}>
+                      {done && <Check className="w-4 h-4" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        {doc.title}
+                      </p>
+                      <p className="text-sm text-gray-500">{doc.doc_type}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {doc.google_doc_url && (
+                        <a
+                          href={doc.google_doc_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
+                        >
+                          Open <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {isExpanded ? (
+                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                      )}
+                    </div>
                   </div>
-                  {doc.google_doc_url && (
-                    <a
-                      href={doc.google_doc_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
-                    >
-                      Open <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
+                      <div className="bg-white rounded-lg border border-gray-200 p-6 mt-4 max-h-96 overflow-y-auto">
+                        {doc.content ? (
+                          <MarkdownPreview content={doc.content} />
+                        ) : (
+                          <p className="text-gray-400 italic">No content available. Use the external link to view this document.</p>
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-3 mt-4">
+                        <button
+                          onClick={() => setExpandedDoc(null)}
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium"
+                        >
+                          Collapse
+                        </button>
+                        {!done && (
+                          <button
+                            onClick={() => {
+                              handleAcknowledge(doc.id)
+                              setExpandedDoc(null)
+                            }}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" />
+                            Mark Complete
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               )
@@ -487,33 +628,100 @@ function TrainingSession({ track, existingSession, documents, operators, onBack,
               <Plane className="w-5 h-5 text-gray-400" />
               Flight Skills ({skillSignoffs.length}/{track.flightSkills.length})
             </h3>
-            <p className="text-sm text-gray-500 mt-1">Each skill requires supervisor sign-off</p>
+            <p className="text-sm text-gray-500 mt-1">Each skill requires supervisor sign-off after observing checkpoints</p>
           </div>
           <div className="divide-y divide-gray-100">
             {track.flightSkills.map(skill => {
-              const signoff = skillSignoffs.find(s => s.skill_name === skill)
+              const skillName = typeof skill === 'string' ? skill : skill.name
+              const skillDesc = typeof skill === 'string' ? null : skill.description
+              const skillCheckpoints = typeof skill === 'string' ? [] : (skill.checkpoints || [])
+              const signoff = skillSignoffs.find(s => s.skill_name === skillName)
+              const isExpanded = expandedSkill === skillName
+
               return (
-                <div key={skill} className="px-5 py-4 flex items-center gap-4">
-                  <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    signoff ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
-                  }`}>
-                    {signoff && <Check className="w-4 h-4" />}
+                <div key={skillName} className="overflow-hidden">
+                  {/* Skill header row */}
+                  <div
+                    className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors ${isExpanded ? 'bg-gray-50' : ''}`}
+                    onClick={() => setExpandedSkill(isExpanded ? null : skillName)}
+                  >
+                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      signoff ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                    }`}>
+                      {signoff && <Check className="w-4 h-4" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-medium ${signoff ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        {skillName}
+                      </p>
+                      {signoff && (
+                        <p className="text-sm text-gray-500">{signoff.notes}</p>
+                      )}
+                      {!signoff && skillDesc && (
+                        <p className="text-sm text-gray-500">{skillDesc}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!signoff && !isExpanded && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSignOff(skillName)
+                          }}
+                          className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                        >
+                          Sign Off
+                        </button>
+                      )}
+                      {skillCheckpoints.length > 0 && (
+                        isExpanded ? (
+                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                        )
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className={`font-medium ${signoff ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                      {skill}
-                    </p>
-                    {signoff && (
-                      <p className="text-sm text-gray-500">{signoff.notes}</p>
-                    )}
-                  </div>
-                  {!signoff && (
-                    <button
-                      onClick={() => handleSignOff(skill)}
-                      className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                    >
-                      Sign Off
-                    </button>
+
+                  {/* Expanded checkpoints */}
+                  {isExpanded && skillCheckpoints.length > 0 && (
+                    <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Observer Checkpoints</h4>
+                        <div className="space-y-2">
+                          {skillCheckpoints.map((checkpoint, idx) => (
+                            <div key={idx} className="flex items-start gap-3">
+                              <div className="w-5 h-5 rounded border border-gray-300 flex-shrink-0 mt-0.5 flex items-center justify-center">
+                                {signoff && <Check className="w-3 h-3 text-green-600" />}
+                              </div>
+                              <span className={`text-sm ${signoff ? 'text-gray-400' : 'text-gray-700'}`}>
+                                {checkpoint}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-3 mt-4">
+                        <button
+                          onClick={() => setExpandedSkill(null)}
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium"
+                        >
+                          Collapse
+                        </button>
+                        {!signoff && (
+                          <button
+                            onClick={() => {
+                              handleSignOff(skillName)
+                              setExpandedSkill(null)
+                            }}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" />
+                            Supervisor Sign-Off
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               )
