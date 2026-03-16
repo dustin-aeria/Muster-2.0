@@ -29,16 +29,14 @@ const IMSAFE_ITEMS = [
 // HELPER COMPONENTS
 // ============================================
 
-function Section({ title, children, defaultOpen = true, badge = null, icon: Icon, variant = 'default' }) {
+function Section({ title, children, defaultOpen = true, badge = null, icon: Icon }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
-  const bgColor = variant === 'alt' ? 'bg-blue-50/50' : 'bg-white'
-  const headerBg = variant === 'alt' ? 'bg-blue-100/50 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'
 
   return (
-    <div className={`${bgColor} rounded-xl border border-gray-200 shadow-sm overflow-hidden`}>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-6 py-4 flex items-center justify-between ${headerBg} transition-colors`}
+        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
       >
         <div className="flex items-center gap-3">
           {Icon && <Icon className="w-5 h-5 text-gray-400" />}
@@ -707,7 +705,7 @@ export default function FieldDocsTab({ project, onUpdate, onSendNotification }) 
   return (
     <div className="space-y-6">
       {/* Tailgate Meetings */}
-      <Section title="Tailgate Meetings" icon={ClipboardCheck} badge={`${tailgates.length}`} variant="default">
+      <Section title="Tailgate Meetings" icon={ClipboardCheck} badge={`${tailgates.length}`}>
         <TailgateList
           tailgates={tailgates}
           onSelect={handleSelectTailgate}
@@ -716,7 +714,7 @@ export default function FieldDocsTab({ project, onUpdate, onSendNotification }) 
       </Section>
 
       {/* IMSAFE Reference */}
-      <Section title="IMSAFE Self-Check" icon={Heart} defaultOpen={false} variant="alt">
+      <Section title="IMSAFE Self-Check" icon={Heart} defaultOpen={false}>
         <IMSAFEReference />
       </Section>
 
