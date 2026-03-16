@@ -3339,18 +3339,6 @@ function CommunicationsPlan({ site, onUpdateSite }) {
         </select>
       </div>
 
-      {/* Check-in Schedule */}
-      <div className="pt-2 border-t border-gray-200">
-        <label className="block text-xs text-gray-500 mb-1">Check-in Schedule</label>
-        <input
-          type="text"
-          value={emergency.checkin_schedule || ''}
-          onChange={(e) => updateEmergency({ checkin_schedule: e.target.value })}
-          placeholder="e.g., Every 30 minutes, or at mission start/end"
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-        />
-      </div>
-
       {/* Emergency Signals Reference */}
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
         <p className="text-sm text-amber-800">
