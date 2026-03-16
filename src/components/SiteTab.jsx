@@ -800,26 +800,28 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
           }
         })
 
-        // Generate 3D flight path with elevated coordinates
+        // Generate 3D flight path as buffered corridor for proper extrusion
         if (el.elementType === 'flight_path' && el.geometry?.type === 'LineString' && altitude > 0) {
-          const coords3D = el.geometry.coordinates.map(coord => {
-            // Add altitude as Z coordinate [lng, lat, altitude]
-            return [coord[0], coord[1], altitude]
-          })
-          flightPaths3D.push({
-            type: 'Feature',
-            id: `${el.id}-3d`,
-            geometry: {
-              type: 'LineString',
-              coordinates: coords3D
-            },
-            properties: {
-              id: el.id,
-              name: el.name,
-              color: color,
-              altitude: altitude
+          try {
+            // Buffer the line into a thin corridor (10m width) for 3D extrusion
+            const lineFeature = { type: 'Feature', geometry: el.geometry, properties: {} }
+            const corridor = turf.buffer(lineFeature, 0.01, { units: 'kilometers' }) // 10m buffer
+            if (corridor) {
+              flightPaths3D.push({
+                type: 'Feature',
+                id: `${el.id}-3d`,
+                geometry: corridor.geometry,
+                properties: {
+                  id: el.id,
+                  name: el.name,
+                  color: color,
+                  altitude: altitude
+                }
+              })
             }
-          })
+          } catch {
+            // Buffer failed, skip 3D path
+          }
         }
 
         // Generate buffer ONLY for the selected element in this site
@@ -1050,33 +1052,49 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
           'fill-extrusion-color': ['get', 'color'],
           'fill-extrusion-height': ['get', 'altitude'],
           'fill-extrusion-base': 0,
-          'fill-extrusion-opacity': 0.4
+          'fill-extrusion-opacity': 0.35,
+          'fill-extrusion-vertical-gradient': true // Fade from bottom to top
         },
         layout: {
           'visibility': 'none'
         }
       })
 
-      // Source for 3D elevated flight paths
+      // Source for 3D elevated flight paths (buffered corridors)
       mapInstance.addSource('flight-paths-3d-source', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] }
       })
 
-      // 3D Flight Path - line at altitude
+      // 3D Flight Path - extruded corridor at altitude
       mapInstance.addLayer({
         id: 'elements-flight-path-3d',
-        type: 'line',
+        type: 'fill-extrusion',
         source: 'flight-paths-3d-source',
         paint: {
-          'line-color': ['get', 'color'],
-          'line-width': 4,
-          'line-opacity': 1
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['get', 'altitude'],
+          'fill-extrusion-base': ['-', ['get', 'altitude'], 5], // 5m thick corridor
+          'fill-extrusion-opacity': 0.85
         },
         layout: {
-          'visibility': 'none',
-          'line-cap': 'round',
-          'line-join': 'round'
+          'visibility': 'none'
+        }
+      })
+
+      // 3D Flight Path vertical walls (from ground to path)
+      mapInstance.addLayer({
+        id: 'elements-flight-path-walls-3d',
+        type: 'fill-extrusion',
+        source: 'flight-paths-3d-source',
+        paint: {
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['-', ['get', 'altitude'], 5],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.15
+        },
+        layout: {
+          'visibility': 'none'
         }
       })
 
@@ -1300,16 +1318,23 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       if (m.getLayer('elements-flight-path-3d')) {
         m.setLayoutProperty('elements-flight-path-3d', 'visibility', 'visible')
       }
+      if (m.getLayer('elements-flight-path-walls-3d')) {
+        m.setLayoutProperty('elements-flight-path-walls-3d', 'visibility', 'visible')
+      }
       if (m.getLayer('buffers-3d')) {
         m.setLayoutProperty('buffers-3d', 'visibility', 'visible')
       }
 
-      // Hide 2D layers for flight elements
+      // Hide 2D fills for flight elements but keep outlines for ground reference
       if (m.getLayer('elements-polygon-fill')) {
         m.setFilter('elements-polygon-fill', ['all',
           ['==', '$type', 'Polygon'],
           ['!=', ['get', 'elementType'], 'flight_area']
         ])
+      }
+      // Keep polygon outlines visible for ground reference
+      if (m.getLayer('elements-polygon-outline')) {
+        m.setPaintProperty('elements-polygon-outline', 'line-opacity', 0.5)
       }
       if (m.getLayer('elements-line')) {
         m.setFilter('elements-line', ['all',
@@ -1319,6 +1344,10 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       }
       if (m.getLayer('buffers-fill')) {
         m.setLayoutProperty('buffers-fill', 'visibility', 'none')
+      }
+      // Keep buffer outline visible but dimmed
+      if (m.getLayer('buffers-line')) {
+        m.setPaintProperty('buffers-line', 'line-opacity', 0.4)
       }
 
       // Animate to 3D view
@@ -1338,19 +1367,28 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       if (m.getLayer('elements-flight-path-3d')) {
         m.setLayoutProperty('elements-flight-path-3d', 'visibility', 'none')
       }
+      if (m.getLayer('elements-flight-path-walls-3d')) {
+        m.setLayoutProperty('elements-flight-path-walls-3d', 'visibility', 'none')
+      }
       if (m.getLayer('buffers-3d')) {
         m.setLayoutProperty('buffers-3d', 'visibility', 'none')
       }
 
-      // Show 2D fill layers for all polygons
+      // Show 2D fill layers for all polygons and restore opacity
       if (m.getLayer('elements-polygon-fill')) {
         m.setFilter('elements-polygon-fill', ['==', '$type', 'Polygon'])
+      }
+      if (m.getLayer('elements-polygon-outline')) {
+        m.setPaintProperty('elements-polygon-outline', 'line-opacity', ['case', ['get', 'isActiveSite'], 1, 0.6])
       }
       if (m.getLayer('elements-line')) {
         m.setFilter('elements-line', ['==', '$type', 'LineString'])
       }
       if (m.getLayer('buffers-fill')) {
         m.setLayoutProperty('buffers-fill', 'visibility', 'visible')
+      }
+      if (m.getLayer('buffers-line')) {
+        m.setPaintProperty('buffers-line', 'line-opacity', 1)
       }
 
       // Animate to 2D view
