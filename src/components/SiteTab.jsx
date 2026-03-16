@@ -3192,8 +3192,10 @@ function CommunicationsPlan({ site, onUpdateSite }) {
       id: Date.now(),
       type: typeId,
       label: commType.label,
-      details: '',
-      isPrimary: commMethods.length === 0 // First one is primary
+      contacts: '',
+      identifier: '',
+      schedule: '',
+      isPrimary: commMethods.length === 0
     }
     updateEmergency({ commMethods: [...commMethods, newMethod] })
   }
@@ -3214,24 +3216,45 @@ function CommunicationsPlan({ site, onUpdateSite }) {
     })
   }
 
+  // Get appropriate labels based on comm type
+  const getFieldLabels = (typeId) => {
+    const radioTypes = ['vhf_radio', 'uhf_radio', 'hf_radio', 'gmrs', 'frs', 'cb_radio', 'marine_vhf', 'ham_radio', 'atc', 'ctaf', 'unicom', 'atis']
+    const phoneTypes = ['cell_phone', 'iridium', 'thuraya', 'globalstar', 'landline']
+    const appTypes = ['whatsapp', 'signal', 'telegram', 'teams', 'slack', 'discord']
+    const satTypes = ['starlink', 'inreach', 'spot', 'bgan']
+
+    if (radioTypes.includes(typeId)) {
+      return { identifier: 'Frequency / Channel', contacts: 'Call Signs / Names', schedule: 'Monitor Schedule' }
+    } else if (phoneTypes.includes(typeId)) {
+      return { identifier: 'Phone Number', contacts: 'Contact Names', schedule: 'Availability' }
+    } else if (appTypes.includes(typeId)) {
+      return { identifier: 'Group / Channel', contacts: 'Members', schedule: 'Response Time' }
+    } else if (satTypes.includes(typeId)) {
+      return { identifier: 'Device ID / Network', contacts: 'Users', schedule: 'Check-in Times' }
+    }
+    return { identifier: 'Number / ID', contacts: 'Contacts', schedule: 'Schedule' }
+  }
+
   return (
     <div className="space-y-4">
       {/* Communication Methods List */}
       {commMethods.length > 0 && (
-        <div className="space-y-2">
-          {commMethods.map((method, idx) => {
+        <div className="space-y-3">
+          {commMethods.map((method) => {
             const commType = COMM_TYPES.find(t => t.id === method.type)
+            const labels = getFieldLabels(method.type)
             return (
               <div
                 key={method.id}
-                className={`flex items-start gap-3 p-3 rounded-lg border ${
+                className={`p-3 rounded-lg border ${
                   method.isPrimary ? 'bg-brand-50 border-brand-200' : 'bg-gray-50 border-gray-200'
                 }`}
               >
-                <div className="flex-shrink-0 pt-1">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-3">
                   <button
                     onClick={() => setPrimary(method.id)}
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                       method.isPrimary
                         ? 'border-brand-600 bg-brand-600'
                         : 'border-gray-300 hover:border-gray-400'
@@ -3240,29 +3263,53 @@ function CommunicationsPlan({ site, onUpdateSite }) {
                   >
                     {method.isPrimary && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   </button>
+                  <span className="text-xs font-medium text-gray-500 uppercase">{commType?.category}</span>
+                  <span className="font-medium text-gray-800">{method.label}</span>
+                  {method.isPrimary && (
+                    <span className="px-1.5 py-0.5 bg-brand-600 text-white text-xs rounded">Primary</span>
+                  )}
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => removeCommMethod(method.id)}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-gray-500 uppercase">{commType?.category}</span>
-                    <span className="font-medium text-gray-800">{method.label}</span>
-                    {method.isPrimary && (
-                      <span className="px-1.5 py-0.5 bg-brand-600 text-white text-xs rounded">Primary</span>
-                    )}
+
+                {/* Fields Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">{labels.identifier}</label>
+                    <input
+                      type="text"
+                      value={method.identifier || ''}
+                      onChange={(e) => updateCommMethod(method.id, 'identifier', e.target.value)}
+                      placeholder={commType?.placeholder || 'Enter...'}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm bg-white"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={method.details}
-                    onChange={(e) => updateCommMethod(method.id, 'details', e.target.value)}
-                    placeholder={commType?.placeholder || 'Details...'}
-                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm bg-white"
-                  />
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">{labels.contacts}</label>
+                    <input
+                      type="text"
+                      value={method.contacts || ''}
+                      onChange={(e) => updateCommMethod(method.id, 'contacts', e.target.value)}
+                      placeholder="Names..."
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">{labels.schedule}</label>
+                    <input
+                      type="text"
+                      value={method.schedule || ''}
+                      onChange={(e) => updateCommMethod(method.id, 'schedule', e.target.value)}
+                      placeholder="When to use..."
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm bg-white"
+                    />
+                  </div>
                 </div>
-                <button
-                  onClick={() => removeCommMethod(method.id)}
-                  className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
             )
           })}
