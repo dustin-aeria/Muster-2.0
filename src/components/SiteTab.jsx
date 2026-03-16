@@ -1007,7 +1007,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
         }
       })
 
-      // 3D Flight Area Extrusion Layer (for 3D mode)
+      // 3D Flight Area - thin floating slab at altitude (not from ground)
       mapInstance.addLayer({
         id: 'elements-flight-3d',
         type: 'fill-extrusion',
@@ -1018,45 +1018,48 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
         ],
         paint: {
           'fill-extrusion-color': ['get', 'color'],
+          // Create a 15m thick slab floating at altitude
           'fill-extrusion-height': ['get', 'altitude'],
-          'fill-extrusion-base': 0,
-          'fill-extrusion-opacity': 0.6
+          'fill-extrusion-base': ['-', ['get', 'altitude'], 15],
+          'fill-extrusion-opacity': 0.7,
+          'fill-extrusion-vertical-gradient': false
         },
         layout: {
           'visibility': 'none' // Hidden by default, shown in 3D mode
         }
       })
 
-      // 3D Flight Path Walls (for 3D mode - lines rendered as thin walls)
+      // 3D vertical "walls" from ground to flight ceiling for flight areas
       mapInstance.addLayer({
-        id: 'elements-path-3d',
+        id: 'elements-flight-walls-3d',
         type: 'fill-extrusion',
         source: 'elements-source',
         filter: ['all',
           ['==', '$type', 'Polygon'],
-          ['==', ['get', 'elementType'], 'flight_path_buffer']
+          ['==', ['get', 'elementType'], 'flight_area']
         ],
         paint: {
           'fill-extrusion-color': ['get', 'color'],
-          'fill-extrusion-height': ['get', 'altitude'],
+          'fill-extrusion-height': ['-', ['get', 'altitude'], 15],
           'fill-extrusion-base': 0,
-          'fill-extrusion-opacity': 0.5
+          'fill-extrusion-opacity': 0.15
         },
         layout: {
           'visibility': 'none'
         }
       })
 
-      // 3D Operational Volume Buffer (elevated dashed boundary)
+      // 3D Operational Volume Buffer - thin floating boundary at altitude
       mapInstance.addLayer({
         id: 'buffers-3d',
         type: 'fill-extrusion',
         source: 'buffers-source',
         paint: {
           'fill-extrusion-color': '#F59E0B',
+          // Thin slab at altitude
           'fill-extrusion-height': ['coalesce', ['get', 'altitude'], 120],
-          'fill-extrusion-base': 0,
-          'fill-extrusion-opacity': 0.2
+          'fill-extrusion-base': ['-', ['coalesce', ['get', 'altitude'], 120], 10],
+          'fill-extrusion-opacity': 0.4
         },
         layout: {
           'visibility': 'none'
@@ -1264,6 +1267,9 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       if (m.getLayer('elements-flight-3d')) {
         m.setLayoutProperty('elements-flight-3d', 'visibility', 'visible')
       }
+      if (m.getLayer('elements-flight-walls-3d')) {
+        m.setLayoutProperty('elements-flight-walls-3d', 'visibility', 'visible')
+      }
       if (m.getLayer('buffers-3d')) {
         m.setLayoutProperty('buffers-3d', 'visibility', 'visible')
       }
@@ -1292,6 +1298,9 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       // Hide 3D layers
       if (m.getLayer('elements-flight-3d')) {
         m.setLayoutProperty('elements-flight-3d', 'visibility', 'none')
+      }
+      if (m.getLayer('elements-flight-walls-3d')) {
+        m.setLayoutProperty('elements-flight-walls-3d', 'visibility', 'none')
       }
       if (m.getLayer('buffers-3d')) {
         m.setLayoutProperty('buffers-3d', 'visibility', 'none')
