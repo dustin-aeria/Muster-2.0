@@ -292,6 +292,73 @@ const SAIL_COLORS = {
   'VI': 'bg-red-700'
 }
 
+// OSO Table - Operational Safety Objectives by SAIL level
+// O = Optional, L = Low, M = Medium, H = High robustness
+const OSO_TABLE = [
+  { id: 'OSO#01', name: 'Ensure the operator is competent and/or proven', category: 'Technical',
+    requirements: { I: 'O', II: 'L', III: 'M', IV: 'H', V: 'H', VI: 'H' } },
+  { id: 'OSO#02', name: 'UAS manufactured by competent entity', category: 'Technical',
+    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#03', name: 'UAS maintained by competent entity', category: 'Technical',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#04', name: 'UAS developed to design standards', category: 'Technical',
+    requirements: { I: 'O', II: 'O', III: 'O', IV: 'L', V: 'M', VI: 'H' } },
+  { id: 'OSO#05', name: 'UAS is designed considering system safety', category: 'Technical',
+    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#06', name: 'C3 link performance is appropriate', category: 'Technical',
+    requirements: { I: 'O', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#07', name: 'Inspection of UAS to ensure safe condition', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#08', name: 'Operational procedures are defined, validated and adhered to', category: 'Operational',
+    requirements: { I: 'L', II: 'M', III: 'H', IV: 'H', V: 'H', VI: 'H' } },
+  { id: 'OSO#09', name: 'Remote crew trained and current', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#10', name: 'Safe recovery from technical issues', category: 'Technical',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#11', name: 'Procedures for safe handling of cargo', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'M', VI: 'H' } },
+  { id: 'OSO#12', name: 'UAS designed to manage deteriorating systems', category: 'Technical',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#13', name: 'External services supporting UAS operation', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#14', name: 'Operational procedures to handle adverse conditions', category: 'Operational',
+    requirements: { I: 'L', II: 'M', III: 'M', IV: 'H', V: 'H', VI: 'H' } },
+  { id: 'OSO#15', name: 'Adequate crew competency for adverse conditions', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#16', name: 'Multi-crew coordination procedures', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#17', name: 'Remote crew able to control iteration with ATC', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#18', name: 'Automatic protection of flight envelope', category: 'Technical',
+    requirements: { I: 'O', II: 'O', III: 'L', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#19', name: 'Safe recovery from human error', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#20', name: 'Safe design to limit effects of human error', category: 'Technical',
+    requirements: { I: 'O', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#21', name: 'Remote crew not impaired', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#22', name: 'Remote crew can cope with adverse conditions', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'M', IV: 'M', V: 'H', VI: 'H' } },
+  { id: 'OSO#23', name: 'Environmental conditions to be measured', category: 'Operational',
+    requirements: { I: 'L', II: 'L', III: 'L', IV: 'M', V: 'M', VI: 'H' } },
+  { id: 'OSO#24', name: 'UAS designed for environmental conditions', category: 'Technical',
+    requirements: { I: 'O', II: 'L', III: 'L', IV: 'M', V: 'H', VI: 'H' } }
+]
+
+const OSO_ROBUSTNESS_COLORS = {
+  'O': 'bg-gray-100 text-gray-600',
+  'L': 'bg-green-100 text-green-700',
+  'M': 'bg-yellow-100 text-yellow-700',
+  'H': 'bg-red-100 text-red-700'
+}
+
+const OSO_ROBUSTNESS_LABELS = {
+  'O': 'Optional',
+  'L': 'Low',
+  'M': 'Medium',
+  'H': 'High'
+}
+
 const HAZARD_CATEGORIES = [
   { value: 'wildlife', label: 'Wildlife' },
   { value: 'terrain', label: 'Terrain' },
@@ -1980,11 +2047,29 @@ function SORACalculator({ site, onUpdateSite, equipment }) {
 
       {/* Air Risk */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Air Risk Classification</h4>
+        <div className="flex items-center gap-2 mb-3">
+          <h4 className="text-sm font-medium text-gray-700">Air Risk Classification</h4>
+          <InfoTooltip>
+            <p className="font-medium mb-2">Air Risk Classification (ARC)</p>
+            <p className="mb-2">ARC assesses the risk of collision with manned aircraft.</p>
+            <ul className="space-y-1">
+              <li><strong>ARC-a:</strong> Atypical airspace (very low encounter rate)</li>
+              <li><strong>ARC-b:</strong> Low density airspace</li>
+              <li><strong>ARC-c:</strong> Medium density airspace</li>
+              <li><strong>ARC-d:</strong> High density controlled airspace</li>
+            </ul>
+          </InfoTooltip>
+        </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Initial ARC</label>
+            <div className="flex items-center gap-2 mb-1">
+              <label className="block text-xs text-gray-500">Initial ARC</label>
+              <InfoTooltip>
+                <p className="font-medium mb-1">Initial ARC</p>
+                <p>Based on airspace classification and typical air traffic density in your operational area.</p>
+              </InfoTooltip>
+            </div>
             <select
               value={initialARC}
               onChange={(e) => updateSORA({ initial_arc: e.target.value })}
@@ -1999,7 +2084,18 @@ function SORACalculator({ site, onUpdateSite, equipment }) {
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">TMPR Type</label>
+            <div className="flex items-center gap-2 mb-1">
+              <label className="block text-xs text-gray-500">TMPR Type</label>
+              <InfoTooltip>
+                <p className="font-medium mb-1">Tactical Mitigation Performance Requirement</p>
+                <p className="mb-2">Method used to mitigate mid-air collision risk:</p>
+                <ul className="space-y-1">
+                  <li><strong>VLOS:</strong> Visual line of sight operations</li>
+                  <li><strong>EVLOS:</strong> Extended visual line of sight with observers</li>
+                  <li><strong>BVLOS:</strong> Beyond visual line of sight (DAA required)</li>
+                </ul>
+              </InfoTooltip>
+            </div>
             <select
               value={tmprType}
               onChange={(e) => updateSORA({ tmpr: { ...sora.tmpr, type: e.target.value } })}
@@ -2033,6 +2129,109 @@ function SORACalculator({ site, onUpdateSite, equipment }) {
             <p className="text-sm text-red-700 mt-1">
               Final GRC of {fGRC} exceeds SORA limit of 7. Additional mitigations or approval process required.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* OSO Table */}
+      {sail !== 'Outside SORA' && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <h4 className="text-sm font-medium text-gray-700">Operational Safety Objectives (OSO)</h4>
+            <InfoTooltip>
+              <p className="font-medium mb-1">OSO Requirements</p>
+              <p>Based on SAIL {sail}, these are the robustness levels required for each OSO:</p>
+              <ul className="mt-1 space-y-0.5">
+                <li><strong>O:</strong> Optional</li>
+                <li><strong>L:</strong> Low robustness</li>
+                <li><strong>M:</strong> Medium robustness</li>
+                <li><strong>H:</strong> High robustness</li>
+              </ul>
+            </InfoTooltip>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Requirements for SAIL {sail}</span>
+                <div className="flex gap-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600">O = Optional</span>
+                  <span className="px-2 py-0.5 rounded bg-green-100 text-green-700">L = Low</span>
+                  <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">M = Medium</span>
+                  <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">H = High</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr className="text-left text-gray-600">
+                    <th className="px-4 py-2 font-medium">OSO</th>
+                    <th className="px-4 py-2 font-medium">Objective</th>
+                    <th className="px-4 py-2 font-medium text-center w-20">Level</th>
+                    <th className="px-4 py-2 font-medium text-center w-24">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {OSO_TABLE.map(oso => {
+                    const requirement = oso.requirements[sail]
+                    const status = sora.oso?.[oso.id]?.status || 'pending'
+                    return (
+                      <tr key={oso.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 font-mono text-xs text-gray-500">{oso.id}</td>
+                        <td className="px-4 py-2 text-gray-700">{oso.name}</td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${OSO_ROBUSTNESS_COLORS[requirement]}`}>
+                            {requirement}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {requirement === 'O' ? (
+                            <span className="text-xs text-gray-400">N/A</span>
+                          ) : (
+                            <select
+                              value={status}
+                              onChange={(e) => updateSORA({
+                                oso: { ...sora.oso, [oso.id]: { status: e.target.value } }
+                              })}
+                              className={`text-xs px-2 py-1 rounded border ${
+                                status === 'met' ? 'border-green-300 bg-green-50 text-green-700' :
+                                status === 'partial' ? 'border-yellow-300 bg-yellow-50 text-yellow-700' :
+                                'border-gray-300 bg-white text-gray-600'
+                              }`}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="met">Met</option>
+                              <option value="partial">Partial</option>
+                              <option value="na">N/A</option>
+                            </select>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* OSO Summary */}
+            <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">OSO Compliance:</span>
+                <div className="flex gap-4">
+                  <span className="text-green-600">
+                    {OSO_TABLE.filter(o => o.requirements[sail] !== 'O' && sora.oso?.[o.id]?.status === 'met').length} Met
+                  </span>
+                  <span className="text-yellow-600">
+                    {OSO_TABLE.filter(o => o.requirements[sail] !== 'O' && sora.oso?.[o.id]?.status === 'partial').length} Partial
+                  </span>
+                  <span className="text-gray-500">
+                    {OSO_TABLE.filter(o => o.requirements[sail] !== 'O' && (!sora.oso?.[o.id] || sora.oso?.[o.id]?.status === 'pending')).length} Pending
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
