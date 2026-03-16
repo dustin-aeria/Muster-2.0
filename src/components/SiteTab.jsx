@@ -2408,27 +2408,143 @@ function SORACalculator({ site, onUpdateSite, equipment }) {
 // HAZARD TABLE (kept from original)
 // ============================================
 
+// Risk Matrix definitions
+const LIKELIHOOD_LEVELS = [
+  { value: 1, label: 'Rare', desc: 'Highly unlikely to occur' },
+  { value: 2, label: 'Unlikely', desc: 'Could occur but not expected' },
+  { value: 3, label: 'Possible', desc: 'Might occur occasionally' },
+  { value: 4, label: 'Likely', desc: 'Will probably occur' },
+  { value: 5, label: 'Almost Certain', desc: 'Expected to occur' }
+]
+
+const SEVERITY_LEVELS = [
+  { value: 1, label: 'Negligible', desc: 'No injury, minor inconvenience' },
+  { value: 2, label: 'Minor', desc: 'First aid injury, minor damage' },
+  { value: 3, label: 'Moderate', desc: 'Medical treatment, significant damage' },
+  { value: 4, label: 'Major', desc: 'Serious injury, major damage' },
+  { value: 5, label: 'Catastrophic', desc: 'Fatality, destruction' }
+]
+
+const getRiskLevel = (score) => {
+  if (score <= 4) return { label: 'Low', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-100' }
+  if (score <= 9) return { label: 'Medium', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-100' }
+  if (score <= 15) return { label: 'High', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-100' }
+  return { label: 'Critical', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-100' }
+}
+
+const getMatrixCellColor = (l, s) => {
+  const score = l * s
+  if (score <= 4) return 'bg-green-400'
+  if (score <= 9) return 'bg-yellow-400'
+  if (score <= 15) return 'bg-orange-400'
+  return 'bg-red-500'
+}
+
+function RiskMatrix({ showGuide = true }) {
+  return (
+    <div className="flex gap-6 items-start">
+      {/* Matrix Grid */}
+      <div className="flex-shrink-0">
+        <div className="flex">
+          <div className="w-6" /> {/* spacer for row labels */}
+          <div className="flex gap-0.5 mb-0.5">
+            {[1,2,3,4,5].map(s => (
+              <div key={s} className="w-7 text-center text-xs text-gray-500 font-medium">{s}</div>
+            ))}
+          </div>
+        </div>
+        {[5,4,3,2,1].map(l => (
+          <div key={l} className="flex items-center gap-0.5 mb-0.5">
+            <div className="w-6 text-xs text-gray-500 font-medium text-right pr-1">{l}</div>
+            {[1,2,3,4,5].map(s => (
+              <div
+                key={s}
+                className={`w-7 h-6 rounded-sm ${getMatrixCellColor(l, s)} opacity-80`}
+                title={`L${l} × S${s} = ${l*s}`}
+              />
+            ))}
+          </div>
+        ))}
+        <div className="flex mt-1">
+          <div className="w-6" />
+          <div className="text-xs text-gray-400 text-center flex-1">Severity →</div>
+        </div>
+        <div className="absolute -left-3 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-gray-400 whitespace-nowrap" style={{position: 'relative', left: '-8px', top: '-40px'}}>
+        </div>
+      </div>
+
+      {/* Legend & Guide */}
+      {showGuide && (
+        <div className="flex-1 grid grid-cols-2 gap-4 text-xs">
+          <div>
+            <div className="flex items-center gap-2 mb-2 text-gray-600 font-medium">
+              <span>Likelihood</span>
+              <InfoTooltip>
+                <p className="font-medium mb-1">How likely is this hazard to occur?</p>
+                <p>Consider frequency of exposure, past incidents, and environmental factors.</p>
+              </InfoTooltip>
+            </div>
+            <div className="space-y-1">
+              {LIKELIHOOD_LEVELS.map(l => (
+                <div key={l.value} className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-gray-200 text-center text-xs font-medium leading-4">{l.value}</span>
+                  <span className="text-gray-700">{l.label}</span>
+                  <span className="text-gray-400">- {l.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-2 text-gray-600 font-medium">
+              <span>Severity</span>
+              <InfoTooltip>
+                <p className="font-medium mb-1">What's the worst realistic outcome?</p>
+                <p>Consider injury potential, property damage, and operational impact.</p>
+              </InfoTooltip>
+            </div>
+            <div className="space-y-1">
+              {SEVERITY_LEVELS.map(s => (
+                <div key={s.value} className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-gray-200 text-center text-xs font-medium leading-4">{s.value}</span>
+                  <span className="text-gray-700">{s.label}</span>
+                  <span className="text-gray-400">- {s.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function HazardTable({ site, onUpdateSite }) {
   const hazards = site?.hazards || []
+  const [showMatrix, setShowMatrix] = useState(true)
+  const [expandedId, setExpandedId] = useState(null)
 
   const addHazard = () => {
+    const newId = Date.now()
     const newHazards = [...hazards, {
-      id: Date.now(),
+      id: newId,
       site_id: site.id,
       applies_to_all: false,
       category: 'other',
       description: '',
-      likelihood: 2,
-      severity: 2,
+      likelihood: 3,
+      severity: 3,
       control_type: 'administrative',
-      control_description: ''
+      control_description: '',
+      residual_likelihood: 2,
+      residual_severity: 2
     }]
     onUpdateSite({ hazards: newHazards })
+    setExpandedId(newId)
   }
 
-  const updateHazard = (id, field, value) => {
+  const updateHazard = (id, updates) => {
     const newHazards = hazards.map(h =>
-      h.id === id ? { ...h, [field]: value } : h
+      h.id === id ? { ...h, ...updates } : h
     )
     onUpdateSite({ hazards: newHazards })
   }
@@ -2437,150 +2553,249 @@ function HazardTable({ site, onUpdateSite }) {
     onUpdateSite({ hazards: hazards.filter(h => h.id !== id) })
   }
 
-  const getRiskScore = (l, s) => l * s
-  const getRiskColor = (score) => {
-    if (score <= 4) return 'bg-green-100 text-green-700'
-    if (score <= 9) return 'bg-yellow-100 text-yellow-700'
-    if (score <= 15) return 'bg-orange-100 text-orange-700'
-    return 'bg-red-100 text-red-700'
-  }
-  const getRiskLabel = (score) => {
-    if (score <= 4) return 'Low'
-    if (score <= 9) return 'Med'
-    if (score <= 15) return 'High'
-    return 'Crit'
-  }
-
-  const getResidual = (score, controlType) => {
-    const reductions = {
-      eliminate: 0.1,
-      substitute: 0.3,
-      engineering: 0.4,
-      administrative: 0.6,
-      ppe: 0.7,
-      monitor: 0.8
-    }
-    return Math.ceil(score * (reductions[controlType] || 0.8))
-  }
-
   return (
     <div className="space-y-4">
-      {hazards.length === 0 ? (
-        <p className="text-gray-500 text-sm py-4 text-center">No hazards identified yet</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-500 border-b">
-                <th className="pb-2 w-8">All</th>
-                <th className="pb-2">Category</th>
-                <th className="pb-2">Hazard</th>
-                <th className="pb-2 w-12">L</th>
-                <th className="pb-2 w-12">S</th>
-                <th className="pb-2 w-16">Risk</th>
-                <th className="pb-2">Control</th>
-                <th className="pb-2 w-16">Res.</th>
-                <th className="pb-2 w-10"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {hazards.map(h => {
-                const risk = getRiskScore(h.likelihood, h.severity)
-                const residual = getResidual(risk, h.control_type)
-                return (
-                  <tr key={h.id}>
-                    <td className="py-2">
-                      <input
-                        type="checkbox"
-                        checked={h.applies_to_all}
-                        onChange={(e) => updateHazard(h.id, 'applies_to_all', e.target.checked)}
-                        className="rounded"
-                        title="Applies to all sites"
-                      />
-                    </td>
-                    <td className="py-2 pr-2">
-                      <select
-                        value={h.category}
-                        onChange={(e) => updateHazard(h.id, 'category', e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      >
-                        {HAZARD_CATEGORIES.map(c => (
-                          <option key={c.value} value={c.value}>{c.label}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <input
-                        type="text"
-                        value={h.description}
-                        onChange={(e) => updateHazard(h.id, 'description', e.target.value)}
-                        placeholder="Describe hazard..."
-                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
-                      />
-                    </td>
-                    <td className="py-2 pr-1">
-                      <select
-                        value={h.likelihood}
-                        onChange={(e) => updateHazard(h.id, 'likelihood', parseInt(e.target.value))}
-                        className="w-14 px-1 py-1 border border-gray-200 rounded text-sm text-center"
-                      >
-                        {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </td>
-                    <td className="py-2 pr-1">
-                      <select
-                        value={h.severity}
-                        onChange={(e) => updateHazard(h.id, 'severity', parseInt(e.target.value))}
-                        className="w-14 px-1 py-1 border border-gray-200 rounded text-sm text-center"
-                      >
-                        {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getRiskColor(risk)}`}>
-                        {risk} {getRiskLabel(risk)}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <div className="flex gap-1">
+      {/* Collapsible Risk Matrix */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <button
+          onClick={() => setShowMatrix(!showMatrix)}
+          className="w-full px-4 py-2 bg-gray-50 flex items-center justify-between text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          <span className="flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            Risk Assessment Matrix
+          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Low 1-4</span>
+              <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-700">Med 5-9</span>
+              <span className="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-700">High 10-15</span>
+              <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700">Crit 16-25</span>
+            </div>
+            {showMatrix ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </button>
+        {showMatrix && (
+          <div className="p-4 bg-white">
+            <RiskMatrix />
+          </div>
+        )}
+      </div>
+
+      {/* Hazard Cards */}
+      <div className="space-y-3">
+        {hazards.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center border border-dashed border-gray-200 rounded-lg">
+            No hazards identified. Click "Add Hazard" to begin your risk assessment.
+          </p>
+        ) : (
+          hazards.map((h, idx) => {
+            const initialRisk = h.likelihood * h.severity
+            const residualRisk = (h.residual_likelihood || 1) * (h.residual_severity || 1)
+            const initialLevel = getRiskLevel(initialRisk)
+            const residualLevel = getRiskLevel(residualRisk)
+            const isExpanded = expandedId === h.id
+
+            return (
+              <div key={h.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Collapsed Header */}
+                <div
+                  className={`px-4 py-3 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50 border-b border-gray-200' : ''}`}
+                  onClick={() => setExpandedId(isExpanded ? null : h.id)}
+                >
+                  <span className="text-xs font-medium text-gray-400 w-6">#{idx + 1}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600`}>
+                    {HAZARD_CATEGORIES.find(c => c.value === h.category)?.label || 'Other'}
+                  </span>
+                  <span className="flex-1 text-sm text-gray-700 truncate">
+                    {h.description || <span className="text-gray-400 italic">No description</span>}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${initialLevel.bgLight} ${initialLevel.textColor}`}>
+                      {initialRisk}
+                    </span>
+                    <span className="text-gray-400">→</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${residualLevel.bgLight} ${residualLevel.textColor}`}>
+                      {residualRisk}
+                    </span>
+                  </div>
+                  {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                </div>
+
+                {/* Expanded Content */}
+                {isExpanded && (
+                  <div className="p-4 space-y-4 bg-white">
+                    {/* Hazard Details Row */}
+                    <div className="grid grid-cols-12 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
+                        <select
+                          value={h.category}
+                          onChange={(e) => updateHazard(h.id, { category: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                        >
+                          {HAZARD_CATEGORIES.map(c => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-6">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Hazard Description</label>
+                        <input
+                          type="text"
+                          value={h.description}
+                          onChange={(e) => updateHazard(h.id, { description: e.target.value })}
+                          placeholder="Describe the hazard..."
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
+                        />
+                      </div>
+                      <div className="col-span-4 flex gap-2 items-end">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+                            Likelihood
+                            <InfoTooltip>
+                              {LIKELIHOOD_LEVELS.map(l => (
+                                <div key={l.value} className="mb-1"><strong>{l.value}</strong> - {l.label}: {l.desc}</div>
+                              ))}
+                            </InfoTooltip>
+                          </label>
+                          <select
+                            value={h.likelihood}
+                            onChange={(e) => updateHazard(h.id, { likelihood: parseInt(e.target.value) })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm text-center"
+                          >
+                            {LIKELIHOOD_LEVELS.map(l => <option key={l.value} value={l.value}>{l.value} - {l.label}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+                            Severity
+                            <InfoTooltip>
+                              {SEVERITY_LEVELS.map(s => (
+                                <div key={s.value} className="mb-1"><strong>{s.value}</strong> - {s.label}: {s.desc}</div>
+                              ))}
+                            </InfoTooltip>
+                          </label>
+                          <select
+                            value={h.severity}
+                            onChange={(e) => updateHazard(h.id, { severity: parseInt(e.target.value) })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm text-center"
+                          >
+                            {SEVERITY_LEVELS.map(s => <option key={s.value} value={s.value}>{s.value} - {s.label}</option>)}
+                          </select>
+                        </div>
+                        <div className="w-16 text-center">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Risk</label>
+                          <div className={`px-2 py-1.5 rounded text-sm font-bold ${initialLevel.bgLight} ${initialLevel.textColor}`}>
+                            {initialRisk}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arrow Divider */}
+                    <div className="flex items-center gap-2 py-1">
+                      <div className="flex-1 border-t border-gray-200" />
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Shield className="w-4 h-4" />
+                        <span>Apply Control Measure</span>
+                      </div>
+                      <div className="flex-1 border-t border-gray-200" />
+                    </div>
+
+                    {/* Control & Residual Row */}
+                    <div className="grid grid-cols-12 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+                          Control Type
+                          <InfoTooltip>
+                            <p className="font-medium mb-1">Hierarchy of Controls (most to least effective):</p>
+                            <div className="space-y-1">
+                              <div><strong>Eliminate</strong> - Remove the hazard entirely</div>
+                              <div><strong>Substitute</strong> - Replace with less hazardous alternative</div>
+                              <div><strong>Engineering</strong> - Physical barriers, guards, automation</div>
+                              <div><strong>Administrative</strong> - Procedures, training, signage</div>
+                              <div><strong>PPE</strong> - Personal protective equipment</div>
+                              <div><strong>Monitor</strong> - Observe and respond</div>
+                            </div>
+                          </InfoTooltip>
+                        </label>
                         <select
                           value={h.control_type}
-                          onChange={(e) => updateHazard(h.id, 'control_type', e.target.value)}
-                          className="w-28 px-1 py-1 border border-gray-200 rounded text-xs"
+                          onChange={(e) => updateHazard(h.id, { control_type: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
                         >
                           {CONTROL_TYPES.map(c => (
                             <option key={c.value} value={c.value}>{c.label}</option>
                           ))}
                         </select>
+                      </div>
+                      <div className="col-span-6">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Control Description</label>
                         <input
                           type="text"
                           value={h.control_description}
-                          onChange={(e) => updateHazard(h.id, 'control_description', e.target.value)}
-                          placeholder="Control details..."
-                          className="flex-1 px-2 py-1 border border-gray-200 rounded text-sm"
+                          onChange={(e) => updateHazard(h.id, { control_description: e.target.value })}
+                          placeholder="Describe how this control mitigates the hazard..."
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
                         />
                       </div>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getRiskColor(residual)}`}>
-                        {residual}
-                      </span>
-                    </td>
-                    <td className="py-2">
+                      <div className="col-span-4 flex gap-2 items-end">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Res. Likelihood</label>
+                          <select
+                            value={h.residual_likelihood || 1}
+                            onChange={(e) => updateHazard(h.id, { residual_likelihood: parseInt(e.target.value) })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm text-center"
+                          >
+                            {LIKELIHOOD_LEVELS.map(l => <option key={l.value} value={l.value}>{l.value} - {l.label}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Res. Severity</label>
+                          <select
+                            value={h.residual_severity || 1}
+                            onChange={(e) => updateHazard(h.id, { residual_severity: parseInt(e.target.value) })}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm text-center"
+                          >
+                            {SEVERITY_LEVELS.map(s => <option key={s.value} value={s.value}>{s.value} - {s.label}</option>)}
+                          </select>
+                        </div>
+                        <div className="w-16 text-center">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Residual</label>
+                          <div className={`px-2 py-1.5 rounded text-sm font-bold ${residualLevel.bgLight} ${residualLevel.textColor}`}>
+                            {residualRisk}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <label className="flex items-center gap-2 text-xs text-gray-500">
+                        <input
+                          type="checkbox"
+                          checked={h.applies_to_all}
+                          onChange={(e) => updateHazard(h.id, { applies_to_all: e.target.checked })}
+                          className="rounded"
+                        />
+                        Applies to all sites
+                      </label>
                       <button
                         onClick={() => removeHazard(h.id)}
-                        className="p-1 text-gray-400 hover:text-red-500"
+                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
                       >
-                        <X className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3" />
+                        Remove
                       </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
 
       <button
         onClick={addHazard}
