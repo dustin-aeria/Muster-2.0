@@ -703,6 +703,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   const [mapStyle, setMapStyle] = useState('satellite-streets-v12')
   const [mapLoaded, setMapLoaded] = useState(false)
   const [drawingMode, setDrawingMode] = useState(null)
+  const [is3D, setIs3D] = useState(false)
   const selectedTypeRef = useRef(selectedType)
   const elementsRef = useRef(site?.elements || [])
   const onUpdateSiteRef = useRef(onUpdateSite)
@@ -855,7 +856,9 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
       container: mapContainer.current,
       style: `mapbox://styles/mapbox/${mapStyle}`,
       center: site?.center || [-123.1, 49.25],
-      zoom: site?.zoom || 12
+      zoom: site?.zoom || 12,
+      pitch: 0,
+      bearing: 0
     })
 
     const drawInstance = new MapboxDraw({
@@ -872,6 +875,25 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
     draw.current = drawInstance
 
     mapInstance.on('load', () => {
+      // Add terrain source for 3D view
+      mapInstance.addSource('mapbox-dem', {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512,
+        maxzoom: 14
+      })
+
+      // Add sky layer for 3D atmosphere
+      mapInstance.addLayer({
+        id: 'sky',
+        type: 'sky',
+        paint: {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 90.0],
+          'sky-atmosphere-sun-intensity': 15
+        }
+      })
+
       // Add sources for display layers
       mapInstance.addSource('elements-source', {
         type: 'geojson',
@@ -1165,6 +1187,36 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
     }, 100)
   }, [isFullscreen])
 
+  // Toggle 3D terrain
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return
+
+    if (is3D) {
+      // Enable terrain
+      map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
+      // Animate to 3D view
+      map.current.easeTo({
+        pitch: 60,
+        bearing: -20,
+        duration: 1000
+      })
+    } else {
+      // Disable terrain
+      map.current.setTerrain(null)
+      // Animate to 2D view
+      map.current.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 1000
+      })
+    }
+  }, [is3D, mapLoaded])
+
+  // Toggle 3D function
+  const toggle3D = useCallback(() => {
+    setIs3D(prev => !prev)
+  }, [])
+
   if (!MAPBOX_TOKEN) {
     return (
       <div className="h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
@@ -1213,6 +1265,18 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
             title="Delete selected"
           >
             <Trash2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={toggle3D}
+            className={`p-1.5 rounded flex items-center gap-1 ${
+              is3D
+                ? 'bg-brand-100 text-brand-700'
+                : 'text-gray-500 hover:text-brand-600 hover:bg-brand-50'
+            }`}
+            title={is3D ? 'Switch to 2D' : 'Switch to 3D terrain'}
+          >
+            <Mountain className="w-4 h-4" />
+            <span className="text-xs font-medium">{is3D ? '3D' : '2D'}</span>
           </button>
           <button
             onClick={onToggleFullscreen}
