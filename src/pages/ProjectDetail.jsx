@@ -1053,84 +1053,6 @@ function NeedsAnalysisSection({ project, onUpdate }) {
   )
 }
 
-function DeliverablesSection({ project, onUpdate }) {
-  const deliverables = project.deliverables || []
-
-  const addDeliverable = () => {
-    const newDeliverables = [...deliverables, { id: Date.now(), name: '', due_date: '' }]
-    onUpdate({ deliverables: newDeliverables })
-  }
-
-  const updateDeliverable = (id, field, value) => {
-    const newDeliverables = deliverables.map(d =>
-      d.id === id ? { ...d, [field]: value } : d
-    )
-    onUpdate({ deliverables: newDeliverables })
-  }
-
-  const removeDeliverable = (id) => {
-    onUpdate({ deliverables: deliverables.filter(d => d.id !== id) })
-  }
-
-  return (
-    <Section title="Deliverables">
-      <div className="space-y-3">
-        {deliverables.length === 0 ? (
-          <p className="text-gray-500 text-sm py-4 text-center">No deliverables added yet</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-sm text-gray-500 border-b">
-                <th className="pb-2 font-medium">Deliverable</th>
-                <th className="pb-2 font-medium w-40">Due Date</th>
-                <th className="pb-2 w-10"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {deliverables.map((d) => (
-                <tr key={d.id}>
-                  <td className="py-2 pr-3">
-                    <input
-                      type="text"
-                      value={d.name}
-                      onChange={(e) => updateDeliverable(d.id, 'name', e.target.value)}
-                      placeholder="e.g., Orthomosaic, Final Report"
-                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-                    />
-                  </td>
-                  <td className="py-2 pr-3">
-                    <input
-                      type="date"
-                      value={d.due_date}
-                      onChange={(e) => updateDeliverable(d.id, 'due_date', e.target.value)}
-                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-                    />
-                  </td>
-                  <td className="py-2">
-                    <button
-                      onClick={() => removeDeliverable(d.id)}
-                      className="p-1 text-gray-400 hover:text-red-500"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <button
-          onClick={addDeliverable}
-          className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add Deliverable
-        </button>
-      </div>
-    </Section>
-  )
-}
-
 function NotificationContactsSection({ project, onUpdate }) {
   const contacts = project.notification_contacts || []
 
@@ -2339,7 +2261,6 @@ function AdminTab({ project, onUpdate, operators, equipment, services, modifiers
       <ProjectOverviewSection project={project} onUpdate={onUpdate} operators={operators} />
       <ClientInfoSection project={project} onUpdate={onUpdate} />
       <NeedsAnalysisSection project={project} onUpdate={onUpdate} />
-      <DeliverablesSection project={project} onUpdate={onUpdate} />
       <NotificationContactsSection project={project} onUpdate={onUpdate} />
       <CrewSection project={project} onUpdate={onUpdate} operators={operators} modifiers={modifiers} />
       <EquipmentSection project={project} onUpdate={onUpdate} equipment={equipment} modifiers={modifiers} />
