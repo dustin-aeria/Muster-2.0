@@ -2011,9 +2011,7 @@ function CostSummarySection({ project, onUpdate }) {
   const overhead = professionalFees * (overheadPercent / 100) // Overhead only on professional fees
   const estimatedCost = subtotal + overhead
 
-  const markupPercent = project.markup_percent || 0
-  const markup = professionalFees * (markupPercent / 100) // Markup only on professional fees
-  const quotedPrice = project.quoted_price || (estimatedCost + markup)
+  const quotedPrice = project.quoted_price || estimatedCost
 
   const actualCost = project.actual_cost || 0
   const variance = estimatedCost - actualCost
@@ -2125,7 +2123,6 @@ function CostSummarySection({ project, onUpdate }) {
       ['', 'Consumables', '', '', consumablesTotal],
       ['', 'Expenses (incl. admin fee)', '', '', expensesTotal],
       ['', 'ESTIMATED COST', '', '', estimatedCost],
-      ['', `Markup (${markupPercent}%)`, '', '', markup],
       ['', 'QUOTED PRICE', '', '', quotedPrice]
     ].filter(Boolean)
 
@@ -2530,22 +2527,7 @@ function CostSummarySection({ project, onUpdate }) {
             <span>${estimatedCost.toLocaleString()}</span>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <span>Markup</span>
-              <input
-                type="number"
-                value={markupPercent}
-                onChange={(e) => onUpdate({ markup_percent: parseFloat(e.target.value) || 0 })}
-                className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-right"
-              />
-              <span className="text-gray-500">%</span>
-              <span className="text-xs text-gray-400">(on professional fees)</span>
-            </div>
-            <span className="font-medium">${markup.toLocaleString()}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-lg font-bold bg-brand-50 -mx-6 px-6 py-3 border-t border-brand-100">
+          <div className="flex items-center justify-between text-lg font-bold bg-brand-50 -mx-6 px-6 py-3 border-t border-brand-100 mt-3">
             <span>Quoted Price</span>
             <div className="flex items-center">
               <span className="text-gray-500 mr-1">$</span>
