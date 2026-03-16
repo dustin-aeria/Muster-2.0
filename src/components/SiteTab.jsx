@@ -3565,9 +3565,18 @@ export default function SiteTab({ project, onUpdate, equipment }) {
   }
 
   const addSite = () => {
+    // Find the highest existing site number to avoid duplicates
+    const existingNumbers = sites
+      .map(s => {
+        const match = s.name?.match(/^Site (\d+)$/)
+        return match ? parseInt(match[1], 10) : 0
+      })
+      .filter(n => n > 0)
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1
+
     const newSite = {
       id: `site-${Date.now()}`,
-      name: `Site ${sites.length + 1}`
+      name: `Site ${nextNumber}`
     }
     updateSites([...sites, newSite])
     setActiveSiteId(newSite.id)
