@@ -161,30 +161,57 @@ function SelectField({ label, value, onChange, options, className = '' }) {
 // ADMIN TAB COMPONENTS
 // ============================================
 
-function ClientDatesSection({ project, onUpdate }) {
+const PROJECT_TYPES = [
+  { id: 'mapping', label: 'Mapping' },
+  { id: 'survey', label: 'Survey' },
+  { id: 'inspection', label: 'Inspection' },
+  { id: 'monitoring', label: 'Monitoring' },
+  { id: 'photography', label: 'Photography/Video' },
+  { id: 'lidar', label: 'LiDAR' },
+  { id: 'thermal', label: 'Thermal' },
+  { id: 'other', label: 'Other' }
+]
+
+const PROJECT_CONSTRAINTS = [
+  { id: 'time_sensitive', label: 'Time-Sensitive' },
+  { id: 'budget_constrained', label: 'Budget-Constrained' },
+  { id: 'access_challenges', label: 'Access Challenges' },
+  { id: 'weather_dependent', label: 'Weather-Dependent' },
+  { id: 'permits_required', label: 'Permits Required' },
+  { id: 'client_onsite', label: 'Client On-Site' }
+]
+
+function ProjectOverviewSection({ project, onUpdate, operators }) {
+  const statusOption = STATUS_OPTIONS.find(s => s.value === project.status) || STATUS_OPTIONS[0]
+
   return (
-    <Section title="Client & Dates">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <InputField
-          label="Client Name"
-          value={project.client_name}
-          onChange={(v) => onUpdate({ client_name: v })}
-          placeholder="Company or contact name"
-        />
-        <InputField
-          label="Client Email"
-          type="email"
-          value={project.client_email}
-          onChange={(v) => onUpdate({ client_email: v })}
-          placeholder="email@example.com"
-        />
-        <InputField
-          label="Client Phone"
-          type="tel"
-          value={project.client_phone}
-          onChange={(v) => onUpdate({ client_phone: v })}
-          placeholder="(604) 555-1234"
-        />
+    <Section title="Project Overview">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Project Author</label>
+          <select
+            value={project.author_id || ''}
+            onChange={(e) => onUpdate({ author_id: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          >
+            <option value="">Select author...</option>
+            {operators.map(op => (
+              <option key={op.id} value={op.id}>{op.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+          <select
+            value={project.status || 'draft'}
+            onChange={(e) => onUpdate({ status: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          >
+            {STATUS_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
         <InputField
           label="Field Start Date"
           type="date"
@@ -197,6 +224,8 @@ function ClientDatesSection({ project, onUpdate }) {
           value={project.end_date}
           onChange={(v) => onUpdate({ end_date: v })}
         />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
         <InputField
           label="Field Days"
           type="number"
@@ -204,15 +233,170 @@ function ClientDatesSection({ project, onUpdate }) {
           onChange={(v) => onUpdate({ field_days: parseInt(v) || 0 })}
           placeholder="Number of days"
         />
+        <InputField
+          label="Created Date"
+          type="date"
+          value={project.created_date}
+          onChange={(v) => onUpdate({ created_date: v })}
+        />
+        <InputField
+          label="Quote/Reference #"
+          value={project.reference_number}
+          onChange={(v) => onUpdate({ reference_number: v })}
+          placeholder="e.g., Q-2024-001"
+        />
       </div>
-      <div className="mt-6">
+    </Section>
+  )
+}
+
+function ClientInfoSection({ project, onUpdate }) {
+  return (
+    <Section title="Client Information">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <InputField
+          label="Client / Company"
+          value={project.client_name}
+          onChange={(v) => onUpdate({ client_name: v })}
+          placeholder="Company or contact name"
+        />
+        <InputField
+          label="Contact Email"
+          type="email"
+          value={project.client_email}
+          onChange={(v) => onUpdate({ client_email: v })}
+          placeholder="email@example.com"
+        />
+        <InputField
+          label="Contact Phone"
+          type="tel"
+          value={project.client_phone}
+          onChange={(v) => onUpdate({ client_phone: v })}
+          placeholder="(604) 555-1234"
+        />
+      </div>
+      <div className="mt-4">
         <TextArea
           label="Project Description / Scope"
           value={project.description}
           onChange={(v) => onUpdate({ description: v })}
-          placeholder="Describe the project scope, objectives, and requirements..."
-          rows={4}
+          placeholder="Describe the project scope and detailed requirements..."
+          rows={3}
         />
+      </div>
+    </Section>
+  )
+}
+
+function NeedsAnalysisSection({ project, onUpdate }) {
+  const needs = project.needs_analysis || {}
+
+  const updateNeeds = (updates) => {
+    onUpdate({ needs_analysis: { ...needs, ...updates } })
+  }
+
+  const projectTypes = needs.project_types || []
+  const constraints = needs.constraints || []
+
+  const toggleType = (typeId) => {
+    if (projectTypes.includes(typeId)) {
+      updateNeeds({ project_types: projectTypes.filter(t => t !== typeId) })
+    } else {
+      updateNeeds({ project_types: [...projectTypes, typeId] })
+    }
+  }
+
+  const toggleConstraint = (constraintId) => {
+    if (constraints.includes(constraintId)) {
+      updateNeeds({ constraints: constraints.filter(c => c !== constraintId) })
+    } else {
+      updateNeeds({ constraints: [...constraints, constraintId] })
+    }
+  }
+
+  return (
+    <Section title="Needs Analysis">
+      {/* Project Type */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
+        <div className="flex flex-wrap gap-2">
+          {PROJECT_TYPES.map(type => (
+            <button
+              key={type.id}
+              onClick={() => toggleType(type.id)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                projectTypes.includes(type.id)
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {type.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Constraints */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Key Considerations</label>
+        <div className="flex flex-wrap gap-2">
+          {PROJECT_CONSTRAINTS.map(constraint => (
+            <button
+              key={constraint.id}
+              onClick={() => toggleConstraint(constraint.id)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                constraints.includes(constraint.id)
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {constraint.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Key Questions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Objective
+            <span className="font-normal text-gray-400 ml-1">What do they need?</span>
+          </label>
+          <textarea
+            value={needs.objective || ''}
+            onChange={(e) => updateNeeds({ objective: e.target.value })}
+            placeholder="e.g., Accurate topographic map for drainage planning"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Constraints
+            <span className="font-normal text-gray-400 ml-1">Key limitations?</span>
+          </label>
+          <textarea
+            value={needs.constraints_notes || ''}
+            onChange={(e) => updateNeeds({ constraints_notes: e.target.value })}
+            placeholder="e.g., Must complete before rainy season, limited site access on weekends"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Success Criteria
+            <span className="font-normal text-gray-400 ml-1">How do we know we delivered?</span>
+          </label>
+          <textarea
+            value={needs.success_criteria || ''}
+            onChange={(e) => updateNeeds({ success_criteria: e.target.value })}
+            placeholder="e.g., 5cm accuracy, delivered within 2 weeks, includes contour lines"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
       </div>
     </Section>
   )
@@ -1380,7 +1564,9 @@ function PostFieldSection({ project, onUpdate }) {
 function AdminTab({ project, onUpdate, operators, equipment, services }) {
   return (
     <div className="space-y-8">
-      <ClientDatesSection project={project} onUpdate={onUpdate} />
+      <ProjectOverviewSection project={project} onUpdate={onUpdate} operators={operators} />
+      <ClientInfoSection project={project} onUpdate={onUpdate} />
+      <NeedsAnalysisSection project={project} onUpdate={onUpdate} />
       <DeliverablesSection project={project} onUpdate={onUpdate} />
       <NotificationContactsSection project={project} onUpdate={onUpdate} />
       <CrewSection project={project} onUpdate={onUpdate} operators={operators} />
