@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   Plus,
@@ -14,7 +14,10 @@ import {
   Save,
   Calendar,
   Eye,
-  Printer
+  Printer,
+  FileSearch,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import {
   getDocuments, getDocument, createDocument, updateDocument, archiveDocument, deleteDocument
@@ -754,6 +757,60 @@ function getDocIcon(type) {
   return typeConfig?.icon || File
 }
 
+// Helper to find all matches in content with surrounding context
+function findContentMatches(content, searchTerm, contextWords = 8) {
+  if (!content || !searchTerm || searchTerm.length < 2) return []
+
+  const searchLower = searchTerm.toLowerCase()
+  const words = content.split(/\s+/)
+  const matches = []
+
+  // Find all word indices where the search term appears
+  words.forEach((word, index) => {
+    if (word.toLowerCase().includes(searchLower)) {
+      const start = Math.max(0, index - contextWords)
+      const end = Math.min(words.length, index + contextWords + 1)
+      const snippet = words.slice(start, end).join(' ')
+
+      // Clean up markdown syntax for display
+      const cleanSnippet = snippet
+        .replace(/^#+\s*/gm, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/\|/g, ' ')
+        .replace(/-{3,}/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+
+      matches.push({
+        snippet: cleanSnippet,
+        wordIndex: index
+      })
+    }
+  })
+
+  // Deduplicate overlapping snippets
+  const deduped = []
+  let lastEnd = -contextWords * 2
+  matches.forEach(m => {
+    if (m.wordIndex > lastEnd + contextWords) {
+      deduped.push(m)
+      lastEnd = m.wordIndex
+    }
+  })
+
+  return deduped.slice(0, 5) // Max 5 snippets per document
+}
+
+// Highlight search term in text
+function highlightMatch(text, searchTerm) {
+  if (!searchTerm || searchTerm.length < 2) return text
+  const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const parts = text.split(regex)
+  return parts.map((part, i) =>
+    regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : part
+  )
+}
+
 function getStatusBadge(status) {
   const statusConfig = DOC_STATUSES.find(s => s.value === status)
   return (
@@ -782,6 +839,7 @@ export default function Documents() {
   const [viewerOpen, setViewerOpen] = useState(false)
   const [editingDocument, setEditingDocument] = useState(null)
   const [viewingDocument, setViewingDocument] = useState(null)
+  const [expandedSearchResults, setExpandedSearchResults] = useState({})
 
   // Update filter when URL changes
   useEffect(() => {
@@ -823,6 +881,38 @@ export default function Documents() {
     }
   }
 
+  // Content search - find all documents with matches in content
+  const contentSearchResults = useMemo(() => {
+    if (!search || search.length < 2) return []
+
+    const searchLower = search.toLowerCase()
+    const results = []
+
+    documents.forEach(doc => {
+      if (doc.doc_type === 'form') return // Skip forms
+      if (filterCategory && doc.category !== filterCategory) return
+
+      const titleMatch = doc.title?.toLowerCase().includes(searchLower)
+      const docNumMatch = doc.doc_number?.toLowerCase().includes(searchLower)
+      const contentMatches = findContentMatches(doc.content, search)
+
+      if (titleMatch || docNumMatch || contentMatches.length > 0) {
+        results.push({
+          doc,
+          titleMatch,
+          docNumMatch,
+          contentMatches,
+          totalMatches: (titleMatch ? 1 : 0) + (docNumMatch ? 1 : 0) + contentMatches.length
+        })
+      }
+    })
+
+    // Sort by number of matches
+    return results.sort((a, b) => b.totalMatches - a.totalMatches)
+  }, [documents, search, filterCategory])
+
+  const isContentSearchMode = search && search.length >= 2
+
   const filteredDocuments = documents.filter(doc => {
     // Exclude forms - they have their own section
     if (doc.doc_type === 'form') return false
@@ -830,16 +920,9 @@ export default function Documents() {
     // Category filter
     if (filterCategory && doc.category !== filterCategory) return false
 
-    // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase()
-      return (
-        doc.title.toLowerCase().includes(searchLower) ||
-        doc.doc_number?.toLowerCase().includes(searchLower) ||
-        doc.category?.toLowerCase().includes(searchLower) ||
-        doc.tags?.some(t => t.toLowerCase().includes(searchLower))
-      )
-    }
+    // In content search mode, we show results separately
+    if (isContentSearchMode) return false
+
     return true
   })
 
@@ -911,44 +994,144 @@ export default function Documents() {
         </label>
       </div>
 
-      {/* Document List */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+      {/* Content Search Results */}
+      {isContentSearchMode && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <FileSearch className="w-5 h-5 text-brand-500" />
+            <span>
+              Found <strong className="text-gray-900">{contentSearchResults.length}</strong> documents containing "<strong className="text-brand-600">{search}</strong>"
+            </span>
+          </div>
+
+          {contentSearchResults.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <FileSearch className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No documents contain "{search}"</p>
+              <p className="text-sm text-gray-400 mt-1">Try different keywords or check your spelling</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {contentSearchResults.map(({ doc, titleMatch, docNumMatch, contentMatches }) => {
+                const typeConfig = DOC_TYPES.find(t => t.value === doc.doc_type)
+                const Icon = typeConfig?.icon || File
+                const isExpanded = expandedSearchResults[doc.id]
+
+                return (
+                  <div key={doc.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div
+                      className="px-4 py-3 flex items-start gap-3 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setExpandedSearchResults(prev => ({ ...prev, [doc.id]: !prev[doc.id] }))}
+                    >
+                      <Icon className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-medium text-gray-900">
+                            {titleMatch ? highlightMatch(doc.title, search) : doc.title}
+                          </h4>
+                          {doc.doc_number && (
+                            <span className="text-sm text-gray-500">
+                              {docNumMatch ? highlightMatch(doc.doc_number, search) : doc.doc_number}
+                            </span>
+                          )}
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            DOC_STATUSES.find(s => s.value === doc.status)?.color || 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {DOC_STATUSES.find(s => s.value === doc.status)?.label || doc.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                          <span>{typeConfig?.label || doc.doc_type}</span>
+                          {doc.category && <span>• {doc.category}</span>}
+                          <span className="text-brand-600 font-medium">
+                            {contentMatches.length} match{contentMatches.length !== 1 ? 'es' : ''} in content
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setViewingDocument(doc); setViewerOpen(true) }}
+                          className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
+                          title="View document"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {isExpanded ? (
+                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded content matches */}
+                    {isExpanded && contentMatches.length > 0 && (
+                      <div className="px-4 pb-4 border-t border-gray-100 bg-gray-50">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide py-2">
+                          Matching excerpts:
+                        </p>
+                        <div className="space-y-2">
+                          {contentMatches.map((match, idx) => (
+                            <div
+                              key={idx}
+                              className="px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm text-gray-700"
+                            >
+                              <span className="text-gray-400">...</span>
+                              {highlightMatch(match.snippet, search)}
+                              <span className="text-gray-400">...</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
-      ) : filteredDocuments.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">
-            {search || filterType ? 'No documents match your search' : 'No documents yet'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(documentsByType).map(([type, docs]) => {
-            const typeConfig = DOC_TYPES.find(t => t.value === type)
-            const Icon = typeConfig?.icon || File
-            return (
-              <div key={type} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-gray-500" />
-                    {typeConfig?.label || type}
-                    <span className="text-gray-400 font-normal">({docs.length})</span>
-                  </h3>
-                </div>
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Document</th>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Category</th>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Version</th>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Status</th>
-                      <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {docs.map((doc) => (
+      )}
+
+      {/* Document List (when not searching) */}
+      {!isContentSearchMode && (
+        <>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+            </div>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">
+                {filterType ? 'No documents match your filter' : 'No documents yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(documentsByType).map(([type, docs]) => {
+                const typeConfig = DOC_TYPES.find(t => t.value === type)
+                const Icon = typeConfig?.icon || File
+                return (
+                  <div key={type} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                      <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-gray-500" />
+                        {typeConfig?.label || type}
+                        <span className="text-gray-400 font-normal">({docs.length})</span>
+                      </h3>
+                    </div>
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Document</th>
+                          <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Category</th>
+                          <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Version</th>
+                          <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Status</th>
+                          <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {docs.map((doc) => (
                           <tr
                             key={doc.id}
                             className={`hover:bg-gray-50 cursor-pointer ${doc.status === 'archived' ? 'opacity-50' : ''}`}
@@ -1015,6 +1198,8 @@ export default function Documents() {
             )
           })}
         </div>
+          )}
+        </>
       )}
 
       {/* Viewer Modal */}
