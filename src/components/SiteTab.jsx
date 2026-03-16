@@ -696,7 +696,7 @@ function FlightParameters({ site, onUpdateSite }) {
 // MAP COMPONENT (REBUILT WITH ALL FEATURES)
 // ============================================
 
-function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, flightParams, isFullscreen, onToggleFullscreen }) {
+function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, flightParams, isFullscreen, onToggleFullscreen, siteIndex }) {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const draw = useRef(null)
@@ -706,6 +706,7 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   const selectedTypeRef = useRef(selectedType)
   const elementsRef = useRef(site?.elements || [])
   const onUpdateSiteRef = useRef(onUpdateSite)
+  const siteIndexRef = useRef(siteIndex)
 
   // Keep refs updated
   useEffect(() => {
@@ -719,6 +720,10 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
   useEffect(() => {
     onUpdateSiteRef.current = onUpdateSite
   }, [onUpdateSite])
+
+  useEffect(() => {
+    siteIndexRef.current = siteIndex
+  }, [siteIndex])
 
   const mapStyles = [
     { value: 'satellite-streets-v12', label: 'Satellite' },
@@ -985,11 +990,12 @@ function SiteMap({ site, allSites, onUpdateSite, selectedType, activeTool, fligh
 
       const newElements = newFeatures.map(f => {
         const existingOfType = currentElements.filter(el => el.elementType === currentType).length
+        const sitePrefix = `S${siteIndexRef.current + 1}`
         return {
           id: f.id,
           elementType: currentType || 'poi',
           geometry: f.geometry,
-          name: `${typeConfig.label} ${existingOfType + 1}`,
+          name: `${sitePrefix}-${typeConfig.label} ${existingOfType + 1}`,
           color: typeConfig.defaultColor,
           notes: '',
           properties: {}
@@ -2277,6 +2283,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
   }, [])
 
   const activeSite = sites.find(s => s.id === activeSiteId) || sites[0]
+  const activeSiteIndex = sites.findIndex(s => s.id === activeSiteId)
 
   const updateSites = (newSites) => {
     onUpdate({ sites: newSites })
@@ -2443,6 +2450,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
               flightParams={activeSite?.flightParams}
               isFullscreen={true}
               onToggleFullscreen={toggleMapFullscreen}
+              siteIndex={activeSiteIndex}
             />
           </div>
         </div>
@@ -2480,6 +2488,7 @@ export default function SiteTab({ project, onUpdate, equipment }) {
               flightParams={activeSite?.flightParams}
               isFullscreen={false}
               onToggleFullscreen={toggleMapFullscreen}
+              siteIndex={activeSiteIndex}
             />
 
             <div className="border-t pt-6">
