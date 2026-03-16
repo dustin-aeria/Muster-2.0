@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   MapPin, Plus, X, ChevronDown, ChevronUp, AlertTriangle, Info,
   Shield, Navigation, Target, Plane, Users, Radio, Phone, Building2,
@@ -543,19 +544,42 @@ function Section({ title, children, defaultOpen = true, badge = null, icon: Icon
 
 function InfoTooltip({ children, wide = false }) {
   const [show, setShow] = useState(false)
+  const [position, setPosition] = useState({ top: 0, left: 0 })
+  const buttonRef = useRef(null)
+
+  const handleMouseEnter = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      const tooltipWidth = wide ? 320 : 256
+      // Position below the button, centered
+      setPosition({
+        top: rect.bottom + 8,
+        left: Math.max(8, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 8))
+      })
+    }
+    setShow(true)
+  }
+
   return (
     <div className="relative inline-block">
       <button
-        onMouseEnter={() => setShow(true)}
+        ref={buttonRef}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setShow(false)}
         className="text-gray-400 hover:text-gray-600"
       >
         <Info className="w-4 h-4" />
       </button>
-      {show && (
-        <div className={`absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg ${wide ? 'w-80' : 'w-64'}`}>
+      {show && createPortal(
+        <div
+          className={`fixed z-[9999] p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg ${wide ? 'w-80' : 'w-64'}`}
+          style={{ top: position.top, left: position.left }}
+          onMouseEnter={() => setShow(true)}
+          onMouseLeave={() => setShow(false)}
+        >
           {children}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
