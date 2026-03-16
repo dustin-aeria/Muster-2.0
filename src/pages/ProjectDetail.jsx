@@ -288,29 +288,92 @@ function ClientInfoSection({ project, onUpdate }) {
   )
 }
 
-// Data products for remote sensing
+// Comprehensive data products for remote sensing
 const DATA_PRODUCTS = [
-  { id: 'orthomosaic', label: 'Orthomosaic' },
-  { id: 'dsm', label: 'DSM' },
-  { id: 'dtm', label: 'DTM' },
-  { id: 'point_cloud', label: 'Point Cloud' },
-  { id: 'contours', label: 'Contours' },
-  { id: 'volume', label: 'Volumetrics' },
-  { id: 'thermal', label: 'Thermal Map' },
-  { id: 'ndvi', label: 'NDVI/Multispectral' },
-  { id: 'video', label: 'Video/Footage' },
-  { id: 'photos', label: 'Still Photos' },
-  { id: '3d_model', label: '3D Model' },
-  { id: 'inspection', label: 'Inspection Report' }
+  // Mapping & Survey
+  { id: 'orthomosaic', label: 'Orthomosaic', category: 'Mapping' },
+  { id: 'dsm', label: 'DSM (Digital Surface Model)', category: 'Mapping' },
+  { id: 'dtm', label: 'DTM (Digital Terrain Model)', category: 'Mapping' },
+  { id: 'dem', label: 'DEM (Digital Elevation Model)', category: 'Mapping' },
+  { id: 'contours', label: 'Contour Lines', category: 'Mapping' },
+  { id: 'slope_map', label: 'Slope Map', category: 'Mapping' },
+  { id: 'aspect_map', label: 'Aspect Map', category: 'Mapping' },
+  { id: 'hillshade', label: 'Hillshade', category: 'Mapping' },
+
+  // 3D & Point Cloud
+  { id: 'point_cloud', label: 'Point Cloud', category: '3D' },
+  { id: 'classified_pc', label: 'Classified Point Cloud', category: '3D' },
+  { id: '3d_model', label: '3D Model/Mesh', category: '3D' },
+  { id: '3d_textured', label: '3D Textured Model', category: '3D' },
+
+  // LiDAR
+  { id: 'lidar_raw', label: 'LiDAR Raw Data', category: 'LiDAR' },
+  { id: 'lidar_classified', label: 'LiDAR Classified', category: 'LiDAR' },
+  { id: 'lidar_intensity', label: 'LiDAR Intensity', category: 'LiDAR' },
+  { id: 'chm', label: 'Canopy Height Model', category: 'LiDAR' },
+
+  // Volumetrics
+  { id: 'volume', label: 'Volumetric Analysis', category: 'Analysis' },
+  { id: 'cut_fill', label: 'Cut/Fill Analysis', category: 'Analysis' },
+  { id: 'stockpile', label: 'Stockpile Measurement', category: 'Analysis' },
+  { id: 'change_detection', label: 'Change Detection', category: 'Analysis' },
+
+  // Bathymetric
+  { id: 'bathymetry', label: 'Bathymetric Survey', category: 'Bathymetric' },
+  { id: 'water_depth', label: 'Water Depth Map', category: 'Bathymetric' },
+  { id: 'substrate', label: 'Substrate Classification', category: 'Bathymetric' },
+  { id: 'shoreline', label: 'Shoreline Mapping', category: 'Bathymetric' },
+
+  // Thermal & Multispectral
+  { id: 'thermal', label: 'Thermal Imagery', category: 'Spectral' },
+  { id: 'thermal_analysis', label: 'Thermal Analysis Report', category: 'Spectral' },
+  { id: 'ndvi', label: 'NDVI', category: 'Spectral' },
+  { id: 'multispectral', label: 'Multispectral Imagery', category: 'Spectral' },
+  { id: 'vegetation_health', label: 'Vegetation Health Map', category: 'Spectral' },
+  { id: 'crop_analysis', label: 'Crop Analysis', category: 'Spectral' },
+
+  // Inspection
+  { id: 'inspection_report', label: 'Inspection Report', category: 'Inspection' },
+  { id: 'defect_map', label: 'Defect Mapping', category: 'Inspection' },
+  { id: 'condition_assessment', label: 'Condition Assessment', category: 'Inspection' },
+  { id: 'corrosion_map', label: 'Corrosion Mapping', category: 'Inspection' },
+
+  // Visual
+  { id: 'video', label: 'Video/Footage', category: 'Visual' },
+  { id: 'photos', label: 'Still Photos', category: 'Visual' },
+  { id: 'panorama', label: '360° Panorama', category: 'Visual' },
+  { id: 'virtual_tour', label: 'Virtual Tour', category: 'Visual' },
+
+  // Security & Surveillance
+  { id: 'security_footage', label: 'Security Footage', category: 'Security' },
+  { id: 'perimeter_survey', label: 'Perimeter Survey', category: 'Security' },
+  { id: 'search_rescue', label: 'Search & Rescue Support', category: 'Security' },
+
+  // Environmental
+  { id: 'habitat_map', label: 'Habitat Mapping', category: 'Environmental' },
+  { id: 'wetland_delineation', label: 'Wetland Delineation', category: 'Environmental' },
+  { id: 'wildlife_survey', label: 'Wildlife Survey', category: 'Environmental' },
+  { id: 'erosion_assessment', label: 'Erosion Assessment', category: 'Environmental' },
+  { id: 'spill_assessment', label: 'Spill Assessment', category: 'Environmental' },
+
+  // GIS & CAD
+  { id: 'gis_layers', label: 'GIS Layers', category: 'Deliverable' },
+  { id: 'cad_drawings', label: 'CAD Drawings', category: 'Deliverable' },
+  { id: 'planimetrics', label: 'Planimetric Mapping', category: 'Deliverable' },
+  { id: 'as_built', label: 'As-Built Survey', category: 'Deliverable' }
 ]
+
+const DATA_PRODUCT_CATEGORIES = [...new Set(DATA_PRODUCTS.map(p => p.category))]
 
 const GSD_OPTIONS = [
   { value: '', label: 'Not specified' },
-  { value: '1cm', label: '< 1 cm (Ultra-high)' },
+  { value: '0.5cm', label: '< 0.5 cm (Ultra-high)' },
+  { value: '1cm', label: '0.5-1 cm (Very High)' },
   { value: '2cm', label: '1-2 cm (High)' },
   { value: '5cm', label: '2-5 cm (Standard)' },
   { value: '10cm', label: '5-10 cm (Medium)' },
   { value: '20cm', label: '10-20 cm (Low)' },
+  { value: '50cm', label: '20-50 cm (Very Low)' },
   { value: 'na', label: 'N/A' }
 ]
 
@@ -319,6 +382,7 @@ const ACCURACY_OPTIONS = [
   { value: 'survey', label: 'Survey-grade (< 3cm)' },
   { value: 'high', label: 'High (3-10cm)' },
   { value: 'standard', label: 'Standard (10-30cm)' },
+  { value: 'low', label: 'Low (30cm-1m)' },
   { value: 'relative', label: 'Relative only' },
   { value: 'na', label: 'N/A' }
 ]
@@ -329,22 +393,66 @@ const TERRAIN_OPTIONS = [
   { value: 'steep', label: 'Steep/Mountainous' },
   { value: 'forested', label: 'Forested' },
   { value: 'urban', label: 'Urban/Built-up' },
+  { value: 'industrial', label: 'Industrial' },
   { value: 'water', label: 'Over Water' },
+  { value: 'coastal', label: 'Coastal' },
+  { value: 'wetland', label: 'Wetland/Marsh' },
+  { value: 'corridor', label: 'Linear Corridor' },
   { value: 'mixed', label: 'Mixed' }
 ]
 
 const OPERATION_TYPE_OPTIONS = [
   { value: 'vlos', label: 'VLOS (Visual Line of Sight)' },
   { value: 'evlos', label: 'EVLOS (Extended VLOS)' },
-  { value: 'bvlos', label: 'BVLOS (Beyond VLOS)' }
+  { value: 'bvlos', label: 'BVLOS (Beyond VLOS)' },
+  { value: 'night', label: 'Night Operations' },
+  { value: 'over_people', label: 'Over People' }
 ]
 
 const AIRSPACE_OPTIONS = [
   { value: 'uncontrolled', label: 'Uncontrolled (Class G)' },
   { value: 'controlled', label: 'Controlled (requires authorization)' },
   { value: 'restricted', label: 'Restricted/Prohibited' },
+  { value: 'national_park', label: 'National Park' },
+  { value: 'military', label: 'Military Zone' },
   { value: 'unknown', label: 'Unknown - needs assessment' }
 ]
+
+const PERMIT_TYPES = [
+  // Aviation
+  { id: 'sfoc', label: 'SFOC', category: 'Aviation' },
+  { id: 'nav_canada', label: 'NAV CANADA Authorization', category: 'Aviation' },
+  { id: 'notam', label: 'NOTAM', category: 'Aviation' },
+
+  // Environmental - Federal
+  { id: 'dfo', label: 'DFO (Fisheries & Oceans)', category: 'Environmental' },
+  { id: 'eccc', label: 'ECCC (Environment & Climate)', category: 'Environmental' },
+  { id: 'sara', label: 'SARA (Species at Risk)', category: 'Environmental' },
+  { id: 'mbca', label: 'MBCA (Migratory Birds)', category: 'Environmental' },
+  { id: 'parks_canada', label: 'Parks Canada', category: 'Environmental' },
+
+  // Environmental - Provincial
+  { id: 'wildlife_permit', label: 'Wildlife Permit', category: 'Environmental' },
+  { id: 'fish_wildlife', label: 'Fish & Wildlife Authorization', category: 'Environmental' },
+  { id: 'forestry', label: 'Forestry Permit', category: 'Environmental' },
+  { id: 'water_license', label: 'Water License', category: 'Environmental' },
+
+  // Land Access
+  { id: 'land_access', label: 'Land Access Permission', category: 'Access' },
+  { id: 'indigenous', label: 'Indigenous Consultation', category: 'Access' },
+  { id: 'crown_land', label: 'Crown Land Permit', category: 'Access' },
+  { id: 'private_property', label: 'Private Property Access', category: 'Access' },
+  { id: 'utility_row', label: 'Utility ROW Access', category: 'Access' },
+  { id: 'railway', label: 'Railway Access', category: 'Access' },
+
+  // Other
+  { id: 'municipal', label: 'Municipal Permit', category: 'Other' },
+  { id: 'security_clearance', label: 'Security Clearance', category: 'Other' },
+  { id: 'insurance_cert', label: 'Insurance Certificate', category: 'Other' },
+  { id: 'noise_permit', label: 'Noise/Disturbance Permit', category: 'Other' }
+]
+
+const PERMIT_CATEGORIES = [...new Set(PERMIT_TYPES.map(p => p.category))]
 
 function NeedsSubSection({ title, children, defaultOpen = true }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
@@ -485,21 +593,69 @@ function NeedsAnalysisSection({ project, onUpdate }) {
                     <div className="p-3 space-y-3 bg-white">
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1.5">Data Products</label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {DATA_PRODUCTS.map(product => (
-                            <button
-                              key={product.id}
-                              onClick={() => togglePackageProduct(pkg.id, product.id)}
-                              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                (pkg.products || []).includes(product.id)
-                                  ? 'bg-brand-600 text-white'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              {product.label}
-                            </button>
-                          ))}
+                        <div className="flex gap-2 mb-2">
+                          <select
+                            onChange={(e) => {
+                              if (e.target.value && !(pkg.products || []).includes(e.target.value)) {
+                                togglePackageProduct(pkg.id, e.target.value)
+                              }
+                              e.target.value = ''
+                            }}
+                            className="flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm"
+                            defaultValue=""
+                          >
+                            <option value="" disabled>+ Add product...</option>
+                            {DATA_PRODUCT_CATEGORIES.map(cat => (
+                              <optgroup key={cat} label={cat}>
+                                {DATA_PRODUCTS.filter(p => p.category === cat).map(product => (
+                                  <option key={product.id} value={product.id} disabled={(pkg.products || []).includes(product.id)}>
+                                    {product.label}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="Custom product..."
+                            className="w-40 px-2 py-1.5 border border-gray-200 rounded text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.target.value.trim()) {
+                                const customId = `custom_${e.target.value.trim()}`
+                                if (!(pkg.products || []).includes(customId)) {
+                                  const customProducts = pkg.customProducts || []
+                                  updatePackage(pkg.id, {
+                                    products: [...(pkg.products || []), customId],
+                                    customProducts: [...customProducts, e.target.value.trim()]
+                                  })
+                                }
+                                e.target.value = ''
+                              }
+                            }}
+                          />
                         </div>
+                        {(pkg.products || []).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {(pkg.products || []).map(productId => {
+                              const product = DATA_PRODUCTS.find(p => p.id === productId)
+                              const label = product ? product.label : (pkg.customProducts || []).find(c => `custom_${c}` === productId) || productId
+                              return (
+                                <span
+                                  key={productId}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-brand-100 text-brand-700 rounded text-xs"
+                                >
+                                  {label}
+                                  <button
+                                    onClick={() => togglePackageProduct(pkg.id, productId)}
+                                    className="hover:text-brand-900"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <div>
@@ -613,6 +769,7 @@ function NeedsAnalysisSection({ project, onUpdate }) {
                               <option value="ha">ha</option>
                               <option value="ac">ac</option>
                               <option value="km2">km²</option>
+                              <option value="km">km</option>
                             </select>
                           </div>
                         </div>
@@ -722,13 +879,77 @@ function NeedsAnalysisSection({ project, onUpdate }) {
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Permits & Authorizations Needed</label>
-            <input
-              type="text"
-              value={needs.permits_needed || ''}
-              onChange={(e) => updateNeeds({ permits_needed: e.target.value })}
-              placeholder="e.g., SFOC, NAV CANADA authorization, land access permit"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
+            <div className="flex gap-2 mb-2">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const current = needs.permits_list || []
+                    if (!current.includes(e.target.value)) {
+                      updateNeeds({ permits_list: [...current, e.target.value] })
+                    }
+                  }
+                  e.target.value = ''
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                defaultValue=""
+              >
+                <option value="" disabled>+ Add permit...</option>
+                {PERMIT_CATEGORIES.map(cat => (
+                  <optgroup key={cat} label={cat}>
+                    {PERMIT_TYPES.filter(p => p.category === cat).map(permit => (
+                      <option
+                        key={permit.id}
+                        value={permit.id}
+                        disabled={(needs.permits_list || []).includes(permit.id)}
+                      >
+                        {permit.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Custom permit..."
+                className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.target.value.trim()) {
+                    const customId = `custom_${Date.now()}`
+                    const current = needs.permits_list || []
+                    const customPermits = needs.custom_permits || {}
+                    updateNeeds({
+                      permits_list: [...current, customId],
+                      custom_permits: { ...customPermits, [customId]: e.target.value.trim() }
+                    })
+                    e.target.value = ''
+                  }
+                }}
+              />
+            </div>
+            {(needs.permits_list || []).length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {(needs.permits_list || []).map(permitId => {
+                  const permit = PERMIT_TYPES.find(p => p.id === permitId)
+                  const label = permit ? permit.label : (needs.custom_permits?.[permitId] || permitId)
+                  return (
+                    <span
+                      key={permitId}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                    >
+                      {label}
+                      <button
+                        onClick={() => updateNeeds({
+                          permits_list: (needs.permits_list || []).filter(id => id !== permitId)
+                        })}
+                        className="hover:text-blue-900"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </NeedsSubSection>
 
