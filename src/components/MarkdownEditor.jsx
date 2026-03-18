@@ -185,8 +185,29 @@ export function MarkdownPreview({ content }) {
       .replace(/>/g, '&gt;')
 
     // Code blocks (before other processing)
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre style="background: #1a1a2e; color: #e2e8f0; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 20px 0; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; border-left: 3px solid #131CD0;"><code>${code.trim()}</code></pre>`
+    // Handle both ```lang and ``` formats, with or without newline after
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+      const trimmedCode = code.trim()
+      // Check if this looks like a checklist/procedure (contains ☐ or checkbox-like content)
+      const isChecklist = trimmedCode.includes('☐') || trimmedCode.includes('[ ]') || /^[\-\•]\s/m.test(trimmedCode)
+      // Check if this looks like a call-response format (contains → or : followed by quoted text)
+      const isCallResponse = trimmedCode.includes('→') || /^(PIC|VO|OPIC|IPIC):/.test(trimmedCode)
+      // Check if this looks like a box/diagram (contains box characters)
+      const isBox = trimmedCode.includes('┌') || trimmedCode.includes('│') || trimmedCode.includes('└')
+
+      if (isChecklist || isCallResponse || isBox) {
+        // Render as a styled procedure box instead of code
+        const formattedCode = trimmedCode
+          .replace(/☐/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
+          .replace(/\[ \]/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
+          .replace(/→/g, '<span style="color: #131CD0; font-weight: bold;">→</span>')
+          .replace(/^(PIC|VO|OPIC|IPIC):/gm, '<strong style="color: #132163;">$1:</strong>')
+          .replace(/\n/g, '<br />')
+        return `<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #131CD0; border-radius: 6px; padding: 16px; margin: 16px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.8; color: #1f2937; white-space: pre-wrap;">${formattedCode}</div>`
+      }
+
+      // Regular code block - dark theme
+      return `<pre style="background: #1a1a2e; color: #e2e8f0; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 20px 0; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; border-left: 3px solid #131CD0; white-space: pre-wrap;"><code>${trimmedCode}</code></pre>`
     })
 
     // TABLES - Process BEFORE lists to prevent interference
