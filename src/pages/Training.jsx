@@ -12,915 +12,1036 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  ClipboardCheck,
   Plane,
+  Eye,
+  Wrench,
   Briefcase,
   Plus,
   Trash2,
   Pencil,
   Play,
-  HelpCircle,
-  Zap,
-  Wrench,
+  Download,
+  Search,
   BookOpen,
-  Target,
-  CircleCheck,
-  CircleX
+  ClipboardList,
+  AlertCircle,
+  CheckCircle2,
+  Calendar,
+  User
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getOperators, getDocuments } from '../lib/api'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, addDays, addMonths } from 'date-fns'
 import { MarkdownPreview } from '../components/MarkdownEditor'
 
 // ============================================
-// TRAINING TRACKS - REDESIGNED
+// ROLE DEFINITIONS
 // ============================================
 
-const TRACKS = [
+const ROLES = [
   {
-    id: 'onboarding',
-    name: 'Onboarding',
-    description: 'New team member orientation - read and acknowledge all company documents',
+    id: 'all_personnel',
+    name: 'All Personnel',
+    description: 'Safety basics, SMS orientation, company policies',
     icon: Users,
     color: 'bg-blue-500',
-    lightColor: 'bg-blue-50 text-blue-700 border-blue-200',
-    // Onboarding requires reading all docs - this makes sense for new people
-    requireDocs: true,
-    docTypes: ['policy', 'procedure', 'form']
+    recurrencyDays: 365, // Annual
+    required: true // Everyone must complete this
   },
   {
-    id: 'field',
-    name: 'Field Operations',
-    description: 'Hands-on readiness check for field work',
-    icon: ClipboardCheck,
-    color: 'bg-green-500',
-    lightColor: 'bg-green-50 text-green-700 border-green-200',
-    requireDocs: false, // No doc re-reads
-    // Equipment inspection checklist - hands-on verification
-    equipmentChecklist: [
-      { item: 'First aid kit', check: 'Present, sealed, not expired' },
-      { item: 'Fire extinguisher', check: 'Charged, inspection current' },
-      { item: 'PPE (vest, hard hat, safety glasses)', check: 'Present and in good condition' },
-      { item: 'Communication devices', check: 'Charged, signal confirmed' },
-      { item: 'Vehicle inspection', check: 'Fluids, tires, lights checked' },
-      { item: 'Weather briefing', check: 'Conditions reviewed for site' }
-    ],
-    // Decision scenarios - what would you do?
-    scenarios: [
-      {
-        situation: 'You arrive at a job site and notice unmarked power lines within 50 feet of the planned flight area.',
-        question: 'What do you do?',
-        options: [
-          'Proceed carefully, keeping distance from the lines',
-          'Stop work, document the hazard, contact supervisor before proceeding',
-          'Move the takeoff point further away and continue',
-          'Fly higher to avoid the lines'
-        ],
-        correct: 1,
-        explanation: 'Always stop and reassess when you encounter an undocumented hazard. The FHA may need updating.'
-      },
-      {
-        situation: 'Mid-flight, a bystander walks into your operational area despite the cones and tape.',
-        question: 'What is your immediate action?',
-        options: [
-          'Shout at them to leave',
-          'Land immediately in place',
-          'Hover in position and have your VO address the person',
-          'Continue the mission, they will leave'
-        ],
-        correct: 2,
-        explanation: 'Maintain aircraft control while your visual observer handles ground personnel. Never land on someone.'
-      },
-      {
-        situation: 'Weather conditions are deteriorating faster than forecast. Wind is picking up.',
-        question: 'At what point do you scrub the mission?',
-        options: [
-          'When the aircraft becomes hard to control',
-          'When winds exceed aircraft or your personal limits, whichever is lower',
-          'When the client asks you to stop',
-          'Never - the show must go on'
-        ],
-        correct: 1,
-        explanation: 'Your personal limits may be lower than aircraft limits. Know both and respect the lower threshold.'
-      }
-    ],
-    // Reference docs - optional, not required
-    referenceDocs: ['procedure', 'fha']
-  },
-  {
-    id: 'pilot',
-    name: 'Pilot Recurrency',
-    description: 'Annual flight certification - demonstrate skills, not re-read docs',
+    id: 'rpas_pilot',
+    name: 'RPAS Pilot (PIC)',
+    description: 'Flight operations, emergency procedures, aircraft systems',
     icon: Plane,
     color: 'bg-purple-500',
-    lightColor: 'bg-purple-50 text-purple-700 border-purple-200',
-    requireDocs: false, // No doc re-reads
-    // Knowledge quiz - verify understanding
-    quiz: [
-      {
-        question: 'What is the maximum altitude for Part 107 operations without a waiver?',
-        options: ['500 feet AGL', '400 feet AGL', '400 feet MSL', '600 feet AGL'],
-        correct: 1
-      },
-      {
-        question: 'You need to fly over people for a roof inspection. What is required?',
-        options: [
-          'Nothing, inspections are exempt',
-          'Part 107.39 waiver or compliant drone category',
-          'Just verbal consent from the people',
-          'A safety pilot'
-        ],
-        correct: 1
-      },
-      {
-        question: 'Your aircraft loses GPS signal mid-flight. What happens and what do you do?',
-        options: [
-          'Aircraft will auto-land immediately',
-          'Switch to ATTI mode, manually control, land when safe',
-          'RTH will still work via compass',
-          'Increase altitude to regain signal'
-        ],
-        correct: 1
-      },
-      {
-        question: 'When must you report a drone accident to the FAA?',
-        options: [
-          'Any crash',
-          'Serious injury or property damage over $500',
-          'Only if someone complains',
-          'Never for Part 107'
-        ],
-        correct: 1
-      },
-      {
-        question: 'What is the minimum weather visibility for Part 107 flight?',
-        options: ['1 statute mile', '2 statute miles', '3 statute miles', '5 statute miles'],
-        correct: 2
-      }
-    ],
-    // Flight skills demonstration - supervisor observed
-    flightSkills: [
-      {
-        name: 'Pre-flight inspection',
-        description: 'Complete walk-around and systems check',
-        checkpoints: [
-          'Propellers secure, no damage',
-          'Battery charged and seated',
-          'Camera/gimbal operational',
-          'GPS lock confirmed',
-          'Control surfaces responsive'
-        ]
-      },
-      {
-        name: 'Takeoff and hover stability',
-        description: 'Controlled vertical takeoff and stable hover',
-        checkpoints: [
-          'Smooth throttle application',
-          'Stable hover at 10ft for 30 seconds',
-          'Minimal drift correction',
-          'Proper altitude awareness'
-        ]
-      },
-      {
-        name: 'Basic maneuvering',
-        description: 'Controlled flight in all directions',
-        checkpoints: [
-          'Smooth transitions between directions',
-          'Consistent altitude maintenance',
-          'Proper speed control',
-          'Coordinated stick inputs'
-        ]
-      },
-      {
-        name: 'Point of interest orbit',
-        description: 'Circular pattern around a fixed point',
-        checkpoints: [
-          'Consistent radius maintained',
-          'Camera pointed at POI',
-          'Steady speed throughout',
-          'Smooth entry and exit'
-        ]
-      },
-      {
-        name: 'Emergency procedures',
-        description: 'Demonstrate knowledge of emergency response',
-        checkpoints: [
-          'Motor failure response verbalized',
-          'Signal loss behavior understood',
-          'Low battery actions known',
-          'Emergency landing site identified'
-        ]
-      },
-      {
-        name: 'Precision landing',
-        description: 'Land accurately on designated target',
-        checkpoints: [
-          'Approach path planned',
-          'Speed control on descent',
-          'Landing within 3ft of target',
-          'Soft touchdown'
-        ]
-      }
-    ],
-    // Scenarios for decision making
-    scenarios: [
-      {
-        situation: 'During flight, you notice battery voltage dropping faster than expected.',
-        question: 'What is your response?',
-        options: [
-          'Continue until low battery warning',
-          'Immediately initiate RTH and monitor closely',
-          'Land wherever you are right now',
-          'Increase altitude to reduce power draw'
-        ],
-        correct: 1,
-        explanation: 'Unexpected battery behavior requires conservative response. RTH gives you options while heading home.'
-      },
-      {
-        situation: 'A manned helicopter appears in your area, about 1 mile away and at similar altitude.',
-        question: 'What do you do?',
-        options: [
-          'Continue, you have right of way as you were there first',
-          'Descend and land immediately, yielding to manned aircraft',
-          'Climb higher to be more visible',
-          'Hold position and flash your lights'
-        ],
-        correct: 1,
-        explanation: 'Always yield to manned aircraft. Descend and land to remove any conflict.'
-      }
-    ],
-    // Reference docs - optional
-    referenceDocs: ['procedure']
+    recurrencyDays: 90 // 90-day currency
   },
   {
-    id: 'management',
-    name: 'Management & SMS',
-    description: 'Safety oversight and trend analysis',
-    icon: Briefcase,
+    id: 'visual_observer',
+    name: 'Visual Observer',
+    description: 'VO procedures, standard calls, airspace awareness',
+    icon: Eye,
+    color: 'bg-green-500',
+    recurrencyDays: 365 // Annual
+  },
+  {
+    id: 'ground_crew',
+    name: 'Ground Crew',
+    description: 'Equipment handling, site setup, battery safety',
+    icon: Wrench,
     color: 'bg-amber-500',
-    lightColor: 'bg-amber-50 text-amber-700 border-amber-200',
-    requireDocs: false, // No doc re-reads
-    // SMS Knowledge quiz
-    quiz: [
-      {
-        question: 'What is the primary purpose of a Safety Management System?',
-        options: [
-          'To document accidents after they happen',
-          'To proactively identify and mitigate hazards before incidents occur',
-          'To satisfy regulatory requirements',
-          'To assign blame when things go wrong'
-        ],
-        correct: 1
-      },
-      {
-        question: 'An employee reports a near-miss. What is the correct management response?',
-        options: [
-          'Investigate who is at fault',
-          'Thank them, investigate the hazard, implement controls if needed',
-          'Add it to the file but take no action unless it happens again',
-          'Counsel the employee on being more careful'
-        ],
-        correct: 1
-      },
-      {
-        question: 'You notice a pattern: 3 similar battery incidents in 2 months. What action?',
-        options: [
-          'Wait for a fourth to confirm the pattern',
-          'Review all battery procedures, consider equipment changes, brief team',
-          'Replace the batteries and move on',
-          'Document it for the annual review'
-        ],
-        correct: 1
-      },
-      {
-        question: 'When should safety policies be reviewed and updated?',
-        options: [
-          'Only after an accident',
-          'Annually or when operations/regulations change',
-          'Every 5 years',
-          'Never - once written they are final'
-        ],
-        correct: 1
-      }
-    ],
-    // Management scenarios
-    scenarios: [
-      {
-        situation: 'A pilot pushes back on a new safety procedure, saying it slows down operations.',
-        question: 'How do you handle this?',
-        options: [
-          'Override them - safety comes first, no discussion',
-          'Listen to their concern, evaluate if procedure can be improved while maintaining safety',
-          'Remove the procedure since it is causing friction',
-          'Document their resistance for their personnel file'
-        ],
-        correct: 1,
-        explanation: 'Good SMS involves listening. Procedures should be practical. But safety intent must be preserved.'
-      },
-      {
-        situation: 'Client is pressuring your team to fly in marginal weather to meet their deadline.',
-        question: 'What do you do?',
-        options: [
-          'Let the pilot decide',
-          'Support your pilot in declining, offer to reschedule',
-          'Ask the pilot to try and see how it goes',
-          'Agree to the client demand - customer is always right'
-        ],
-        correct: 1,
-        explanation: 'Management must back safety decisions. Never put pilots in position of choosing between job and safety.'
-      }
-    ],
-    // Review tasks - tie into actual system data
-    reviewTasks: [
-      'Review any open safety reports from the past quarter',
-      'Check for expiring certifications on your team',
-      'Review recent flight logs for any noted issues',
-      'Confirm all FHAs are current for active job sites'
-    ],
-    // Reference docs - optional
-    referenceDocs: ['policy']
+    recurrencyDays: 365 // Annual
+  },
+  {
+    id: 'ops_manager',
+    name: 'Operations Manager',
+    description: 'SMS oversight, auditing, incident review',
+    icon: Briefcase,
+    color: 'bg-red-500',
+    recurrencyDays: 365 // Annual
   }
 ]
 
 // ============================================
-// API HELPERS
+// TRAINING TRACKER API
 // ============================================
 
-async function createSession(track, traineeName) {
-  // First try with trainee_name, fall back to notes if column doesn't exist
+async function getTrainingRecords() {
   const { data, error } = await supabase
-    .from('track_assignments')
-    .insert({
-      track,
-      status: 'in_progress'
-    })
+    .from('training_records')
+    .select('*')
+    .order('person_name', { ascending: true })
+  if (error && error.code === '42P01') {
+    // Table doesn't exist yet
+    return []
+  }
+  return data || []
+}
+
+async function createTrainingRecord(record) {
+  const { data, error } = await supabase
+    .from('training_records')
+    .insert(record)
     .select()
     .single()
-
-  if (error) throw error
-
-  // Store trainee name in localStorage since column may not exist
-  localStorage.setItem(`trainee_${data.id}`, traineeName)
-  return { ...data, trainee_name: traineeName }
-}
-
-async function getSessions() {
-  const { data } = await supabase
-    .from('track_assignments')
-    .select('*')
-    .order('assigned_at', { ascending: false })
-  // Augment with trainee names from localStorage
-  return (data || []).map(s => ({
-    ...s,
-    trainee_name: s.trainee_name || localStorage.getItem(`trainee_${s.id}`) || 'Unknown'
-  }))
-}
-
-async function updateSession(id, updates) {
-  await supabase.from('track_assignments').update(updates).eq('id', id)
-}
-
-async function deleteSession(id) {
-  await supabase.from('document_acknowledgments').delete().eq('assignment_id', id)
-  await supabase.from('flight_skill_signoffs').delete().eq('assignment_id', id)
-  await supabase.from('track_assignments').delete().eq('id', id)
-}
-
-async function getAcknowledgments(sessionId) {
-  const { data } = await supabase.from('document_acknowledgments').select('document_id').eq('assignment_id', sessionId)
-  return (data || []).map(a => a.document_id)
-}
-
-async function acknowledgeDoc(sessionId, docId) {
-  await supabase.from('document_acknowledgments').insert({ assignment_id: sessionId, document_id: docId })
-}
-
-async function getSkillSignoffs(sessionId) {
-  const { data } = await supabase.from('flight_skill_signoffs').select('*').eq('assignment_id', sessionId)
-  return data || []
-}
-
-async function signOffSkill(sessionId, skillName, supervisorName) {
-  await supabase.from('flight_skill_signoffs').insert({
-    assignment_id: sessionId,
-    skill_name: skillName,
-    notes: `Signed off by: ${supervisorName}`
-  })
-}
-
-async function getCertifications() {
-  const { data } = await supabase.from('certifications').select('*, operators(name)').order('expiry_date', { ascending: true, nullsFirst: false })
-  return data || []
-}
-
-async function createCertification(cert) {
-  const { data, error } = await supabase.from('certifications').insert(cert).select().single()
   if (error) throw error
   return data
 }
 
-async function updateCertification(id, updates) {
-  await supabase.from('certifications').update(updates).eq('id', id)
+async function updateTrainingRecord(id, updates) {
+  const { error } = await supabase
+    .from('training_records')
+    .update(updates)
+    .eq('id', id)
+  if (error) throw error
 }
 
-async function deleteCertification(id) {
-  await supabase.from('certifications').delete().eq('id', id)
+async function deleteTrainingRecord(id) {
+  const { error } = await supabase
+    .from('training_records')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
 }
 
 // ============================================
-// TRACK SELECTION
+// TRAINING TRACKER VIEW
 // ============================================
 
-function TrackSelection({ documents, onBeginTraining, onContinueSession }) {
-  const [sessions, setSessions] = useState([])
+function TrainingTracker({ onStartTraining }) {
+  const [records, setRecords] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editingRecord, setEditingRecord] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
 
-  useEffect(() => { loadSessions() }, [])
+  useEffect(() => {
+    loadRecords()
+  }, [])
 
-  const loadSessions = async () => {
-    const data = await getSessions()
-    setSessions(data.filter(s => s.status !== 'completed'))
+  const loadRecords = async () => {
+    setLoading(true)
+    const data = await getTrainingRecords()
+    setRecords(data)
+    setLoading(false)
   }
 
-  const handleDelete = async (id, e) => {
-    e.stopPropagation()
-    if (!confirm('Delete this training session?')) return
-    await deleteSession(id)
-    loadSessions()
-  }
+  const getStatus = (record) => {
+    if (!record.completed_date) return { status: 'not_started', label: 'Not Started', color: 'text-gray-500 bg-gray-100' }
 
-  const getTrackSummary = (track) => {
-    const items = []
-    if (track.requireDocs) {
-      const docCount = documents.filter(d => track.docTypes?.includes(d.doc_type)).length
-      items.push(`${docCount} documents`)
+    const role = ROLES.find(r => r.id === record.role)
+    if (!role) return { status: 'current', label: 'Current', color: 'text-green-700 bg-green-100' }
+
+    const completedDate = new Date(record.completed_date)
+    const expiryDate = addDays(completedDate, role.recurrencyDays)
+    const daysUntilExpiry = differenceInDays(expiryDate, new Date())
+
+    if (daysUntilExpiry < 0) {
+      return { status: 'overdue', label: 'Overdue', color: 'text-red-700 bg-red-100', days: Math.abs(daysUntilExpiry) }
+    } else if (daysUntilExpiry <= 30) {
+      return { status: 'due_soon', label: 'Due Soon', color: 'text-amber-700 bg-amber-100', days: daysUntilExpiry }
+    } else {
+      return { status: 'current', label: 'Current', color: 'text-green-700 bg-green-100', days: daysUntilExpiry }
     }
-    if (track.quiz) items.push(`${track.quiz.length} quiz questions`)
-    if (track.scenarios) items.push(`${track.scenarios.length} scenarios`)
-    if (track.flightSkills) items.push(`${track.flightSkills.length} flight skills`)
-    if (track.equipmentChecklist) items.push(`${track.equipmentChecklist.length} equipment checks`)
-    if (track.reviewTasks) items.push(`${track.reviewTasks.length} review tasks`)
-    return items.join(' • ')
+  }
+
+  const filteredRecords = records.filter(record => {
+    const matchesSearch = record.person_name.toLowerCase().includes(searchTerm.toLowerCase())
+    if (!matchesSearch) return false
+
+    if (filterStatus === 'all') return true
+    const status = getStatus(record)
+    return status.status === filterStatus
+  })
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this training record?')) return
+    await deleteTrainingRecord(id)
+    loadRecords()
+  }
+
+  const exportCSV = () => {
+    const headers = ['Name', 'Role', 'Training Type', 'Completed Date', 'Signed Off By', 'Status', 'Notes']
+    const rows = records.map(r => {
+      const role = ROLES.find(role => role.id === r.role)
+      const status = getStatus(r)
+      return [
+        r.person_name,
+        role?.name || r.role,
+        r.training_type,
+        r.completed_date ? format(new Date(r.completed_date), 'yyyy-MM-dd') : '',
+        r.signed_off_by || '',
+        status.label,
+        r.notes || ''
+      ]
+    })
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `training-records-${format(new Date(), 'yyyy-MM-dd')}.csv`
+    a.click()
+  }
+
+  // Stats
+  const stats = {
+    total: records.length,
+    current: records.filter(r => getStatus(r).status === 'current').length,
+    dueSoon: records.filter(r => getStatus(r).status === 'due_soon').length,
+    overdue: records.filter(r => getStatus(r).status === 'overdue').length,
+    notStarted: records.filter(r => getStatus(r).status === 'not_started').length
+  }
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
   }
 
   return (
-    <div className="space-y-8">
-      {sessions.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Continue Training</h2>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {sessions.map(session => {
-              const track = TRACKS.find(t => t.id === session.track)
-              if (!track) return null
-              const Icon = track.icon
-              return (
-                <div
-                  key={session.id}
-                  className="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => onContinueSession(session)}
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.current}</p>
+              <p className="text-sm text-gray-500">Current</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Clock className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.dueSoon}</p>
+              <p className="text-sm text-gray-500">Due Soon</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.overdue}</p>
+              <p className="text-sm text-gray-500">Overdue</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <User className="w-5 h-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-sm text-gray-500">Total Records</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions Bar */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+        >
+          <option value="all">All Status</option>
+          <option value="current">Current</option>
+          <option value="due_soon">Due Soon</option>
+          <option value="overdue">Overdue</option>
+          <option value="not_started">Not Started</option>
+        </select>
+        <button
+          onClick={exportCSV}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+        >
+          <Plus className="w-4 h-4" />
+          Add Record
+        </button>
+      </div>
+
+      {/* Records Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Name</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Role</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Type</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Completed</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Status</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Signed By</th>
+                <th className="text-right px-4 py-3 text-sm font-semibold text-gray-900">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    {records.length === 0 ? 'No training records yet. Add one or start a training session.' : 'No records match your search.'}
+                  </td>
+                </tr>
+              ) : (
+                filteredRecords.map(record => {
+                  const role = ROLES.find(r => r.id === record.role)
+                  const status = getStatus(record)
+                  const Icon = role?.icon || User
+                  return (
+                    <tr key={record.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-1.5 rounded-lg ${role?.color || 'bg-gray-500'} text-white`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className="font-medium text-gray-900">{record.person_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{role?.name || record.role}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 capitalize">{record.training_type}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {record.completed_date ? format(new Date(record.completed_date), 'MMM d, yyyy') : '-'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                          {status.label}
+                          {status.days !== undefined && status.status !== 'current' && (
+                            <span>({status.days}d)</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{record.signed_off_by || '-'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setEditingRecord(record)}
+                            className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Start Training Button */}
+      <div className="flex justify-center">
+        <button
+          onClick={onStartTraining}
+          className="flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium"
+        >
+          <Play className="w-5 h-5" />
+          Start New Training Session
+        </button>
+      </div>
+
+      {/* Add/Edit Modal */}
+      {(showAddModal || editingRecord) && (
+        <RecordModal
+          record={editingRecord}
+          onClose={() => { setShowAddModal(false); setEditingRecord(null) }}
+          onSave={() => { setShowAddModal(false); setEditingRecord(null); loadRecords() }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// RECORD MODAL
+// ============================================
+
+function RecordModal({ record, onClose, onSave }) {
+  const [form, setForm] = useState({
+    person_name: record?.person_name || '',
+    role: record?.role || 'all_personnel',
+    training_type: record?.training_type || 'initial',
+    completed_date: record?.completed_date || format(new Date(), 'yyyy-MM-dd'),
+    signed_off_by: record?.signed_off_by || 'Dustin Wales',
+    notes: record?.notes || ''
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      if (record) {
+        await updateTrainingRecord(record.id, form)
+      } else {
+        await createTrainingRecord(form)
+      }
+      onSave()
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    }
+    setSaving(false)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-md w-full">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{record ? 'Edit' : 'Add'} Training Record</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Person Name</label>
+            <input
+              type="text"
+              required
+              value={form.person_name}
+              onChange={e => setForm({ ...form, person_name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              placeholder="Enter name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              value={form.role}
+              onChange={e => setForm({ ...form, role: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+            >
+              {ROLES.map(role => (
+                <option key={role.id} value={role.id}>{role.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Training Type</label>
+            <select
+              value={form.training_type}
+              onChange={e => setForm({ ...form, training_type: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="initial">Initial</option>
+              <option value="recurrent">Recurrent</option>
+              <option value="upgrade">Upgrade</option>
+              <option value="remedial">Remedial</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Completed Date</label>
+            <input
+              type="date"
+              value={form.completed_date}
+              onChange={e => setForm({ ...form, completed_date: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Signed Off By</label>
+            <input
+              type="text"
+              value={form.signed_off_by}
+              onChange={e => setForm({ ...form, signed_off_by: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              placeholder="Supervisor name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              rows={2}
+              placeholder="Optional notes"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// ROLE SELECTION (for starting training)
+// ============================================
+
+function RoleSelection({ onSelectRole, onBack }) {
+  const [personName, setPersonName] = useState('')
+  const [selectedRoles, setSelectedRoles] = useState(['all_personnel'])
+  const [trainingType, setTrainingType] = useState('initial')
+
+  const toggleRole = (roleId) => {
+    if (roleId === 'all_personnel') return // Can't deselect this
+    setSelectedRoles(prev =>
+      prev.includes(roleId)
+        ? prev.filter(r => r !== roleId)
+        : [...prev, roleId]
+    )
+  }
+
+  const handleStart = () => {
+    if (!personName.trim()) {
+      alert('Please enter the trainee name')
+      return
+    }
+    onSelectRole({
+      personName: personName.trim(),
+      roles: selectedRoles,
+      trainingType
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+        <ChevronLeft className="w-5 h-5" /> Back to Tracker
+      </button>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-2xl">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Start Training Session</h2>
+
+        <div className="space-y-6">
+          {/* Trainee Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Trainee Name</label>
+            <input
+              type="text"
+              value={personName}
+              onChange={(e) => setPersonName(e.target.value)}
+              placeholder="Enter name of person being trained"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
+              autoFocus
+            />
+          </div>
+
+          {/* Training Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Training Type</label>
+            <div className="flex gap-2">
+              {['initial', 'recurrent', 'upgrade', 'remedial'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setTrainingType(type)}
+                  className={`px-4 py-2 rounded-lg capitalize ${
+                    trainingType === type
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  <div className={`p-2 rounded-lg ${track.lightColor}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{track.name}</p>
-                    <p className="text-sm text-gray-500">{session.trainee_name}</p>
-                  </div>
-                  <button
-                    onClick={(e) => handleDelete(session.id, e)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Role Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Roles to Train
+              <span className="text-gray-400 font-normal ml-2">(select all that apply)</span>
+            </label>
+            <div className="grid gap-3">
+              {ROLES.map(role => {
+                const Icon = role.icon
+                const isSelected = selectedRoles.includes(role.id)
+                const isRequired = role.required
+                return (
+                  <div
+                    key={role.id}
+                    onClick={() => toggleRole(role.id)}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'border-brand-500 bg-brand-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    } ${isRequired ? 'opacity-100' : ''}`}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm text-brand-600 font-medium">Continue →</span>
-                </div>
-              )
-            })}
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-lg ${role.color} text-white`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {role.name}
+                          {isRequired && <span className="text-brand-600 text-sm ml-2">(Required)</span>}
+                        </p>
+                        <p className="text-sm text-gray-500">{role.description}</p>
+                      </div>
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        isSelected ? 'border-brand-500 bg-brand-500' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <Check className="w-4 h-4 text-white" />}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <button
+            onClick={handleStart}
+            disabled={!personName.trim()}
+            className="w-full py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Play className="w-5 h-5" />
+            Begin Training
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// TRAINING SESSION
+// ============================================
+
+function TrainingSession({ config, documents, onComplete, onBack }) {
+  const [currentRoleIndex, setCurrentRoleIndex] = useState(0)
+  const [completedRoles, setCompletedRoles] = useState([])
+  const [expandedSection, setExpandedSection] = useState(null)
+
+  const currentRole = ROLES.find(r => r.id === config.roles[currentRoleIndex])
+  const Icon = currentRole?.icon || Users
+  const isLastRole = currentRoleIndex === config.roles.length - 1
+  const isRecurrent = config.trainingType === 'recurrent'
+
+  const handleCompleteRole = async () => {
+    // Create training record for this role
+    try {
+      await createTrainingRecord({
+        person_name: config.personName,
+        role: currentRole.id,
+        training_type: config.trainingType,
+        completed_date: format(new Date(), 'yyyy-MM-dd'),
+        signed_off_by: 'Dustin Wales'
+      })
+
+      setCompletedRoles([...completedRoles, currentRole.id])
+
+      if (isLastRole) {
+        onComplete()
+      } else {
+        setCurrentRoleIndex(currentRoleIndex + 1)
+        setExpandedSection(null)
+      }
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    }
+  }
+
+  // Get documents for this role
+  const getRoleDocuments = () => {
+    // Map roles to document types
+    const docTypeMap = {
+      all_personnel: ['policy'],
+      rpas_pilot: ['procedure'],
+      visual_observer: ['procedure'],
+      ground_crew: ['procedure'],
+      ops_manager: ['policy']
+    }
+    const types = docTypeMap[currentRole?.id] || []
+    return documents.filter(d => types.includes(d.doc_type))
+  }
+
+  const roleDocs = getRoleDocuments()
+
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+        <ChevronLeft className="w-5 h-5" /> Exit Training
+      </button>
+
+      {/* Progress */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="flex items-center gap-4 mb-3">
+          <div className="flex-1">
+            <p className="text-sm text-gray-500">Training: {config.personName}</p>
+            <p className="font-medium text-gray-900">
+              Role {currentRoleIndex + 1} of {config.roles.length}: {currentRole?.name}
+            </p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+            config.trainingType === 'initial' ? 'bg-blue-100 text-blue-700' :
+            config.trainingType === 'recurrent' ? 'bg-green-100 text-green-700' :
+            config.trainingType === 'upgrade' ? 'bg-purple-100 text-purple-700' :
+            'bg-amber-100 text-amber-700'
+          } capitalize`}>
+            {config.trainingType}
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {config.roles.map((roleId, idx) => (
+            <div
+              key={roleId}
+              className={`flex-1 h-2 rounded-full ${
+                completedRoles.includes(roleId) ? 'bg-green-500' :
+                idx === currentRoleIndex ? 'bg-brand-500' :
+                'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Role Header */}
+      <div className={`rounded-xl border-2 p-5 ${currentRole?.color.replace('bg-', 'bg-').replace('500', '50')} border-${currentRole?.color.replace('bg-', '').replace('500', '200')}`}>
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl ${currentRole?.color} text-white`}>
+            <Icon className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{currentRole?.name}</h2>
+            <p className="text-gray-600">{currentRole?.description}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Training Content Based on Type */}
+      {isRecurrent ? (
+        // Recurrent: What's changed + scenarios
+        <RecurrentTraining role={currentRole} onComplete={handleCompleteRole} />
+      ) : (
+        // Initial: Full training
+        <InitialTraining
+          role={currentRole}
+          documents={roleDocs}
+          onComplete={handleCompleteRole}
+        />
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// INITIAL TRAINING (full content)
+// ============================================
+
+function InitialTraining({ role, documents, onComplete }) {
+  const [step, setStep] = useState(0)
+  const [acknowledgedDocs, setAcknowledgedDocs] = useState([])
+  const [expandedDoc, setExpandedDoc] = useState(null)
+
+  // Steps: 1. Documents, 2. Key Concepts, 3. Sign-off
+  const steps = ['Review Documents', 'Key Concepts', 'Sign Off']
+
+  const handleAcknowledge = (docId) => {
+    setAcknowledgedDocs([...acknowledgedDocs, docId])
+  }
+
+  const allDocsAcknowledged = documents.length === 0 || acknowledgedDocs.length >= documents.length
+
+  return (
+    <div className="space-y-6">
+      {/* Step Indicator */}
+      <div className="flex items-center gap-2">
+        {steps.map((s, idx) => (
+          <div key={s} className="flex items-center">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+              idx < step ? 'bg-green-100 text-green-700' :
+              idx === step ? 'bg-brand-100 text-brand-700' :
+              'bg-gray-100 text-gray-500'
+            }`}>
+              {idx < step ? <Check className="w-4 h-4" /> : <span>{idx + 1}</span>}
+              <span>{s}</span>
+            </div>
+            {idx < steps.length - 1 && <div className="w-8 h-0.5 bg-gray-200 mx-2" />}
+          </div>
+        ))}
+      </div>
+
+      {/* Step Content */}
+      {step === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-gray-400" />
+              Required Reading ({acknowledgedDocs.length}/{documents.length})
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">Review and acknowledge each document</p>
+          </div>
+          {documents.length === 0 ? (
+            <p className="px-5 py-8 text-center text-gray-500">No documents assigned for this role</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {documents.map(doc => {
+                const done = acknowledgedDocs.includes(doc.id)
+                const isExpanded = expandedDoc === doc.id
+                return (
+                  <div key={doc.id}>
+                    <div
+                      className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
+                      onClick={() => setExpandedDoc(isExpanded ? null : doc.id)}
+                    >
+                      <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${
+                        done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                      }`}>
+                        {done && <Check className="w-4 h-4" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-medium ${done ? 'text-gray-400' : 'text-gray-900'}`}>{doc.title}</p>
+                        <p className="text-sm text-gray-500">{doc.doc_type}</p>
+                      </div>
+                      {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                    </div>
+                    {isExpanded && (
+                      <div className="px-5 pb-5 bg-gray-50">
+                        <div className="bg-white rounded-lg border border-gray-200 p-6 max-h-96 overflow-y-auto">
+                          {doc.content ? (
+                            <MarkdownPreview content={doc.content} />
+                          ) : (
+                            <p className="text-gray-400 italic">No content available</p>
+                          )}
+                        </div>
+                        {!done && (
+                          <div className="flex justify-end mt-4">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAcknowledge(doc.id)
+                                setExpandedDoc(null)
+                              }}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
+                            >
+                              <Check className="w-4 h-4" /> I have read this
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <div className="px-5 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+            <button
+              onClick={() => setStep(1)}
+              disabled={!allDocsAcknowledged}
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}
 
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Start New Training</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {TRACKS.map(track => {
-            const Icon = track.icon
-            return (
-              <div
-                key={track.id}
-                className="bg-white rounded-xl border border-gray-200 p-6 hover:border-brand-300 hover:shadow-md transition-all"
-              >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className={`p-3 rounded-xl ${track.color} text-white`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{track.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{track.description}</p>
-                    <p className="text-xs text-gray-400 mt-2">{getTrackSummary(track)}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => onBeginTraining(track)}
-                  className="w-full py-2.5 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  Begin Training
-                </button>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {step === 1 && (
+        <KeyConceptsStep role={role} onContinue={() => setStep(2)} />
+      )}
+
+      {step === 2 && (
+        <SignOffStep role={role} personName="" onComplete={onComplete} />
+      )}
     </div>
   )
 }
 
 // ============================================
-// QUIZ SECTION
+// KEY CONCEPTS STEP
 // ============================================
 
-function QuizSection({ quiz, completedQuestions, onComplete }) {
-  const [currentQ, setCurrentQ] = useState(0)
-  const [selected, setSelected] = useState(null)
-  const [showResult, setShowResult] = useState(false)
-  const [answers, setAnswers] = useState([])
-
-  const question = quiz[currentQ]
-  const isLastQuestion = currentQ === quiz.length - 1
-  const allDone = completedQuestions.length === quiz.length
-
-  if (allDone) {
-    const correct = completedQuestions.filter(a => a.correct).length
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-gray-400" />
-            Knowledge Quiz
-            <span className="ml-auto text-green-600 flex items-center gap-1">
-              <Check className="w-4 h-4" /> Complete
-            </span>
-          </h3>
-        </div>
-        <div className="p-6 text-center">
-          <div className="text-4xl font-bold text-gray-900 mb-2">{correct}/{quiz.length}</div>
-          <p className="text-gray-500">Questions answered correctly</p>
-        </div>
-      </div>
-    )
+function KeyConceptsStep({ role, onContinue }) {
+  const concepts = {
+    all_personnel: [
+      {
+        title: 'Hazard Identification',
+        objective: 'Understand how to identify hazards before they cause incidents',
+        content: 'A good operator recognizes that hazards exist everywhere. Before any task, ask: What could go wrong? What are the consequences? The FHA (Formal Hazard Assessment) and FLHA (Field Level Hazard Assessment) are your tools for this.'
+      },
+      {
+        title: 'Risk Assessment',
+        objective: 'Learn to evaluate risk using likelihood and severity',
+        content: 'Risk = Likelihood × Severity. A high likelihood + high severity = unacceptable risk. Use the risk matrix to evaluate. If risk is too high, implement controls or don\'t proceed.'
+      },
+      {
+        title: 'Control Implementation',
+        objective: 'Know the hierarchy of controls and how to apply them',
+        content: 'The hierarchy: Elimination > Substitution > Engineering Controls > Administrative Controls > PPE. Always start at the top. PPE is the last resort, not the first solution.'
+      },
+      {
+        title: 'Where to Find Information',
+        objective: 'Know how to access policies, procedures, and forms when needed',
+        content: 'All documents are in the Documents library. Policies tell you WHAT and WHY. Procedures tell you HOW. Forms help you document. QRCs are quick field references. Know where to look before you need it.'
+      }
+    ],
+    rpas_pilot: [
+      {
+        title: 'Pre-Flight Checklist Purpose',
+        objective: 'Understand why we use checklists',
+        content: 'Pre-flight checklists keep the pilot and ground team aware of potential influences to a safe flight. The VO calls out the question, the pilot assesses and answers. This confirms immediately prior to flight that it is safe to launch.'
+      },
+      {
+        title: 'Currency Requirements',
+        objective: 'Know your flight currency obligations',
+        content: 'PIC currency: 1 flight every 90 days. BVLOS: 1 flight every 90 days. If currency lapses, you need recurrent training before acting as PIC. Track this yourself - don\'t let it expire.'
+      },
+      {
+        title: 'Emergency Decision Making',
+        objective: 'React correctly when things go wrong',
+        content: 'In an emergency: Aviate, Navigate, Communicate. First, control the aircraft. Second, navigate to safety. Third, communicate with crew and ATC if needed. Never sacrifice aircraft control to troubleshoot.'
+      }
+    ],
+    visual_observer: [
+      {
+        title: 'Standard Calls',
+        objective: 'Use consistent communication with the PIC',
+        content: 'Clear, standardized calls prevent misunderstanding. "Clear left", "Aircraft 3 o\'clock low", "Bystander approaching". Keep calls brief, accurate, and immediate. See the QRC-VOCALLS for the full list.'
+      },
+      {
+        title: 'Airspace Awareness',
+        objective: 'Understand the airspace you\'re operating in',
+        content: 'Know your airspace class before flight. Controlled airspace requires authorization. TFRs can appear without notice. The PIC is responsible, but you are their eyes - spot conflicts early.'
+      }
+    ],
+    ground_crew: [
+      {
+        title: 'Battery Safety',
+        objective: 'Handle LiPo batteries safely',
+        content: 'LiPo batteries are energy-dense and can be dangerous. Never charge unattended. Store at proper voltage. Inspect for puffing or damage. Use fireproof bags. See QRC-BATTERY for details.'
+      },
+      {
+        title: 'Site Setup',
+        objective: 'Establish safe operational areas',
+        content: 'Set up landing/takeoff areas clear of obstacles. Establish crew positions. Mark exclusion zones. Brief bystander management plan. The site setup determines how smoothly operations run.'
+      }
+    ],
+    ops_manager: [
+      {
+        title: 'SMS Oversight',
+        objective: 'Understand your safety management responsibilities',
+        content: 'As operations manager, you set the safety culture. Review incident reports. Identify trends. Ensure corrective actions are completed. Support pilots who refuse unsafe work. Lead by example.'
+      },
+      {
+        title: 'Incident Review',
+        objective: 'Learn from what goes wrong',
+        content: 'Every incident is a learning opportunity. Focus on system failures, not blame. Ask "why" five times to find root causes. Implement controls to prevent recurrence. Share lessons learned with the team.'
+      }
+    ]
   }
 
-  const handleSubmit = () => {
-    if (selected === null) return
-    const isCorrect = selected === question.correct
-    const newAnswers = [...answers, { questionIndex: currentQ, selected, correct: isCorrect }]
-    setAnswers(newAnswers)
-    setShowResult(true)
-  }
+  const roleConcepts = concepts[role?.id] || concepts.all_personnel
+  const [expandedConcept, setExpandedConcept] = useState(null)
+  const [acknowledgedConcepts, setAcknowledgedConcepts] = useState([])
 
-  const handleNext = () => {
-    if (isLastQuestion) {
-      onComplete(answers.concat({ questionIndex: currentQ, selected, correct: selected === question.correct }))
-    } else {
-      setCurrentQ(currentQ + 1)
-      setSelected(null)
-      setShowResult(false)
-    }
-  }
+  const allAcknowledged = acknowledgedConcepts.length >= roleConcepts.length
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <HelpCircle className="w-5 h-5 text-gray-400" />
-          Knowledge Quiz ({currentQ + 1}/{quiz.length})
+          <BookOpen className="w-5 h-5 text-gray-400" />
+          Key Concepts ({acknowledgedConcepts.length}/{roleConcepts.length})
         </h3>
-      </div>
-      <div className="p-6">
-        <p className="text-lg font-medium text-gray-900 mb-4">{question.question}</p>
-        <div className="space-y-2">
-          {question.options.map((opt, idx) => {
-            let style = 'border-gray-200 hover:border-brand-300 hover:bg-brand-50'
-            if (showResult) {
-              if (idx === question.correct) style = 'border-green-500 bg-green-50'
-              else if (idx === selected && idx !== question.correct) style = 'border-red-500 bg-red-50'
-              else style = 'border-gray-200 opacity-50'
-            } else if (selected === idx) {
-              style = 'border-brand-500 bg-brand-50'
-            }
-            return (
-              <button
-                key={idx}
-                onClick={() => !showResult && setSelected(idx)}
-                disabled={showResult}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${style}`}
-              >
-                <div className="flex items-center gap-3">
-                  {showResult && idx === question.correct && <CircleCheck className="w-5 h-5 text-green-600" />}
-                  {showResult && idx === selected && idx !== question.correct && <CircleX className="w-5 h-5 text-red-600" />}
-                  <span>{opt}</span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-        {showResult && question.explanation && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">{question.explanation}</p>
-          </div>
-        )}
-        <div className="flex justify-end mt-6">
-          {!showResult ? (
-            <button
-              onClick={handleSubmit}
-              disabled={selected === null}
-              className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50"
-            >
-              Submit Answer
-            </button>
-          ) : (
-            <button
-              onClick={handleNext}
-              className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700"
-            >
-              {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ============================================
-// SCENARIO SECTION
-// ============================================
-
-function ScenarioSection({ scenarios, completedScenarios, onComplete }) {
-  const [expanded, setExpanded] = useState(null)
-  const [selected, setSelected] = useState(null)
-  const [showResult, setShowResult] = useState(false)
-
-  const handleSubmit = (scenario, idx) => {
-    setShowResult(true)
-  }
-
-  const handleComplete = (scenario, idx) => {
-    onComplete(idx)
-    setExpanded(null)
-    setSelected(null)
-    setShowResult(false)
-  }
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-gray-400" />
-          Decision Scenarios ({completedScenarios.length}/{scenarios.length})
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">What would you do in these situations?</p>
+        <p className="text-sm text-gray-500 mt-1">Understand these core principles</p>
       </div>
       <div className="divide-y divide-gray-100">
-        {scenarios.map((scenario, idx) => {
-          const done = completedScenarios.includes(idx)
-          const isExpanded = expanded === idx
+        {roleConcepts.map((concept, idx) => {
+          const done = acknowledgedConcepts.includes(idx)
+          const isExpanded = expandedConcept === idx
           return (
-            <div key={idx} className="overflow-hidden">
+            <div key={idx}>
               <div
                 className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
-                onClick={() => {
-                  if (!done) {
-                    setExpanded(isExpanded ? null : idx)
-                    setSelected(null)
-                    setShowResult(false)
-                  }
-                }}
+                onClick={() => setExpandedConcept(isExpanded ? null : idx)}
               >
-                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${
                   done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
                 }`}>
                   {done && <Check className="w-4 h-4" />}
                 </div>
                 <div className="flex-1">
-                  <p className={`font-medium ${done ? 'text-gray-400' : 'text-gray-900'}`}>
-                    Scenario {idx + 1}
-                  </p>
-                  <p className={`text-sm ${done ? 'text-gray-400' : 'text-gray-500'} line-clamp-1`}>
-                    {scenario.situation.slice(0, 80)}...
-                  </p>
-                </div>
-                {!done && (isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />)}
-              </div>
-
-              {isExpanded && (
-                <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
-                    <p className="text-gray-800 mb-4">{scenario.situation}</p>
-                    <p className="font-medium text-gray-900 mb-3">{scenario.question}</p>
-                    <div className="space-y-2">
-                      {scenario.options.map((opt, optIdx) => {
-                        let style = 'border-gray-200 hover:border-brand-300'
-                        if (showResult) {
-                          if (optIdx === scenario.correct) style = 'border-green-500 bg-green-50'
-                          else if (optIdx === selected) style = 'border-red-500 bg-red-50'
-                          else style = 'border-gray-200 opacity-50'
-                        } else if (selected === optIdx) {
-                          style = 'border-brand-500 bg-brand-50'
-                        }
-                        return (
-                          <button
-                            key={optIdx}
-                            onClick={() => !showResult && setSelected(optIdx)}
-                            disabled={showResult}
-                            className={`w-full text-left px-4 py-2 rounded-lg border-2 text-sm ${style}`}
-                          >
-                            {opt}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    {showResult && scenario.explanation && (
-                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm text-blue-800">{scenario.explanation}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end gap-3 mt-4">
-                    {!showResult ? (
-                      <button
-                        onClick={() => handleSubmit(scenario, idx)}
-                        disabled={selected === null}
-                        className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
-                      >
-                        Check Answer
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleComplete(scenario, idx)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
-                      >
-                        <Check className="w-4 h-4" /> Mark Complete
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ============================================
-// EQUIPMENT CHECKLIST SECTION
-// ============================================
-
-function EquipmentChecklistSection({ checklist, completedItems, onToggle }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <Wrench className="w-5 h-5 text-gray-400" />
-          Equipment Inspection ({completedItems.length}/{checklist.length})
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">Physically verify each item before proceeding</p>
-      </div>
-      <div className="divide-y divide-gray-100">
-        {checklist.map((item, idx) => {
-          const done = completedItems.includes(idx)
-          return (
-            <div
-              key={idx}
-              className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
-              onClick={() => onToggle(idx)}
-            >
-              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-brand-500'
-              }`}>
-                {done && <Check className="w-4 h-4" />}
-              </div>
-              <div className="flex-1">
-                <p className={`font-medium ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                  {item.item}
-                </p>
-                <p className="text-sm text-gray-500">{item.check}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ============================================
-// REVIEW TASKS SECTION
-// ============================================
-
-function ReviewTasksSection({ tasks, completedTasks, onToggle }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <Target className="w-5 h-5 text-gray-400" />
-          Review Tasks ({completedTasks.length}/{tasks.length})
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">Complete these management review items</p>
-      </div>
-      <div className="divide-y divide-gray-100">
-        {tasks.map((task, idx) => {
-          const done = completedTasks.includes(idx)
-          return (
-            <div
-              key={idx}
-              className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
-              onClick={() => onToggle(idx)}
-            >
-              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-brand-500'
-              }`}>
-                {done && <Check className="w-4 h-4" />}
-              </div>
-              <p className={`flex-1 ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                {task}
-              </p>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ============================================
-// FLIGHT SKILLS SECTION
-// ============================================
-
-function FlightSkillsSection({ skills, signoffs, onSignOff }) {
-  const [expanded, setExpanded] = useState(null)
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <Plane className="w-5 h-5 text-gray-400" />
-          Flight Skills ({signoffs.length}/{skills.length})
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">Supervisor observes and signs off each skill</p>
-      </div>
-      <div className="divide-y divide-gray-100">
-        {skills.map(skill => {
-          const signoff = signoffs.find(s => s.skill_name === skill.name)
-          const isExpanded = expanded === skill.name
-
-          return (
-            <div key={skill.name} className="overflow-hidden">
-              <div
-                className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
-                onClick={() => setExpanded(isExpanded ? null : skill.name)}
-              >
-                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  signoff ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
-                }`}>
-                  {signoff && <Check className="w-4 h-4" />}
-                </div>
-                <div className="flex-1">
-                  <p className={`font-medium ${signoff ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                    {skill.name}
-                  </p>
-                  <p className="text-sm text-gray-500">{signoff ? signoff.notes : skill.description}</p>
+                  <p className={`font-medium ${done ? 'text-gray-400' : 'text-gray-900'}`}>{concept.title}</p>
+                  <p className="text-sm text-gray-500">{concept.objective}</p>
                 </div>
                 {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
               </div>
-
               {isExpanded && (
-                <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Observer Checkpoints</h4>
-                    <div className="space-y-2">
-                      {skill.checkpoints.map((cp, idx) => (
-                        <div key={idx} className="flex items-start gap-3">
-                          <div className="w-5 h-5 rounded border border-gray-300 flex-shrink-0 mt-0.5 flex items-center justify-center">
-                            {signoff && <Check className="w-3 h-3 text-green-600" />}
-                          </div>
-                          <span className={`text-sm ${signoff ? 'text-gray-400' : 'text-gray-700'}`}>{cp}</span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="px-5 pb-5 bg-gray-50">
+                  <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <p className="text-gray-700 leading-relaxed">{concept.content}</p>
                   </div>
-                  {!signoff && (
+                  {!done && (
                     <div className="flex justify-end mt-4">
                       <button
-                        onClick={() => {
-                          onSignOff(skill.name)
-                          setExpanded(null)
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAcknowledgedConcepts([...acknowledgedConcepts, idx])
+                          setExpandedConcept(null)
                         }}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-2"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
                       >
-                        <Check className="w-4 h-4" /> Supervisor Sign-Off
+                        <Check className="w-4 h-4" /> Got it
                       </button>
                     </div>
                   )}
@@ -930,650 +1051,460 @@ function FlightSkillsSection({ skills, signoffs, onSignOff }) {
           )
         })}
       </div>
-    </div>
-  )
-}
-
-// ============================================
-// DOCUMENTS SECTION (for onboarding)
-// ============================================
-
-function DocumentsSection({ documents, acknowledgments, onAcknowledge }) {
-  const [expanded, setExpanded] = useState(null)
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-gray-400" />
-          Documents ({acknowledgments.length}/{documents.length})
-        </h3>
-      </div>
-      {documents.length === 0 ? (
-        <p className="px-5 py-8 text-center text-gray-500">No documents for this track</p>
-      ) : (
-        <div className="divide-y divide-gray-100">
-          {documents.map(doc => {
-            const done = acknowledgments.includes(doc.id)
-            const isExpanded = expanded === doc.id
-            return (
-              <div key={doc.id} className="overflow-hidden">
-                <div
-                  className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
-                  onClick={() => setExpanded(isExpanded ? null : doc.id)}
-                >
-                  <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    done ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
-                  }`}>
-                    {done && <Check className="w-4 h-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-medium ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{doc.title}</p>
-                    <p className="text-sm text-gray-500">{doc.doc_type}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {doc.google_doc_url && (
-                      <a
-                        href={doc.google_doc_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
-                      >
-                        Open <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <div className="px-5 pb-5 bg-gray-50 border-t border-gray-100">
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 mt-4 max-h-96 overflow-y-auto">
-                      {doc.content ? (
-                        <MarkdownPreview content={doc.content} />
-                      ) : (
-                        <p className="text-gray-400 italic">No inline content. Use the external link to view.</p>
-                      )}
-                    </div>
-                    {!done && (
-                      <div className="flex justify-end mt-4">
-                        <button
-                          onClick={() => {
-                            onAcknowledge(doc.id)
-                            setExpanded(null)
-                          }}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2"
-                        >
-                          <Check className="w-4 h-4" /> I have read this document
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ============================================
-// REFERENCE DOCS (optional, collapsible)
-// ============================================
-
-function ReferenceDocsSection({ documents }) {
-  const [expanded, setExpanded] = useState(false)
-
-  if (documents.length === 0) return null
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div
-        className="px-5 py-4 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <h3 className="font-semibold text-gray-500 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-gray-400" />
-          Reference Documents ({documents.length})
-          <span className="text-xs font-normal ml-2">Optional - for reference only</span>
-          <span className="ml-auto">
-            {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </span>
-        </h3>
-      </div>
-      {expanded && (
-        <div className="divide-y divide-gray-100">
-          {documents.map(doc => (
-            <div key={doc.id} className="px-5 py-3 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-700">{doc.title}</p>
-                <p className="text-sm text-gray-400">{doc.doc_type}</p>
-              </div>
-              {doc.google_doc_url && (
-                <a
-                  href={doc.google_doc_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg flex items-center gap-1"
-                >
-                  View <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ============================================
-// TRAINING SESSION
-// ============================================
-
-function TrainingSession({ track, existingSession, documents, operators, onBack }) {
-  const [session, setSession] = useState(existingSession)
-  const [traineeName, setTraineeName] = useState(
-    existingSession?.trainee_name ||
-    (existingSession ? localStorage.getItem(`trainee_${existingSession.id}`) : '') ||
-    ''
-  )
-  const [started, setStarted] = useState(!!existingSession)
-  const [saving, setSaving] = useState(false)
-
-  // Progress states
-  const [acknowledgments, setAcknowledgments] = useState([])
-  const [skillSignoffs, setSkillSignoffs] = useState([])
-  const [quizCompleted, setQuizCompleted] = useState([])
-  const [scenariosCompleted, setScenariosCompleted] = useState([])
-  const [equipmentCompleted, setEquipmentCompleted] = useState([])
-  const [reviewTasksCompleted, setReviewTasksCompleted] = useState([])
-
-  const trackDocs = documents.filter(d => track.docTypes?.includes(d.doc_type))
-  const referenceDocs = documents.filter(d => track.referenceDocs?.includes(d.doc_type))
-  const Icon = track.icon
-
-  useEffect(() => {
-    if (existingSession) loadProgress()
-  }, [])
-
-  const loadProgress = async () => {
-    const acks = await getAcknowledgments(existingSession.id)
-    setAcknowledgments(acks)
-    if (track.flightSkills) {
-      const skills = await getSkillSignoffs(existingSession.id)
-      setSkillSignoffs(skills)
-    }
-    // Load other progress from localStorage
-    const stored = localStorage.getItem(`training_progress_${existingSession.id}`)
-    if (stored) {
-      const data = JSON.parse(stored)
-      setQuizCompleted(data.quiz || [])
-      setScenariosCompleted(data.scenarios || [])
-      setEquipmentCompleted(data.equipment || [])
-      setReviewTasksCompleted(data.reviewTasks || [])
-    }
-  }
-
-  const saveProgress = (updates) => {
-    const progressData = {
-      quiz: updates.quiz ?? quizCompleted,
-      scenarios: updates.scenarios ?? scenariosCompleted,
-      equipment: updates.equipment ?? equipmentCompleted,
-      reviewTasks: updates.reviewTasks ?? reviewTasksCompleted
-    }
-    localStorage.setItem(`training_progress_${session.id}`, JSON.stringify(progressData))
-  }
-
-  const handleStart = async () => {
-    if (!traineeName.trim()) {
-      alert('Please enter the trainee name')
-      return
-    }
-    setSaving(true)
-    try {
-      const newSession = await createSession(track.id, traineeName.trim())
-      setSession(newSession)
-      setStarted(true)
-    } catch (err) {
-      alert('Failed to start: ' + err.message)
-    }
-    setSaving(false)
-  }
-
-  const handleAcknowledge = async (docId) => {
-    await acknowledgeDoc(session.id, docId)
-    setAcknowledgments([...acknowledgments, docId])
-  }
-
-  const handleSignOff = async (skillName) => {
-    const supervisorName = prompt('Supervisor name:')
-    if (!supervisorName) return
-    await signOffSkill(session.id, skillName, supervisorName)
-    setSkillSignoffs([...skillSignoffs, { skill_name: skillName, notes: `Signed off by: ${supervisorName}` }])
-  }
-
-  const handleQuizComplete = async (answers) => {
-    setQuizCompleted(answers)
-    await saveProgress({ quiz: answers })
-  }
-
-  const handleScenarioComplete = async (idx) => {
-    const updated = [...scenariosCompleted, idx]
-    setScenariosCompleted(updated)
-    await saveProgress({ scenarios: updated })
-  }
-
-  const handleEquipmentToggle = async (idx) => {
-    const updated = equipmentCompleted.includes(idx)
-      ? equipmentCompleted.filter(i => i !== idx)
-      : [...equipmentCompleted, idx]
-    setEquipmentCompleted(updated)
-    await saveProgress({ equipment: updated })
-  }
-
-  const handleReviewTaskToggle = async (idx) => {
-    const updated = reviewTasksCompleted.includes(idx)
-      ? reviewTasksCompleted.filter(i => i !== idx)
-      : [...reviewTasksCompleted, idx]
-    setReviewTasksCompleted(updated)
-    await saveProgress({ reviewTasks: updated })
-  }
-
-  // Calculate progress
-  let totalItems = 0
-  let completedItems = 0
-
-  if (track.requireDocs) {
-    totalItems += trackDocs.length
-    completedItems += acknowledgments.length
-  }
-  if (track.quiz) {
-    totalItems += track.quiz.length
-    completedItems += quizCompleted.length
-  }
-  if (track.scenarios) {
-    totalItems += track.scenarios.length
-    completedItems += scenariosCompleted.length
-  }
-  if (track.equipmentChecklist) {
-    totalItems += track.equipmentChecklist.length
-    completedItems += equipmentCompleted.length
-  }
-  if (track.flightSkills) {
-    totalItems += track.flightSkills.length
-    completedItems += skillSignoffs.length
-  }
-  if (track.reviewTasks) {
-    totalItems += track.reviewTasks.length
-    completedItems += reviewTasksCompleted.length
-  }
-
-  const isComplete = completedItems >= totalItems && totalItems > 0
-
-  // Mark complete when done
-  useEffect(() => {
-    if (isComplete && session) {
-      updateSession(session.id, { status: 'completed', completed_at: new Date().toISOString() })
-    }
-  }, [isComplete])
-
-  // Start screen
-  if (!started) {
-    return (
-      <div className="space-y-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-          <ChevronLeft className="w-5 h-5" /> Back
+      <div className="px-5 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+        <button
+          onClick={onContinue}
+          disabled={!allAcknowledged}
+          className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50"
+        >
+          Continue to Sign Off
         </button>
-        <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-lg">
-          <div className="flex items-center gap-4 mb-6">
-            <div className={`p-4 rounded-xl ${track.color} text-white`}>
-              <Icon className="w-8 h-8" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{track.name}</h2>
-              <p className="text-gray-500">{track.description}</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Trainee Name</label>
-              <input
-                type="text"
-                value={traineeName}
-                onChange={e => setTraineeName(e.target.value)}
-                placeholder="Enter name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500"
-                autoFocus
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// SIGN OFF STEP
+// ============================================
+
+function SignOffStep({ role, onComplete }) {
+  const [confirmed, setConfirmed] = useState(false)
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-lg">
+      <div className="text-center mb-6">
+        <div className={`w-16 h-16 rounded-full ${role?.color} text-white flex items-center justify-center mx-auto mb-4`}>
+          {role?.icon && <role.icon className="w-8 h-8" />}
+        </div>
+        <h3 className="text-xl font-bold text-gray-900">Complete {role?.name} Training</h3>
+        <p className="text-gray-500 mt-2">Confirm that training has been completed satisfactorily</p>
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(e) => setConfirmed(e.target.checked)}
+            className="mt-1 w-5 h-5 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span className="text-sm text-gray-700">
+            I, <strong>Dustin Wales</strong>, confirm that this trainee has demonstrated understanding of the required material and is competent to perform duties under the <strong>{role?.name}</strong> role.
+          </span>
+        </label>
+      </div>
+
+      <button
+        onClick={onComplete}
+        disabled={!confirmed}
+        className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        <Check className="w-5 h-5" />
+        Sign Off & Complete
+      </button>
+    </div>
+  )
+}
+
+// ============================================
+// RECURRENT TRAINING
+// ============================================
+
+function RecurrentTraining({ role, onComplete }) {
+  const [step, setStep] = useState(0) // 0: What's changed, 1: Scenarios, 2: Sign off
+  const [scenarioIndex, setScenarioIndex] = useState(0)
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [showResult, setShowResult] = useState(false)
+  const [completedScenarios, setCompletedScenarios] = useState([])
+
+  const scenarios = [
+    {
+      situation: 'You arrive at the job site and notice unmarked power lines within 50 feet of the planned flight area that weren\'t on the site survey.',
+      question: 'What do you do?',
+      options: [
+        'Proceed carefully, maintaining distance from the lines',
+        'Stop work, document the hazard, contact operations before proceeding',
+        'Move the takeoff point further away and continue the mission',
+        'Fly higher to avoid the power lines'
+      ],
+      correct: 1,
+      explanation: 'Always stop and reassess when you encounter an undocumented hazard. The FHA may need updating, and operations should be aware of site changes.'
+    },
+    {
+      situation: 'During flight, you notice battery voltage dropping faster than expected. You\'re 400m from the launch point.',
+      question: 'What is your immediate response?',
+      options: [
+        'Continue until the low battery warning activates',
+        'Immediately initiate RTH and monitor the return',
+        'Land in place wherever you are',
+        'Increase altitude to reduce power consumption'
+      ],
+      correct: 1,
+      explanation: 'Unexpected battery behavior requires a conservative response. RTH gives you options while heading home. Don\'t wait for warnings - act on anomalies early.'
+    },
+    {
+      situation: 'A manned helicopter appears in your area, approximately 1 mile away at similar altitude and appears to be heading your direction.',
+      question: 'What action do you take?',
+      options: [
+        'Continue operations - you were there first and have right of way',
+        'Descend and land immediately, yielding to the manned aircraft',
+        'Climb higher to be more visible to the helicopter',
+        'Hold position and flash your aircraft lights'
+      ],
+      correct: 1,
+      explanation: 'Always yield to manned aircraft. Descend and land to remove any potential conflict. Manned aircraft always have priority.'
+    },
+    {
+      situation: 'Mid-flight, a bystander walks into your operational area despite the cones and caution tape.',
+      question: 'What is your immediate action?',
+      options: [
+        'Shout at them to leave the area',
+        'Land immediately wherever the aircraft is',
+        'Hover in position while your VO addresses the person',
+        'Continue the mission - they\'ll move eventually'
+      ],
+      correct: 2,
+      explanation: 'Maintain aircraft control while your visual observer handles ground personnel. Never sacrifice aircraft control, and never land on someone.'
+    },
+    {
+      situation: 'Weather conditions are deteriorating faster than forecast. Wind is picking up and gusts are becoming stronger.',
+      question: 'At what point do you scrub the mission?',
+      options: [
+        'When the aircraft becomes difficult to control',
+        'When winds exceed aircraft limits OR your personal limits, whichever is lower',
+        'When the client asks you to stop',
+        'Continue - we need to complete the job'
+      ],
+      correct: 1,
+      explanation: 'Your personal limits may be lower than aircraft limits. Know both and respect the lower threshold. Client pressure never overrides safety.'
+    },
+    {
+      situation: 'You\'re about to start a pre-flight inspection but you\'re running behind schedule and the client is waiting.',
+      question: 'How do you handle this?',
+      options: [
+        'Skip a few less important checklist items to save time',
+        'Complete the full pre-flight checklist - no shortcuts',
+        'Have someone else do the checklist while you set up other equipment',
+        'Do a visual inspection only and skip the checklist'
+      ],
+      correct: 1,
+      explanation: 'Pre-flight checklists exist because they work. Skipping items invites the exact problem that item was designed to catch. Never shortcut safety for schedule.'
+    },
+    {
+      situation: 'After landing, you notice a small crack in one of the propeller blades that wasn\'t there before the flight.',
+      question: 'What do you do?',
+      options: [
+        'Note it for later and continue with the next flight',
+        'Ground the aircraft, document the damage, replace the propeller',
+        'Monitor it during the next flight to see if it gets worse',
+        'Apply tape to stabilize the crack and continue'
+      ],
+      correct: 1,
+      explanation: 'Any propeller damage is grounds for immediate replacement. A cracked prop can fail catastrophically. Document everything and replace before flying again.'
+    },
+    {
+      situation: 'A colleague asks you to sign off on a flight log for a flight you didn\'t witness.',
+      question: 'How do you respond?',
+      options: [
+        'Sign it as a favor - they probably flew it correctly',
+        'Refuse to sign - you can only attest to what you witnessed',
+        'Sign it if they promise they did everything right',
+        'Ask them to describe the flight, then sign if it sounds reasonable'
+      ],
+      correct: 1,
+      explanation: 'Your signature is your attestation of truth. Never sign documents for events you didn\'t witness. This is a fundamental principle of safety documentation.'
+    },
+    {
+      situation: 'You realize you forgot to check NOTAMs before arriving at the job site. You\'re already set up and the client is ready.',
+      question: 'What do you do?',
+      options: [
+        'Proceed - you\'ve flown here before and it was fine',
+        'Check NOTAMs now before launching, even if it causes delay',
+        'Fly a quick test flight to see if there are any issues',
+        'Ask the client if they know of any airspace restrictions'
+      ],
+      correct: 1,
+      explanation: 'NOTAMs can change daily. TFRs can appear without warning. Always check before flight, regardless of delay. This is regulatory requirement.'
+    },
+    {
+      situation: 'During your pre-flight briefing, a team member expresses concern about the wind conditions, but they\'re within limits.',
+      question: 'How do you handle their concern?',
+      options: [
+        'Overrule them - conditions are within limits',
+        'Listen to their concern, discuss it, and make a collective decision',
+        'Tell them to wait by the vehicle if they\'re nervous',
+        'Proceed but let them know you\'ll be extra careful'
+      ],
+      correct: 1,
+      explanation: 'Safety concerns from any team member deserve attention. Their perspective may reveal something you missed. Good CRM means considering all input before deciding.'
+    }
+  ]
+
+  const currentScenario = scenarios[scenarioIndex]
+
+  const handleCheckAnswer = () => {
+    setShowResult(true)
+  }
+
+  const handleNext = () => {
+    setCompletedScenarios([...completedScenarios, scenarioIndex])
+    if (scenarioIndex < scenarios.length - 1) {
+      setScenarioIndex(scenarioIndex + 1)
+      setSelectedAnswer(null)
+      setShowResult(false)
+    } else {
+      setStep(2)
+    }
+  }
+
+  if (step === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-amber-500" />
+          What's Changed
+        </h3>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <p className="text-amber-800">
+            Review any policy or procedure updates since your last training. Check the Documents library for recently modified documents.
+          </p>
+        </div>
+        <p className="text-gray-600 mb-6">
+          This recurrent training focuses on scenario-based assessment rather than re-reading everything.
+          You'll answer 10 common-sense questions about real situations you might encounter.
+        </p>
+        <button
+          onClick={() => setStep(1)}
+          className="w-full py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700"
+        >
+          Start Scenarios
+        </button>
+      </div>
+    )
+  }
+
+  if (step === 1) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900">
+            Scenario {scenarioIndex + 1} of {scenarios.length}
+          </h3>
+          <div className="flex gap-1 mt-2">
+            {scenarios.map((_, idx) => (
+              <div
+                key={idx}
+                className={`flex-1 h-1.5 rounded-full ${
+                  completedScenarios.includes(idx) ? 'bg-green-500' :
+                  idx === scenarioIndex ? 'bg-brand-500' :
+                  'bg-gray-200'
+                }`}
               />
+            ))}
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <p className="text-gray-800">{currentScenario.situation}</p>
+          </div>
+          <p className="font-medium text-gray-900 mb-3">{currentScenario.question}</p>
+          <div className="space-y-2">
+            {currentScenario.options.map((option, idx) => {
+              let style = 'border-gray-200 hover:border-brand-300'
+              if (showResult) {
+                if (idx === currentScenario.correct) style = 'border-green-500 bg-green-50'
+                else if (idx === selectedAnswer && idx !== currentScenario.correct) style = 'border-red-500 bg-red-50'
+                else style = 'border-gray-200 opacity-50'
+              } else if (selectedAnswer === idx) {
+                style = 'border-brand-500 bg-brand-50'
+              }
+              return (
+                <button
+                  key={idx}
+                  onClick={() => !showResult && setSelectedAnswer(idx)}
+                  disabled={showResult}
+                  className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${style}`}
+                >
+                  {option}
+                </button>
+              )
+            })}
+          </div>
+          {showResult && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">{currentScenario.explanation}</p>
             </div>
-            <button
-              onClick={handleStart}
-              disabled={saving || !traineeName.trim()}
-              className="w-full py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {saving ? 'Starting...' : <><Play className="w-5 h-5" /> Start Training</>}
-            </button>
+          )}
+          <div className="flex justify-end mt-6">
+            {!showResult ? (
+              <button
+                onClick={handleCheckAnswer}
+                disabled={selectedAnswer === null}
+                className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50"
+              >
+                Check Answer
+              </button>
+            ) : (
+              <button
+                onClick={handleNext}
+                className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700"
+              >
+                {scenarioIndex < scenarios.length - 1 ? 'Next Scenario' : 'Complete'}
+              </button>
+            )}
           </div>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-          <ChevronLeft className="w-5 h-5" /> Back
-        </button>
-        {isComplete && (
-          <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium flex items-center gap-2">
-            <Check className="w-5 h-5" /> Training Complete
-          </span>
-        )}
-      </div>
-
-      {/* Progress Header */}
-      <div className={`rounded-xl border-2 p-5 ${track.lightColor}`}>
-        <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-xl ${track.color} text-white`}>
-            <Icon className="w-6 h-6" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold">{track.name}</h2>
-            <p className="text-sm opacity-80">Trainee: {traineeName}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold">{completedItems}/{totalItems}</p>
-            <p className="text-sm opacity-80">items completed</p>
-          </div>
-        </div>
-        <div className="mt-4 h-3 bg-white/50 rounded-full overflow-hidden">
-          <div
-            className={`h-full ${track.color} transition-all duration-300`}
-            style={{ width: `${totalItems > 0 ? (completedItems / totalItems) * 100 : 0}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Documents (only for onboarding) */}
-      {track.requireDocs && (
-        <DocumentsSection
-          documents={trackDocs}
-          acknowledgments={acknowledgments}
-          onAcknowledge={handleAcknowledge}
-        />
-      )}
-
-      {/* Quiz */}
-      {track.quiz && (
-        <QuizSection
-          quiz={track.quiz}
-          completedQuestions={quizCompleted}
-          onComplete={handleQuizComplete}
-        />
-      )}
-
-      {/* Equipment Checklist */}
-      {track.equipmentChecklist && (
-        <EquipmentChecklistSection
-          checklist={track.equipmentChecklist}
-          completedItems={equipmentCompleted}
-          onToggle={handleEquipmentToggle}
-        />
-      )}
-
-      {/* Scenarios */}
-      {track.scenarios && (
-        <ScenarioSection
-          scenarios={track.scenarios}
-          completedScenarios={scenariosCompleted}
-          onComplete={handleScenarioComplete}
-        />
-      )}
-
-      {/* Flight Skills */}
-      {track.flightSkills && (
-        <FlightSkillsSection
-          skills={track.flightSkills}
-          signoffs={skillSignoffs}
-          onSignOff={handleSignOff}
-        />
-      )}
-
-      {/* Review Tasks */}
-      {track.reviewTasks && (
-        <ReviewTasksSection
-          tasks={track.reviewTasks}
-          completedTasks={reviewTasksCompleted}
-          onToggle={handleReviewTaskToggle}
-        />
-      )}
-
-      {/* Reference Docs */}
-      <ReferenceDocsSection documents={referenceDocs} />
-    </div>
-  )
+  return <SignOffStep role={role} onComplete={onComplete} />
 }
 
 // ============================================
-// CERTIFICATIONS
+// FIELD REFERENCE (QRCs)
 // ============================================
 
-function CertificationsView({ operators }) {
-  const [certs, setCerts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState(null)
+function FieldReference({ documents, onBack }) {
+  const [expandedDoc, setExpandedDoc] = useState(null)
 
-  useEffect(() => { load() }, [])
+  // Filter for QRC-type documents or create static list
+  const qrcs = [
+    { id: 'qrc-emergency', title: 'QRC-EMERGENCY', description: 'Emergency Procedures Quick Reference' },
+    { id: 'qrc-preflight', title: 'QRC-PREFLIGHT', description: 'Pre-Flight Quick Reference' },
+    { id: 'qrc-airspace', title: 'QRC-AIRSPACE', description: 'Airspace Classifications' },
+    { id: 'qrc-weather', title: 'QRC-WEATHER', description: 'Weather Limits & Minimums' },
+    { id: 'qrc-flha', title: 'QRC-FLHA', description: 'Field Level Hazard Assessment Guide' },
+    { id: 'qrc-bvlos', title: 'QRC-BVLOS', description: 'BVLOS Operations' },
+    { id: 'qrc-battery', title: 'QRC-BATTERY', description: 'Battery Safety & Handling' },
+    { id: 'qrc-wildlife', title: 'QRC-WILDLIFE', description: 'Wildlife Safety & Encounter Response' },
+    { id: 'qrc-firstaid', title: 'QRC-FIRSTAID', description: 'First Aid Quick Reference' },
+    { id: 'qrc-workingalone', title: 'QRC-WORKINGALONE', description: 'Working Alone Protocol' },
+    { id: 'qrc-vocalls', title: 'QRC-VOCALLS', description: 'Visual Observer Standard Calls' },
+    { id: 'qrc-delivery', title: 'QRC-DELIVERY', description: 'Cargo Delivery Operations' },
+    { id: 'qrc-avalanche', title: 'QRC-AVALANCHE', description: 'Avalanche Control Operations' }
+  ]
 
-  const load = async () => {
-    setCerts(await getCertifications())
-    setLoading(false)
-  }
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+        <ChevronLeft className="w-5 h-5" /> Back
+      </button>
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this certification?')) return
-    await deleteCertification(id)
-    load()
-  }
-
-  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
-
-  const expired = certs.filter(c => c.expiry_date && differenceInDays(new Date(c.expiry_date), new Date()) < 0)
-  const expiring = certs.filter(c => c.expiry_date && differenceInDays(new Date(c.expiry_date), new Date()) >= 0 && differenceInDays(new Date(c.expiry_date), new Date()) <= 30)
-  const current = certs.filter(c => !c.expiry_date || differenceInDays(new Date(c.expiry_date), new Date()) > 30)
-
-  const CertRow = ({ cert }) => (
-    <div className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
       <div>
-        <p className="font-medium text-gray-900">{cert.name} - {cert.operators?.name}</p>
-        <p className="text-sm text-gray-500">
-          {cert.issuing_authority && `${cert.issuing_authority} | `}
-          Issued {format(new Date(cert.issued_date), 'MMM d, yyyy')}
-          {cert.expiry_date && ` | Expires ${format(new Date(cert.expiry_date), 'MMM d, yyyy')}`}
-        </p>
-      </div>
-      <div className="flex gap-1">
-        <button onClick={() => { setEditing(cert); setShowModal(true) }} className="p-2 text-gray-400 hover:text-brand-600 rounded-lg"><Pencil className="w-4 h-4" /></button>
-        <button onClick={() => handleDelete(cert.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
-        <button onClick={() => { setEditing(null); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">
-          <Plus className="w-5 h-5" /> Add Certification
-        </button>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Field Reference</h2>
+        <p className="text-gray-500">Quick reference cards for field use</p>
       </div>
 
-      {expired.length > 0 && (
-        <div className="bg-white rounded-xl border border-red-200 overflow-hidden">
-          <div className="px-4 py-3 bg-red-50 border-b border-red-200 font-medium text-red-800 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" /> Expired ({expired.length})
-          </div>
-          <div className="divide-y divide-gray-100">{expired.map(c => <CertRow key={c.id} cert={c} />)}</div>
-        </div>
-      )}
-
-      {expiring.length > 0 && (
-        <div className="bg-white rounded-xl border border-amber-200 overflow-hidden">
-          <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 font-medium text-amber-800 flex items-center gap-2">
-            <Clock className="w-4 h-4" /> Expiring Soon ({expiring.length})
-          </div>
-          <div className="divide-y divide-gray-100">{expiring.map(c => <CertRow key={c.id} cert={c} />)}</div>
-        </div>
-      )}
-
-      {current.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 font-medium text-gray-900 flex items-center gap-2">
-            <Award className="w-4 h-4 text-green-500" /> Current ({current.length})
-          </div>
-          <div className="divide-y divide-gray-100">{current.map(c => <CertRow key={c.id} cert={c} />)}</div>
-        </div>
-      )}
-
-      {certs.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No certifications yet</p>
-        </div>
-      )}
-
-      {showModal && <CertModal cert={editing} operators={operators} onClose={() => { setShowModal(false); setEditing(null) }} onSave={() => { setShowModal(false); setEditing(null); load() }} />}
-    </div>
-  )
-}
-
-function CertModal({ cert, operators, onClose, onSave }) {
-  const [form, setForm] = useState({
-    operator_id: cert?.operator_id || '',
-    name: cert?.name || '',
-    issuing_authority: cert?.issuing_authority || '',
-    issued_date: cert?.issued_date || format(new Date(), 'yyyy-MM-dd'),
-    expiry_date: cert?.expiry_date || ''
-  })
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      if (cert) await updateCertification(cert.id, form)
-      else await createCertification(form)
-      onSave()
-    } catch (err) { alert('Failed: ' + err.message) }
-    setSaving(false)
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{cert ? 'Edit' : 'Add'} Certification</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Operator</label>
-            <select value={form.operator_id} onChange={e => setForm({ ...form, operator_id: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-              <option value="">Select...</option>
-              {operators.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Certification Name</label>
-            <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Authority</label>
-            <input type="text" value={form.issuing_authority} onChange={e => setForm({ ...form, issuing_authority: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Issued Date</label>
-              <input type="date" required value={form.issued_date} onChange={e => setForm({ ...form, issued_date: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-              <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+      <div className="grid gap-4 md:grid-cols-2">
+        {qrcs.map(qrc => (
+          <div
+            key={qrc.id}
+            className="bg-white rounded-xl border border-gray-200 p-4 hover:border-brand-300 hover:shadow-md transition-all cursor-pointer"
+            onClick={() => setExpandedDoc(expandedDoc === qrc.id ? null : qrc.id)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-brand-100 rounded-lg">
+                <ClipboardList className="w-5 h-5 text-brand-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{qrc.title}</p>
+                <p className="text-sm text-gray-500">{qrc.description}</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-gray-400" />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
-          </div>
-        </form>
+        ))}
       </div>
+
+      <p className="text-sm text-gray-400 text-center">
+        QRC content will be loaded from the v5.0 documents library
+      </p>
     </div>
   )
 }
 
 // ============================================
-// MAIN
+// MAIN COMPONENT
 // ============================================
 
 export default function Training() {
-  const [view, setView] = useState('home')
-  const [selectedTrack, setSelectedTrack] = useState(null)
-  const [selectedSession, setSelectedSession] = useState(null)
-  const [operators, setOperators] = useState([])
+  const [view, setView] = useState('tracker') // tracker, roles, training, reference
+  const [trainingConfig, setTrainingConfig] = useState(null)
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getOperators(), getDocuments()]).then(([ops, docs]) => {
-      setOperators(ops || [])
-      setDocuments(docs || [])
-      setLoading(false)
-    })
+    loadData()
   }, [])
 
-  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
+  const loadData = async () => {
+    const docs = await getDocuments()
+    setDocuments(docs || [])
+    setLoading(false)
+  }
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
+  }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Training</h1>
-          <p className="text-gray-500">Complete training tracks and manage certifications</p>
+          <p className="text-gray-500">Track training, manage competency records</p>
         </div>
-        <button
-          onClick={() => setView(view === 'certs' ? 'home' : 'certs')}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-        >
-          {view === 'certs' ? <GraduationCap className="w-5 h-5" /> : <Award className="w-5 h-5" />}
-          {view === 'certs' ? 'Training' : 'Certifications'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setView('reference')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+              view === 'reference' ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <BookOpen className="w-5 h-5" />
+            Field Reference
+          </button>
+        </div>
       </div>
 
-      {view === 'home' && (
-        <TrackSelection
-          documents={documents}
-          onBeginTraining={(track) => { setSelectedTrack(track); setSelectedSession(null); setView('session') }}
-          onContinueSession={(session) => { setSelectedTrack(TRACKS.find(t => t.id === session.track)); setSelectedSession(session); setView('session') }}
+      {/* Views */}
+      {view === 'tracker' && (
+        <TrainingTracker onStartTraining={() => setView('roles')} />
+      )}
+
+      {view === 'roles' && (
+        <RoleSelection
+          onSelectRole={(config) => {
+            setTrainingConfig(config)
+            setView('training')
+          }}
+          onBack={() => setView('tracker')}
         />
       )}
 
-      {view === 'session' && selectedTrack && (
+      {view === 'training' && trainingConfig && (
         <TrainingSession
-          track={selectedTrack}
-          existingSession={selectedSession}
+          config={trainingConfig}
           documents={documents}
-          operators={operators}
-          onBack={() => { setView('home'); setSelectedTrack(null); setSelectedSession(null) }}
+          onComplete={() => {
+            setView('tracker')
+            setTrainingConfig(null)
+          }}
+          onBack={() => {
+            if (confirm('Exit training? Progress will be lost.')) {
+              setView('tracker')
+              setTrainingConfig(null)
+            }
+          }}
         />
       )}
 
-      {view === 'certs' && <CertificationsView operators={operators} />}
+      {view === 'reference' && (
+        <FieldReference documents={documents} onBack={() => setView('tracker')} />
+      )}
     </div>
   )
 }

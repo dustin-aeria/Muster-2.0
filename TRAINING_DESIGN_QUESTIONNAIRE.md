@@ -15,6 +15,8 @@ Work through these questions to define what the training system should actually 
 - [ ] All of the above
 - [ ] Other: _______________________
 
+all of the above
+
 ### 1.2 Who is the primary user?
 - [ ] New hires going through orientation
 - [ ] Existing pilots doing annual recurrency
@@ -23,10 +25,12 @@ Work through these questions to define what the training system should actually 
 - [ ] Operations manager assigning training
 - [ ] All of the above
 
+all of the above
+
 ### 1.3 What's broken about training today (before this app)?
 _Write your pain points here:_
 
-
+disjoiunted, too many docuemnts and random googled rives trying to maintain track of all that material - hard to trak - ot to confusing - too much "read this entire document"
 
 
 ---
@@ -52,9 +56,9 @@ _Write your pain points here:_
 - Role determines WHAT you need
 - Tracks determine WHEN (orientation vs recurrent vs upgrade)
 
-Your choice: [ A / B / C ]
+Your choice: A
 
-Notes:
+Notes: many of these roles are held by one person at once - so being able to train ALL would be good
 
 
 
@@ -63,11 +67,11 @@ Notes:
 
 | Type | Include? | Notes |
 |------|----------|-------|
-| Orientation (new hire) | Yes / No | |
-| Initial (first time in role) | Yes / No | |
-| Recurrent (annual refresh) | Yes / No | |
-| Upgrade (new equipment/role) | Yes / No | |
-| Remedial (after incident) | Yes / No | |
+| Orientation (new hire) | Yes 
+| Initial (first time in role) | Yes 
+| Recurrent (annual refresh) | Yes 
+| Upgrade (new equipment/role) | Yes 
+| Remedial (after incident) | Yes 
 
 ### 2.3 What should happen when someone joins?
 
@@ -83,8 +87,7 @@ TCP-001-PR defines a detailed orientation:
 
 Your answer:
 
-
-
+this is insane - 90 days of orietnation? more like 1 week of hands on training and required reading
 
 ---
 
@@ -102,18 +105,25 @@ Your answer:
 | Guides (GUIDE-*) | 7 | | Read & quiz / Reference only |
 | Manuals (SMS-001, MCM-001, TCP-001) | 3 | | Read sections / Reference only |
 
+for policies and procedures there are trhe main ones that need to be read - the others however its more a matter of knowing where to find and hoiw to accesss - a good operator knows when planing a task they need to review the approporaite content in our documents and prepare themselves.
+
+forms - knowing what is there is important - field level hazard being most used
+
+realisticaly a big part of training shuld be indeitfying hazards, understanding risk, implementing control and where to fidn teh material that assists in that effort
+
+guide and manual walk throughts - no quizes
+
 ### 3.2 Which documents are MANDATORY reads for new hires?
 
 List them (or categories):
 
-
-
+everything is mandatory for new hires
 
 ### 3.3 Which documents need annual re-acknowledgment?
 
 List them:
 
-
+anything thats edited durting a program audit or safety meeting etc - or anythig safety program specific 
 
 
 ### 3.4 Should quizzes be generated FROM document content?
@@ -121,6 +131,7 @@ List them:
 - [ ] No - manually create quiz questions
 - [ ] Hybrid - auto-generate but allow manual override
 
+no - no quizes anywhere
 ---
 
 ## SECTION 4: Competency & Sign-Offs
@@ -143,7 +154,7 @@ From your forms and TCP, these seem to need sign-off:
 
 Add others:
 
-
+yes to all - the operator who filled them - when filled
 
 
 ### 4.2 What are the checkpoints for each skill?
@@ -158,17 +169,22 @@ Pre-flight inspection:
 - Control surfaces responsive
 ```
 
+
 Should these come from:
 - [ ] Your existing FRM-PREFLIGHT form
 - [ ] Your existing procedures (OPS-001-PR)
 - [ ] Custom list in the app
 - [ ] All of the above, merged
 
+theres sort of a two point step i want the learning to go thorugh - first is a nice quick objective: Pre Flgiht Checklists are designed to keep the pilot and ground team aware of potential influences to a safe flight. Prior to flying the VO will call our the question nd the pilot will assess and answer - in this method we confirm immediatly prior to flight that it is safe to launch - review this checklist.
+
 ### 4.3 Who can sign off on skills?
 - [ ] Any supervisor/manager
 - [ ] Specific certified trainers only
 - [ ] Role-specific (pilots sign off pilots, etc.)
 - [ ] Operations Manager only
+
+me (dustin wales - CEO)
 
 ---
 
@@ -178,13 +194,13 @@ Should these come from:
 
 | Requirement | Period | Track in App? |
 |-------------|--------|---------------|
-| PIC: 1 flight per 90 days | 90 days | Yes / No |
-| BVLOS: 1 flight per 90 days | 90 days | Yes / No |
-| Visual Observer: Annual refresher | 12 months | Yes / No |
-| Emergency Procedures: Annual | 12 months | Yes / No |
+| PIC: 1 flight per 90 days | 90 days | Yes 
+| BVLOS: 1 flight per 90 days | 90 days | Yes 
+| Visual Observer: Annual refresher | 12 months | Yes 
+| Emergency Procedures: Annual | 12 months | Yes 
 
 Add others:
-
+follow that logic and apply where necessary
 
 
 
@@ -195,12 +211,16 @@ Add others:
 - [ ] Just show warning, no enforcement
 - [ ] Other: _______________________
 
+anyone whos taken the training - as in their name has been logged into a training path should be populated into a table (training tracker) - here their trraining status is viewed - up to date - recurrency soon - over - I also need the ability to edit this table freely, as ill want to update it with poeple who i dont train using the website or update it with orpeviosu training records
+
 ### 5.3 How should recurrent training differ from initial?
 
 Initial training (first time):
 - Read everything
 - Demonstrate all skills
 - Full assessment
+
+yes 
 
 Recurrent training (annual):
 - [ ] Same as initial (re-read, re-demonstrate everything)
@@ -210,7 +230,7 @@ Recurrent training (annual):
 - [ ] Scenario-based assessment
 - [ ] Other: _______________________
 
----
+whats changed and scenario based
 
 ## SECTION 6: Practical Training Elements
 
@@ -220,17 +240,23 @@ Recurrent training (annual):
 - [ ] No, just read and acknowledge
 - [ ] Optional for some tracks
 
+yes, 10 scenario based - common sense quesitons 
+
 ### 6.2 What passing score for quizzes?
 - [ ] 70%
 - [ ] 80%
 - [ ] 100% (must get all correct)
 - [ ] No score, just review wrong answers
 
+no score just review wrong answers
+
 ### 6.3 What happens if someone fails a quiz?
 - [ ] Retake immediately
 - [ ] Review material, retake after 24 hours
 - [ ] Notify supervisor
 - [ ] Schedule remedial training
+
+retake immediatly
 
 ### 6.4 Should training include scenarios?
 Examples from current system:
@@ -240,6 +266,8 @@ Examples from current system:
 - [ ] Yes, critical for decision-making practice
 - [ ] No, waste of time
 - [ ] Only for certain roles (pilots, supervisors)
+
+yes
 
 ### 6.5 Should training include equipment checklists?
 Physical verification before field work:
@@ -251,6 +279,8 @@ Physical verification before field work:
 - [ ] Yes, practical readiness check
 - [ ] No, that's covered by FRM-PREFLIGHT form
 - [ ] Integrate with existing forms
+
+it should be reviewed the improtantce of why
 
 ---
 
@@ -268,11 +298,15 @@ Physical verification before field work:
 | Time spent on training | Yes / No | |
 | Number of quiz attempts | Yes / No | |
 
+just a simple, training accomplished. all the above would be part of the overall training package - once everything is accomplsihed, there 100% done. put it in the training tracker (where i cna edit freely, add, remove, change status etc)
+
 ### 7.2 Who needs access to training records?
 - [ ] Individual (their own records)
 - [ ] Supervisors (their team)
 - [ ] Operations Manager (everyone)
 - [ ] External auditors (read-only export)
+
+i do - remember this is a single user account - i will need to download training records so it needs to be downloadable
 
 ### 7.3 What reports do you need?
 
@@ -285,6 +319,8 @@ Physical verification before field work:
 | Audit-ready training matrix | Yes / No | |
 | Expiring certifications | Yes / No | |
 
+audit readyt training matrix / training data
+
 ---
 
 ## SECTION 8: Integration with Existing App
@@ -293,12 +329,8 @@ Physical verification before field work:
 
 | Feature | Integration? | How? |
 |---------|--------------|------|
-| Operators list | Yes / No | Auto-assign training based on role |
-| Documents library | Yes / No | Pull content for reading |
-| Flight logs | Yes / No | Track currency automatically |
-| Safety reports | Yes / No | Trigger training after incidents |
-| Job management | Yes / No | Block assignment if training incomplete |
-| Certifications | Yes / No | Already tracking, just connect |
+
+| Documents library | Yes  Pull content for reading |
 
 ### 8.2 Should training block other actions?
 - [ ] Can't be assigned to flight without completed training
@@ -306,6 +338,7 @@ Physical verification before field work:
 - [ ] Warning only, no hard blocks
 - [ ] No enforcement, just tracking
 
+ No enforcement, just tracking
 ---
 
 ## SECTION 9: Quick Reference Cards (QRCs)
@@ -331,11 +364,14 @@ You have 13 QRCs for field use:
 - [ ] Available as reference only
 - [ ] Different approach per QRC
 
+reioew and aknkowledge
+
 ### 9.2 Should QRCs be accessible in the field?
 - [ ] Yes, add a "Field Reference" section in the app
 - [ ] No, they print these out
 - [ ] Yes, but separate from training
 
+Yes, add a "Field Reference" section in the app - 
 ---
 
 ## SECTION 10: Formal Hazard Assessments (FHAs)
@@ -353,12 +389,15 @@ You have 20+ FHAs for different operation types:
 - [ ] Quiz on hazards and controls
 - [ ] Not in training, just reference
 
+training on what FHAs are, why they are important and how to find them plus an overview of what ius there
+
 ### 10.2 Should operators complete FLHAs (Field Level) through the app?
 - [ ] Yes, digitize FRM-FLHA form
 - [ ] No, paper forms work fine
 - [ ] Yes, with pre-populated hazards from master FHA
 
----
+Yes, with pre-populated hazards from master FHA but we triedf this already and you struggle to make fillable forms so leave this for later, we will discuss
+
 
 ## SECTION 11: Forms Integration
 
@@ -366,15 +405,12 @@ You have 30 forms. Which should be digitized and connected to training?
 
 | Form | Digitize? | Connect to Training? |
 |------|-----------|---------------------|
-| FRM-IMSAFE (Fitness for Duty) | Yes / No | Yes / No |
-| FRM-PREFLIGHT | Yes / No | Yes / No |
-| FRM-POSTFLIGHT | Yes / No | Yes / No |
-| FRM-FLHA | Yes / No | Yes / No |
-| FRM-NEWWORKER | Yes / No | Yes / No |
-| FRM-COMPETENCY | Yes / No | Yes / No |
-| FRM-TRAINING | Yes / No | Yes / No |
-| FRM-INCIDENT | Yes / No | Yes / No |
-| FRM-NEARMISS | Yes / No | Yes / No |
+| FRM-IMSAFE (Fitness for Duty) | Yes yes
+| FRM-PREFLIGHT | Yes  Yes 
+| FRM-POSTFLIGHT | Yes / | Yes
+| FRM-FLHA | Yes / | Yes 
+| FRM-INCIDENT | Yes Yes /
+| FRM-NEARMISS | Yes  Yes 
 
 ---
 
@@ -384,22 +420,22 @@ You have 30 forms. Which should be digitized and connected to training?
 
 | Feature | Rank (1-10) |
 |---------|-------------|
-| New hire orientation workflow | |
-| Document read & acknowledge | |
-| Quizzes | |
-| Scenario-based training | |
-| Flight skill sign-offs | |
-| Currency tracking | |
-| Recurrent training prompts | |
-| Audit-ready reports | |
-| Integration with existing app features | |
-| QRC/FHA reference library | |
+| New hire orientation workflow |8 |
+| Document read & acknowledge |6 |
+| Quizzes | 7|
+| Scenario-based training |2 |
+| Flight skill sign-offs |3 |
+| Currency tracking | 1|
+| Recurrent training prompts |9 |
+| Audit-ready reports |4 |
+| Integration with existing app features |10 |
+| QRC/FHA reference library | 5|
 
 ### 12.2 What's the ONE thing that would make this useful immediately?
 
 Your answer:
 
-
+tracking training
 
 
 ### 12.3 What can wait for Phase 2?
@@ -407,7 +443,7 @@ Your answer:
 Your answer:
 
 
-
+na
 
 ---
 
