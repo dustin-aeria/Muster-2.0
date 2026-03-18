@@ -30,8 +30,8 @@ import {
   User
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { getOperators, getDocuments } from '../lib/api'
-import { format, differenceInDays, addDays, addMonths } from 'date-fns'
+import { getDocuments } from '../lib/api'
+import { format, differenceInDays, addDays } from 'date-fns'
 import { MarkdownPreview } from '../components/MarkdownEditor'
 
 // ============================================
@@ -136,16 +136,16 @@ function TrainingTracker({ onStartTraining }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
 
-  useEffect(() => {
-    loadRecords()
-  }, [])
-
   const loadRecords = async () => {
     setLoading(true)
     const data = await getTrainingRecords()
     setRecords(data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadRecords()
+  }, [])
 
   const getStatus = (record) => {
     if (!record.completed_date) return { status: 'not_started', label: 'Not Started', color: 'text-gray-500 bg-gray-100' }
@@ -669,7 +669,6 @@ function RoleSelection({ onSelectRole, onBack }) {
 function TrainingSession({ config, documents, onComplete, onBack }) {
   const [currentRoleIndex, setCurrentRoleIndex] = useState(0)
   const [completedRoles, setCompletedRoles] = useState([])
-  const [expandedSection, setExpandedSection] = useState(null)
 
   const currentRole = ROLES.find(r => r.id === config.roles[currentRoleIndex])
   const Icon = currentRole?.icon || Users
@@ -693,7 +692,6 @@ function TrainingSession({ config, documents, onComplete, onBack }) {
         onComplete()
       } else {
         setCurrentRoleIndex(currentRoleIndex + 1)
-        setExpandedSection(null)
       }
     } catch (err) {
       alert('Failed to save: ' + err.message)
@@ -916,11 +914,9 @@ function InitialTraining({ role, documents, onComplete }) {
 // ============================================
 
 function RiskMatrix() {
-  const matrix = [
-    // [likelihood index][severity index] = { score, level, color }
-    // Severity: 1-Negligible, 2-Minor, 3-Moderate, 4-Major, 5-Catastrophic
-    // Likelihood: 1-Rare, 2-Unlikely, 3-Possible, 4-Likely, 5-Almost Certain
-  ]
+  // Risk matrix: Likelihood × Severity = Score (1-25)
+  // Severity: 1-Negligible, 2-Minor, 3-Moderate, 4-Major, 5-Catastrophic
+  // Likelihood: 1-Rare, 2-Unlikely, 3-Possible, 4-Likely, 5-Almost Certain
 
   const getCell = (l, s) => {
     const score = l * s
@@ -2005,7 +2001,7 @@ function RecurrentTraining({ role, onComplete }) {
 // FIELD REFERENCE (QRCs)
 // ============================================
 
-function FieldReference({ documents, onBack }) {
+function FieldReference({ onBack }) {
   const [expandedDoc, setExpandedDoc] = useState(null)
 
   // Filter for QRC-type documents or create static list
@@ -2074,15 +2070,15 @@ export default function Training() {
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   const loadData = async () => {
     const docs = await getDocuments()
     setDocuments(docs || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   if (loading) {
     return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" /></div>
@@ -2142,7 +2138,7 @@ export default function Training() {
       )}
 
       {view === 'reference' && (
-        <FieldReference documents={documents} onBack={() => setView('tracker')} />
+        <FieldReference onBack={() => setView('tracker')} />
       )}
     </div>
   )
