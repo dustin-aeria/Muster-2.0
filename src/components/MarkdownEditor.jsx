@@ -214,10 +214,93 @@ export function MarkdownPreview({ content }) {
       // Contains common flowchart keywords
       const hasFlowchartKeywords = /\b(Start|End|Begin|Stop|Return|Continue|Flow|Checklist|Response)\b/i.test(trimmedCode)
 
-      // All procedure-like content gets light background for readability
+      // All procedure-like content gets styled rendering
       if (hasBoxDrawing || hasArrows || hasAsciiFlowchart || hasCheckboxes || hasCallResponse ||
           hasNumberedSteps || hasBullets || hasAlignedContent || hasDecisionPoints || hasFlowchartKeywords) {
-        // Format the content with highlighted elements
+
+        // Try to render as visual flowchart if it has numbered steps or flow structure
+        const lines = trimmedCode.split('\n').filter(l => l.trim())
+        const isFlowchart = lines.some(l => /^\s*\d+\s+[A-Z]/.test(l)) ||
+                           lines.some(l => /^(Level|Phase|Step)\s*\d/i.test(l)) ||
+                           (hasFlowchartKeywords && lines.length >= 2)
+
+        if (isFlowchart) {
+          // Parse and render as visual flowchart
+          let flowHtml = '<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; margin: 20px 0;">'
+
+          let stepNumber = 0
+          for (const line of lines) {
+            const trimmedLine = line.trim()
+
+            // Skip empty lines and pure decoration
+            if (!trimmedLine || /^[\-\|\/\\↓↑]+$/.test(trimmedLine)) continue
+
+            // Check if it's a numbered step
+            const numberedMatch = trimmedLine.match(/^(\d+)\s+(.+)$/)
+            // Check if it's a labeled section
+            const labelMatch = trimmedLine.match(/^(Level|Phase|Step|Stage)\s*(\d+)?[:\s]*(.*)$/i)
+
+            if (numberedMatch || labelMatch) {
+              // Add arrow connector (except for first item)
+              if (stepNumber > 0) {
+                flowHtml += '<div style="display: flex; flex-direction: column; align-items: center;"><svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 0 L12 24 M6 18 L12 24 L18 18" stroke="#131CD0" stroke-width="2" fill="none"/></svg></div>'
+              }
+
+              const num = numberedMatch ? numberedMatch[1] : (labelMatch[2] || (stepNumber + 1))
+              const text = numberedMatch ? numberedMatch[2] : (labelMatch[3] || labelMatch[0])
+
+              // Determine box style based on content
+              let bgColor = '#ffffff'
+              let borderColor = '#131CD0'
+              let icon = ''
+
+              if (/checklist|check|verify/i.test(text)) {
+                bgColor = '#eff6ff'
+                borderColor = '#3b82f6'
+                icon = '☑'
+              } else if (/response|call/i.test(text)) {
+                bgColor = '#f0fdf4'
+                borderColor = '#22c55e'
+                icon = '💬'
+              } else if (/warning|caution|alert/i.test(text)) {
+                bgColor = '#fef3c7'
+                borderColor = '#f59e0b'
+                icon = '⚠'
+              } else if (/emergency|critical/i.test(text)) {
+                bgColor = '#fef2f2'
+                borderColor = '#ef4444'
+                icon = '🚨'
+              } else if (/start|begin/i.test(text)) {
+                bgColor = '#ecfdf5'
+                borderColor = '#10b981'
+                icon = '▶'
+              } else if (/end|stop|complete/i.test(text)) {
+                bgColor = '#fdf4ff'
+                borderColor = '#a855f7'
+                icon = '⏹'
+              }
+
+              flowHtml += `<div style="display: flex; align-items: center; gap: 12px; background: ${bgColor}; border: 2px solid ${borderColor}; border-radius: 10px; padding: 14px 20px; min-width: 280px; max-width: 400px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <div style="width: 32px; height: 32px; background: ${borderColor}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">${num}</div>
+                <div style="flex: 1; font-weight: 500; color: #1f2937; font-size: 14px;">${icon ? icon + ' ' : ''}${text}</div>
+              </div>`
+
+              stepNumber++
+            } else if (/^(YES|NO|TRUE|FALSE)$/i.test(trimmedLine)) {
+              // Decision branch label
+              const isYes = /^(YES|TRUE)$/i.test(trimmedLine)
+              flowHtml += `<div style="background: ${isYes ? '#dcfce7' : '#fee2e2'}; color: ${isYes ? '#166534' : '#991b1b'}; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 12px; text-transform: uppercase;">${trimmedLine}</div>`
+            } else if (trimmedLine.length > 3 && !/^[\-\|\+\/\\]+$/.test(trimmedLine)) {
+              // Regular text content - smaller info box
+              flowHtml += `<div style="background: #f1f5f9; border-left: 3px solid #94a3b8; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #475569; max-width: 350px; text-align: center;">${trimmedLine}</div>`
+            }
+          }
+
+          flowHtml += '</div>'
+          return flowHtml
+        }
+
+        // Fallback: Format as styled text block with highlighted elements
         let formattedCode = trimmedCode
           .replace(/☐/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
           .replace(/\[ \]/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
