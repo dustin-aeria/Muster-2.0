@@ -214,205 +214,24 @@ export function MarkdownPreview({ content }) {
       // Contains common flowchart keywords
       const hasFlowchartKeywords = /\b(Start|End|Begin|Stop|Return|Continue|Flow|Checklist|Response)\b/i.test(trimmedCode)
 
-      // All procedure-like content gets styled rendering
+      // All procedure-like content gets styled rendering - PRESERVE ASCII STRUCTURE
+      // Clean and simple approach: display as monospace text with minimal enhancements
       if (hasBoxDrawing || hasArrows || hasAsciiFlowchart || hasCheckboxes || hasCallResponse ||
           hasNumberedSteps || hasBullets || hasAlignedContent || hasDecisionPoints || hasFlowchartKeywords) {
 
-        const lines = trimmedCode.split('\n')
-
-        // Check if this is a decision tree (has YES/NO branching)
-        const isDecisionTree = hasDecisionPoints && lines.some(l => /[\/\\]/.test(l))
-
-        // Check if this is a numbered flowchart
-        const isNumberedFlowchart = lines.some(l => /^\s*\d+\s+[A-Z]/.test(l)) ||
-                                    lines.some(l => /^(Level|Phase|Step)\s*\d/i.test(l))
-
-        if (isDecisionTree) {
-          // Render decision tree with styled boxes
-          let flowHtml = '<div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 24px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; margin: 20px 0; font-family: system-ui, -apple-system, sans-serif;">'
-
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i]
-            const trimmedLine = line.trim()
-
-            // Skip empty lines
-            if (!trimmedLine) continue
-
-            // Connector lines (|, /, \)
-            if (/^[\s]*[\|│][\s]*$/.test(line)) {
-              flowHtml += '<svg width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="0" x2="12" y2="24" stroke="#131CD0" stroke-width="2"/></svg>'
-              continue
-            }
-
-            // Branch lines (/ \)
-            if (/^\s*\/\s+\\?\s*$/.test(trimmedLine) || /^\s*\/\s*$/.test(trimmedLine) || /^\s*\\\s*$/.test(trimmedLine)) {
-              flowHtml += '<svg width="120" height="30" viewBox="0 0 120 30"><line x1="60" y1="0" x2="20" y2="28" stroke="#131CD0" stroke-width="2"/><line x1="60" y1="0" x2="100" y2="28" stroke="#131CD0" stroke-width="2"/></svg>'
-              continue
-            }
-
-            // YES/NO side by side
-            if (/^\s*(YES|TRUE)\s+(NO|FALSE)\s*$/i.test(trimmedLine)) {
-              flowHtml += `<div style="display: flex; gap: 60px; margin: 8px 0;">
-                <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 4px rgba(22,101,52,0.2);">YES</div>
-                <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 4px rgba(153,27,27,0.2);">NO</div>
-              </div>`
-              continue
-            }
-
-            // Single YES or NO
-            if (/^(YES|TRUE)$/i.test(trimmedLine)) {
-              flowHtml += '<div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 4px rgba(22,101,52,0.2);">YES</div>'
-              continue
-            }
-            if (/^(NO|FALSE)$/i.test(trimmedLine)) {
-              flowHtml += '<div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 4px rgba(153,27,27,0.2);">NO</div>'
-              continue
-            }
-
-            // Two items side by side (like "GROUNDED    Announced?")
-            const sideBySideMatch = trimmedLine.match(/^(\S+(?:\s+\S+)?)\s{2,}(\S+.*)$/)
-            if (sideBySideMatch) {
-              const left = sideBySideMatch[1]
-              const right = sideBySideMatch[2]
-
-              const getBoxStyle = (text) => {
-                if (/grounded|stop|terminate|abort/i.test(text)) {
-                  return 'background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border: 2px solid #ef4444; color: #991b1b;'
-                } else if (/\?$/.test(text)) {
-                  return 'background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; color: #92400e;'
-                } else if (/level|monitor|continue/i.test(text)) {
-                  return 'background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 2px solid #3b82f6; color: #1e40af;'
-                }
-                return 'background: white; border: 2px solid #131CD0; color: #1f2937;'
-              }
-
-              flowHtml += `<div style="display: flex; gap: 40px; margin: 8px 0;">
-                <div style="${getBoxStyle(left)} padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 13px; min-width: 100px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">${left}</div>
-                <div style="${getBoxStyle(right)} padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 13px; min-width: 100px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">${right}</div>
-              </div>`
-              continue
-            }
-
-            // Question box (ends with ?)
-            if (/\?$/.test(trimmedLine)) {
-              flowHtml += `<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; color: #92400e; box-shadow: 0 4px 12px rgba(245,158,11,0.25); margin: 8px 0;">❓ ${trimmedLine}</div>`
-              continue
-            }
-
-            // Action/state boxes (all caps or title case without question mark)
-            if (/^[A-Z][A-Z\s]+$/.test(trimmedLine) || /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*$/.test(trimmedLine)) {
-              let boxStyle = 'background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px solid #3b82f6; color: #1e40af;'
-
-              if (/grounded|stop|terminate|abort|emergency/i.test(trimmedLine)) {
-                boxStyle = 'background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border: 2px solid #ef4444; color: #991b1b;'
-              } else if (/start|begin|detect/i.test(trimmedLine)) {
-                boxStyle = 'background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; color: #065f46;'
-              } else if (/monitor|continue|restrict/i.test(trimmedLine)) {
-                boxStyle = 'background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; color: #166534;'
-              } else if (/descend|rth|return/i.test(trimmedLine)) {
-                boxStyle = 'background: linear-gradient(135deg, #fdf4ff 0%, #f5d0fe 100%); border: 2px solid #a855f7; color: #7e22ce;'
-              }
-
-              flowHtml += `<div style="${boxStyle} padding: 14px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">${trimmedLine}</div>`
-              continue
-            }
-
-            // Default: regular text box
-            if (trimmedLine.length > 2 && !/^[\|\-\/\\]+$/.test(trimmedLine)) {
-              flowHtml += `<div style="background: white; border: 2px solid #131CD0; padding: 14px 24px; border-radius: 10px; font-weight: 500; font-size: 14px; color: #1f2937; box-shadow: 0 4px 12px rgba(19,28,208,0.15); margin: 8px 0;">${trimmedLine}</div>`
-            }
-          }
-
-          flowHtml += '</div>'
-          return flowHtml
-        }
-
-        if (isNumberedFlowchart) {
-          // Parse and render as visual flowchart
-          let flowHtml = '<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; margin: 20px 0;">'
-
-          let stepNumber = 0
-          const filteredLines = lines.filter(l => l.trim())
-
-          for (const line of filteredLines) {
-            const trimmedLine = line.trim()
-
-            // Skip empty lines and pure decoration
-            if (!trimmedLine || /^[\-\|\/\\↓↑]+$/.test(trimmedLine)) continue
-
-            // Check if it's a numbered step
-            const numberedMatch = trimmedLine.match(/^(\d+)\s+(.+)$/)
-            // Check if it's a labeled section
-            const labelMatch = trimmedLine.match(/^(Level|Phase|Step|Stage)\s*(\d+)?[:\s]*(.*)$/i)
-
-            if (numberedMatch || labelMatch) {
-              // Add arrow connector (except for first item)
-              if (stepNumber > 0) {
-                flowHtml += '<div style="display: flex; flex-direction: column; align-items: center;"><svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 0 L12 24 M6 18 L12 24 L18 18" stroke="#131CD0" stroke-width="2" fill="none"/></svg></div>'
-              }
-
-              const num = numberedMatch ? numberedMatch[1] : (labelMatch[2] || (stepNumber + 1))
-              const text = numberedMatch ? numberedMatch[2] : (labelMatch[3] || labelMatch[0])
-
-              // Determine box style based on content
-              let bgColor = '#ffffff'
-              let borderColor = '#131CD0'
-              let icon = ''
-
-              if (/checklist|check|verify/i.test(text)) {
-                bgColor = '#eff6ff'
-                borderColor = '#3b82f6'
-                icon = '☑'
-              } else if (/response|call/i.test(text)) {
-                bgColor = '#f0fdf4'
-                borderColor = '#22c55e'
-                icon = '💬'
-              } else if (/warning|caution|alert/i.test(text)) {
-                bgColor = '#fef3c7'
-                borderColor = '#f59e0b'
-                icon = '⚠'
-              } else if (/emergency|critical/i.test(text)) {
-                bgColor = '#fef2f2'
-                borderColor = '#ef4444'
-                icon = '🚨'
-              } else if (/start|begin/i.test(text)) {
-                bgColor = '#ecfdf5'
-                borderColor = '#10b981'
-                icon = '▶'
-              } else if (/end|stop|complete/i.test(text)) {
-                bgColor = '#fdf4ff'
-                borderColor = '#a855f7'
-                icon = '⏹'
-              }
-
-              flowHtml += `<div style="display: flex; align-items: center; gap: 12px; background: ${bgColor}; border: 2px solid ${borderColor}; border-radius: 10px; padding: 14px 20px; min-width: 280px; max-width: 400px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                <div style="width: 32px; height: 32px; background: ${borderColor}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">${num}</div>
-                <div style="flex: 1; font-weight: 500; color: #1f2937; font-size: 14px;">${icon ? icon + ' ' : ''}${text}</div>
-              </div>`
-
-              stepNumber++
-            } else if (/^(YES|NO|TRUE|FALSE)$/i.test(trimmedLine)) {
-              // Decision branch label
-              const isYes = /^(YES|TRUE)$/i.test(trimmedLine)
-              flowHtml += `<div style="background: ${isYes ? '#dcfce7' : '#fee2e2'}; color: ${isYes ? '#166534' : '#991b1b'}; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 12px; text-transform: uppercase;">${trimmedLine}</div>`
-            } else if (trimmedLine.length > 3 && !/^[\-\|\+\/\\]+$/.test(trimmedLine)) {
-              // Regular text content - smaller info box
-              flowHtml += `<div style="background: #f1f5f9; border-left: 3px solid #94a3b8; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #475569; max-width: 350px; text-align: center;">${trimmedLine}</div>`
-            }
-          }
-
-          flowHtml += '</div>'
-          return flowHtml
-        }
-
-        // Fallback: Format as styled text block with highlighted elements
-        let formattedCode = trimmedCode
+        // Subtle inline highlighting (keeps position intact)
+        let styledContent = trimmedCode
+          .replace(/\bYES\b/g, '<span style="color: #16a34a; font-weight: 600;">YES</span>')
+          .replace(/\bNO\b/g, '<span style="color: #dc2626; font-weight: 600;">NO</span>')
+          // Highlight checkboxes
           .replace(/☐/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
           .replace(/\[ \]/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
+          // Highlight arrows
           .replace(/([↓↑←→↔⇒⇐⇔])/g, '<span style="color: #131CD0; font-weight: bold;">$1</span>')
+          // Highlight speaker labels
           .replace(/^(PIC|VO|OPIC|IPIC):/gm, '<strong style="color: #132163;">$1:</strong>')
 
-        return `<pre style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #131CD0; border-radius: 6px; padding: 16px; margin: 16px 0; font-family: 'SF Mono', 'Cascadia Code', Consolas, Monaco, monospace; font-size: 13px; line-height: 1.6; color: #1f2937; white-space: pre-wrap;">${formattedCode}</pre>`
+        return `<pre style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px 24px; margin: 16px 0; font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 13px; line-height: 1.5; color: #1e293b; white-space: pre; overflow-x: auto;">${styledContent}</pre>`
       }
 
       // Regular code block - dark theme (only for actual code)
