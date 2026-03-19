@@ -38,24 +38,132 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Map folder names to categories
+// New domain-based categories (consolidated from 11 to 6)
+const CATEGORIES = {
+  RPAS_OPERATIONS: 'RPAS Operations',
+  SAFETY_HSE: 'Safety & HSE',
+  TRAINING: 'Training',
+  MAINTENANCE: 'Maintenance',
+  GOVERNANCE: 'Governance',
+  LAND_MARINE: 'Land & Marine'
+}
+
+// Map folder names to categories (legacy support, but doc_number takes precedence)
 const FOLDER_TO_CATEGORY = {
-  '00_Governance': 'Governance',
-  '01_RPAS_Operations': 'Operations',
-  '02_SMS': 'Safety',
-  '03_MCM': 'Maintenance',
-  '04_TCP': 'Training',
-  '05_CRM': 'Training',
-  '06_HSE': 'Health & Safety',
-  '07_Land_Marine': 'Operations',
-  '08_Admin': 'Administrative',
-  '08_Administrative': 'Administrative',
-  '09_Forms': 'Forms',
-  '10_QRC': 'Quick Reference',
-  '11_FHA': 'Hazard Assessment',
-  '11_Regulatory': 'Regulatory',
-  '12_FHA': 'Hazard Assessment',
-  '12_Regulatory_Templates': 'Regulatory'
+  '00_Governance': CATEGORIES.GOVERNANCE,
+  '01_RPAS_Operations': CATEGORIES.RPAS_OPERATIONS,
+  '02_SMS': CATEGORIES.SAFETY_HSE,
+  '03_MCM': CATEGORIES.MAINTENANCE,
+  '04_TCP': CATEGORIES.TRAINING,
+  '05_CRM': CATEGORIES.TRAINING,
+  '06_HSE': CATEGORIES.SAFETY_HSE,
+  '07_Land_Marine': CATEGORIES.LAND_MARINE,
+  '08_Admin': CATEGORIES.GOVERNANCE,
+  '08_Administrative': CATEGORIES.GOVERNANCE,
+  '09_Forms': CATEGORIES.RPAS_OPERATIONS, // Default, will be overridden by doc_number logic
+  '10_QRC': CATEGORIES.RPAS_OPERATIONS, // Default, will be overridden by doc_number logic
+  '11_FHA': CATEGORIES.SAFETY_HSE, // Default, will be overridden by doc_number logic
+  '11_Regulatory': CATEGORIES.GOVERNANCE,
+  '12_FHA': CATEGORIES.SAFETY_HSE,
+  '12_Regulatory_Templates': CATEGORIES.GOVERNANCE
+}
+
+// Document prefix to category mapping (takes precedence over folder)
+const PREFIX_TO_CATEGORY = {
+  'OPS': CATEGORIES.RPAS_OPERATIONS,
+  'HSE': CATEGORIES.SAFETY_HSE,
+  'SMS': CATEGORIES.SAFETY_HSE,
+  'TCP': CATEGORIES.TRAINING,
+  'CRM': CATEGORIES.TRAINING,
+  'MCM': CATEGORIES.MAINTENANCE,
+  'GOV': CATEGORIES.GOVERNANCE,
+  'ADM': CATEGORIES.GOVERNANCE,
+  'REG': CATEGORIES.GOVERNANCE,
+  'LM': CATEGORIES.LAND_MARINE,
+}
+
+// Form category mapping based on form purpose
+const FORM_CATEGORY_MAP = {
+  'FRM-PREFLIGHT': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-POSTFLIGHT': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-FLIGHT': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-SITESURVEY': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-CARGO': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-AVALANCHE': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-AIRSPACE': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-WEATHER': CATEGORIES.RPAS_OPERATIONS,
+  'FRM-FLHA': CATEGORIES.SAFETY_HSE,
+  'FRM-INCIDENT': CATEGORIES.SAFETY_HSE,
+  'FRM-NEARMISS': CATEGORIES.SAFETY_HSE,
+  'FRM-INVESTIGATION': CATEGORIES.SAFETY_HSE,
+  'FRM-CORRECTIVE': CATEGORIES.SAFETY_HSE,
+  'FRM-WITNESS': CATEGORIES.SAFETY_HSE,
+  'FRM-DRILL': CATEGORIES.SAFETY_HSE,
+  'FRM-REFUSAL': CATEGORIES.SAFETY_HSE,
+  'FRM-SITEINSP': CATEGORIES.SAFETY_HSE,
+  'FRM-TAILGATE': CATEGORIES.SAFETY_HSE,
+  'FRM-SAFETYMEETING': CATEGORIES.SAFETY_HSE,
+  'FRM-WORKALONE': CATEGORIES.SAFETY_HSE,
+  'FRM-IMSAFE': CATEGORIES.SAFETY_HSE,
+  'FRM-HAZARD': CATEGORIES.SAFETY_HSE,
+  'FRM-RISK': CATEGORIES.SAFETY_HSE,
+  'FRM-OCCURRENCE': CATEGORIES.SAFETY_HSE,
+  'FRM-PPE': CATEGORIES.SAFETY_HSE,
+  'FRM-TRAINING': CATEGORIES.TRAINING,
+  'FRM-COMPETENCY': CATEGORIES.TRAINING,
+  'FRM-COMPCHECK': CATEGORIES.TRAINING,
+  'FRM-ORIENTATION': CATEGORIES.TRAINING,
+  'FRM-NEWWORKER': CATEGORIES.TRAINING,
+  'FRM-CONTRACTOR': CATEGORIES.TRAINING,
+  'FRM-TREC': CATEGORIES.TRAINING,
+  'FRM-MAINT': CATEGORIES.MAINTENANCE,
+  'FRM-BATTERY': CATEGORIES.MAINTENANCE,
+  'FRM-INSPECTION': CATEGORIES.MAINTENANCE,
+}
+
+// QRC category mapping based on QRC purpose
+const QRC_CATEGORY_MAP = {
+  'QRC-GENERAL': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-BVLOS': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-DELIVERY': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-AVALANCHE': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-PREFLIGHT': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-AIRSPACE': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-WEATHER': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-VOCALLS': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-NIGHT': CATEGORIES.RPAS_OPERATIONS,
+  'QRC-EMERGENCY': CATEGORIES.SAFETY_HSE,
+  'QRC-FLHA': CATEGORIES.SAFETY_HSE,
+  'QRC-FIRSTAID': CATEGORIES.SAFETY_HSE,
+  'QRC-WILDLIFE': CATEGORIES.SAFETY_HSE,
+  'QRC-WORKINGALONE': CATEGORIES.SAFETY_HSE,
+  'QRC-SPILL': CATEGORIES.SAFETY_HSE,
+  'QRC-BATTERY': CATEGORIES.MAINTENANCE,
+  'QRC-MAINTENANCE': CATEGORIES.MAINTENANCE,
+}
+
+// FHA category mapping (by number)
+const FHA_CATEGORY_MAP = {
+  'FHA-001': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-002': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-009': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-011': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-014': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-015': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-019': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-020': CATEGORIES.RPAS_OPERATIONS,
+  'FHA-003': CATEGORIES.SAFETY_HSE,
+  'FHA-004': CATEGORIES.SAFETY_HSE,
+  'FHA-005': CATEGORIES.SAFETY_HSE,
+  'FHA-006': CATEGORIES.SAFETY_HSE,
+  'FHA-007': CATEGORIES.SAFETY_HSE,
+  'FHA-008': CATEGORIES.SAFETY_HSE,
+  'FHA-012': CATEGORIES.SAFETY_HSE,
+  'FHA-013': CATEGORIES.SAFETY_HSE,
+  'FHA-016': CATEGORIES.SAFETY_HSE,
+  'FHA-017': CATEGORIES.SAFETY_HSE,
+  'FHA-018': CATEGORIES.SAFETY_HSE,
+  'FHA-010': CATEGORIES.LAND_MARINE, // Marine operations
 }
 
 // Sort order mapping - logical reading sequence
@@ -294,18 +402,78 @@ function getAllMarkdownFiles(dir, files = []) {
   return files
 }
 
-// Get category from file path
-function getCategory(filePath) {
-  const parts = filePath.split(/[/\\]/)
+// Get category from file path and doc_number
+// Doc_number-based categorization takes precedence over folder-based
+function getCategory(filePath, docNumber, title) {
+  const docNum = (docNumber || '').toUpperCase()
+  const titleUpper = (title || '').toUpperCase()
 
-  // Find the v5.0 folder and get the next part
+  // Check FHA mapping first (specific assignments)
+  if (docNum.startsWith('FHA-')) {
+    if (FHA_CATEGORY_MAP[docNum]) {
+      return FHA_CATEGORY_MAP[docNum]
+    }
+    return CATEGORIES.SAFETY_HSE // Default FHAs
+  }
+
+  // Check QRC mapping
+  if (docNum.startsWith('QRC-')) {
+    if (QRC_CATEGORY_MAP[docNum]) {
+      return QRC_CATEGORY_MAP[docNum]
+    }
+    // Try partial match (e.g., QRC-EMERGENCY-FULL matches QRC-EMERGENCY)
+    for (const [key, category] of Object.entries(QRC_CATEGORY_MAP)) {
+      if (docNum.startsWith(key)) {
+        return category
+      }
+    }
+    return CATEGORIES.RPAS_OPERATIONS // Default QRCs
+  }
+
+  // Check Form mapping
+  if (docNum.startsWith('FRM-')) {
+    if (FORM_CATEGORY_MAP[docNum]) {
+      return FORM_CATEGORY_MAP[docNum]
+    }
+    // Try partial match
+    for (const [key, category] of Object.entries(FORM_CATEGORY_MAP)) {
+      if (docNum.startsWith(key)) {
+        return category
+      }
+    }
+    // Infer from title
+    if (titleUpper.includes('TRAINING') || titleUpper.includes('COMPETENCY')) {
+      return CATEGORIES.TRAINING
+    }
+    if (titleUpper.includes('SAFETY') || titleUpper.includes('HAZARD') || titleUpper.includes('INCIDENT')) {
+      return CATEGORIES.SAFETY_HSE
+    }
+    if (titleUpper.includes('MAINT') || titleUpper.includes('BATTERY')) {
+      return CATEGORIES.MAINTENANCE
+    }
+    return CATEGORIES.RPAS_OPERATIONS // Default forms
+  }
+
+  // Check GUIDE prefix
+  if (docNum.startsWith('GUIDE') || titleUpper.includes('GUIDE')) {
+    return CATEGORIES.TRAINING
+  }
+
+  // Check standard document prefixes
+  const prefix = docNum.split('-')[0]
+  if (PREFIX_TO_CATEGORY[prefix]) {
+    return PREFIX_TO_CATEGORY[prefix]
+  }
+
+  // Fall back to folder-based categorization
+  const parts = filePath.split(/[/\\]/)
   const v5Index = parts.findIndex(p => p === 'v5.0')
   if (v5Index !== -1 && parts[v5Index + 1]) {
     const folder = parts[v5Index + 1]
-    return FOLDER_TO_CATEGORY[folder] || 'Other'
+    return FOLDER_TO_CATEGORY[folder] || CATEGORIES.RPAS_OPERATIONS
   }
 
-  return 'Other'
+  return CATEGORIES.RPAS_OPERATIONS
 }
 
 // Get subcategory/tags from path
@@ -340,12 +508,13 @@ async function importDocuments() {
 
     const docNumber = getDocNumber(filename)
     const docType = getDocType(filename)
+    const title = getTitle(filename)
 
     const doc = {
-      title: getTitle(filename),
+      title: title,
       doc_type: docType,
       doc_number: docNumber,
-      category: getCategory(filePath),
+      category: getCategory(filePath, docNumber, title),
       content: content,
       version: '1.0',
       status: 'active',

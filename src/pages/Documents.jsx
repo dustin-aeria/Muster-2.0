@@ -37,18 +37,12 @@ const DOC_TYPES = [
 ]
 
 const DOC_CATEGORIES = [
-  'Governance',
-  'Flight Operations',
-  'Safety',
-  'Maintenance',
+  'RPAS Operations',
+  'Safety & HSE',
   'Training',
-  'Operations',
-  'Administrative',
-  'Forms',
-  'Quick Reference',
-  'Hazard Assessment',
-  'Regulatory',
-  'Other'
+  'Maintenance',
+  'Governance',
+  'Land & Marine'
 ]
 
 const DOC_STATUSES = [

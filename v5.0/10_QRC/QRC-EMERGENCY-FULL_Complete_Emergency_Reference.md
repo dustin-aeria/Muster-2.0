@@ -327,4 +327,8 @@ is [DISTANCE] nautical miles."
 
 ---
 
-**QRC-EMERGENCY-FULL v5.0 | Aeria Solutions Ltd**
+**Reference:** OPS-011-PR RPAS Emergency Procedures Manual (Master Document)
+
+---
+
+**QRC-EMERGENCY-FULL v5.1 | Aeria Solutions Ltd**
