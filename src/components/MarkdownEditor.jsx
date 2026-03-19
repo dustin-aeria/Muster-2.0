@@ -189,32 +189,29 @@ export function MarkdownPreview({ content }) {
     html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
       const trimmedCode = code.trim()
 
-      // Check if this is an ASCII box/flowchart (contains box-drawing characters U+2500-U+257F)
-      const isFlowchart = /[\u2500-\u257F]/.test(trimmedCode)
+      // Check if this is a flowchart, procedure, or structured content
+      // Includes: box-drawing (U+2500-U+257F), arrows (↓↑←→), checkboxes, call-response
+      const hasBoxDrawing = /[\u2500-\u257F]/.test(trimmedCode)
+      const hasArrows = /[↓↑←→↔⇒⇐⇔]/.test(trimmedCode)
+      const hasCheckboxes = trimmedCode.includes('☐') || trimmedCode.includes('[ ]')
+      const hasCallResponse = /^(PIC|VO|OPIC|IPIC|Step|Flow):/m.test(trimmedCode)
+      const hasNumberedSteps = /^\d+\.\s+\w/m.test(trimmedCode)
+      const hasBullets = /^[\-\•\*]\s/m.test(trimmedCode)
 
-      if (isFlowchart) {
-        // Flowcharts need exact spacing preserved - use pre with monospace font
-        // Using specific fonts known to render box-drawing characters well
-        return `<pre style="background: #f8fafc; border: 1px solid #d1d5db; border-radius: 8px; padding: 24px; margin: 20px 0; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.35; color: #1f2937; white-space: pre; overflow-x: auto; letter-spacing: 0;">${trimmedCode}</pre>`
-      }
-
-      // Check if this looks like a checklist/procedure (contains ☐ or checkbox-like content)
-      const isChecklist = trimmedCode.includes('☐') || trimmedCode.includes('[ ]') || /^[\-\•]\s/m.test(trimmedCode)
-      // Check if this looks like a call-response format (contains → or : followed by quoted text)
-      const isCallResponse = trimmedCode.includes('→') || /^(PIC|VO|OPIC|IPIC):/.test(trimmedCode)
-
-      if (isChecklist || isCallResponse) {
-        // Render as a styled procedure box
-        const formattedCode = trimmedCode
+      // All procedure-like content gets light background for readability
+      if (hasBoxDrawing || hasArrows || hasCheckboxes || hasCallResponse || hasNumberedSteps || hasBullets) {
+        // Format the content with highlighted elements
+        let formattedCode = trimmedCode
           .replace(/☐/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
           .replace(/\[ \]/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
-          .replace(/→/g, '<span style="color: #131CD0; font-weight: bold;">→</span>')
+          .replace(/([↓↑←→↔⇒⇐⇔])/g, '<span style="color: #131CD0; font-weight: bold;">$1</span>')
           .replace(/^(PIC|VO|OPIC|IPIC):/gm, '<strong style="color: #132163;">$1:</strong>')
-        return `<pre style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #131CD0; border-radius: 6px; padding: 16px; margin: 16px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #1f2937; white-space: pre-wrap;">${formattedCode}</pre>`
+
+        return `<pre style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #131CD0; border-radius: 6px; padding: 16px; margin: 16px 0; font-family: 'SF Mono', 'Cascadia Code', Consolas, Monaco, monospace; font-size: 13px; line-height: 1.6; color: #1f2937; white-space: pre-wrap;">${formattedCode}</pre>`
       }
 
-      // Regular code block - dark theme
-      return `<pre style="background: #1a1a2e; color: #e2e8f0; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 20px 0; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; border-left: 3px solid #131CD0; white-space: pre;"><code>${trimmedCode}</code></pre>`
+      // Regular code block - dark theme (only for actual code)
+      return `<pre style="background: #1e293b; color: #e2e8f0; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 20px 0; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; border-left: 3px solid #131CD0; white-space: pre;"><code>${trimmedCode}</code></pre>`
     })
 
     // TABLES - Process BEFORE lists to prevent interference
