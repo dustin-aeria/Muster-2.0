@@ -20,6 +20,7 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance update - Added SA Declaration requirements, L1C certificate requirements, EVLOS procedures, updated pilot certification sections | Dustin Wales |
 
 ---
 
@@ -70,12 +71,23 @@ This matrix covers:
 
 | Regulation | Requirement | Aeria Document(s) |
 |:-----------|:------------|:------------------|
-| **CAR 901.56** | Basic operations qualifications | RPAS-002, TCP-001 |
-| **CAR 901.63** | Recency requirements (24 months) | RPAS-002, RPAS-012-PR, TCP-003-PR |
-| **CAR 901.65** | Advanced operations qualifications | RPAS-002, TCP-001 |
-| **CAR 901.76-901.84** | Level 1 Complex requirements | RPAS-002, OPS-BVLOS-001, TCP-001 |
+| **CAR 901.56** | Basic operations qualifications | OPS-004, TCP-001 |
+| **CAR 901.63** | Recency requirements (24 months) | OPS-004 Section 4.10, OPS-007-PR |
+| **CAR 901.65** | Advanced operations qualifications | OPS-004, TCP-001 |
+| **CAR 901.76** | L1C pilot certificate requirements | OPS-004 Section 4.1, OPS-005, TCP-001 Section 3.3 |
+| **CAR 901.77** | L1C aircraft requirements | MCM-001, OPS-005 |
+| **CAR 901.78** | L1C operational limits | OPS-005, GOV-005 |
 
-### 3.3 Operating Rules
+### 3.3 Safety Assurance Declarations (November 2025 Updates)
+
+| Regulation | Requirement | Aeria Document(s) |
+|:-----------|:------------|:------------------|
+| **CAR 901.194** | Safety assurance declaration requirements | GOV-005 |
+| **Standard 922.67** | L1C declaration requirements | GOV-005, OPS-005 |
+| **Standard 922.67** | L1C ground training curriculum | OPS-007-PR Section 4.3, TCP-001 Section 3.3 |
+| **SORA** | Risk assessment methodology | GOV-005 Section 7 |
+
+### 3.4 Operating Rules
 
 | Regulation | Requirement | Aeria Document(s) |
 |:-----------|:------------|:------------------|
@@ -88,14 +100,17 @@ This matrix covers:
 | **CAR 901.48** | Record keeping | GOV-002, ADM-001-PR |
 | **CAR 901.49** | Occurrence reporting | RPAS-010, RPAS-007-PR, SMS-001 |
 
-### 3.4 BVLOS & Complex Operations
+### 3.5 BVLOS & Complex Operations
 
 | Regulation | Requirement | Aeria Document(s) |
 |:-----------|:------------|:------------------|
-| **CAR 901.76** | Level 1 Complex pilot certificate | RPAS-002, TCP-001 |
-| **CAR 901.77** | Level 1 Complex aircraft requirements | MCM-001, OPS-BVLOS-001 |
-| **CAR 901.78** | Level 1 Complex operational limits | OPS-BVLOS-001 |
-| **CAR 901.194** | Safety assurance declarations | RPAS-012-PR, SORA-T01 |
+| **CAR 901.67-901.76** | Level 1 Complex requirements | OPS-004, OPS-005, OPS-007-PR, TCP-001 |
+| **CAR 901.76** | L1C pilot certificate (TC-issued) | OPS-004 Section 4.1, OPS-005 Section 5.4 |
+| **CAR 901.77** | L1C aircraft requirements | MCM-001, OPS-005 Section 5.5 |
+| **CAR 901.78** | L1C operational limits | OPS-005 Section 5.3 |
+| **CAR 901.194** | Safety assurance declarations | GOV-005 |
+| **Standard 922.67** | L1C ground training curriculum | OPS-007-PR Section 4.3, TCP-001 Section 3.3 |
+| **AIM 3.4.5** | EVLOS operations | OPS-013-PR |
 
 ---
 
@@ -289,7 +304,15 @@ Use this section to track identified gaps and resolution status.
 
 | Gap ID | Regulation/Requirement | Gap Description | Resolution | Status |
 |:-------|:-----------------------|:----------------|:-----------|:-------|
-| — | — | None identified at v5.0 release | — | — |
+| GAP-001 | CAR 901.76 | TC L1C Certificate requirement not explicit | Updated OPS-004, OPS-005 | **CLOSED** |
+| GAP-002 | Standard 922.67 | L1C ground training curriculum not specified | Updated OPS-007-PR, TCP-001 | **CLOSED** |
+| GAP-003 | Standard 922.67 | L1C flight training hours not defined | Updated OPS-007-PR (5 flights min) | **CLOSED** |
+| GAP-004 | CAR 901.194 | Safety Assurance Declaration process missing | Created GOV-005 | **CLOSED** |
+| GAP-005 | AIM 3.4.5 | EVLOS procedure missing | Created OPS-013-PR | **CLOSED** |
+| GAP-006 | CAR 901.63 | Flight review detail insufficient | Updated OPS-004 Section 4.10 | **CLOSED** |
+| GAP-007 | AIM 3.2.10 | Transponder requirements not addressed | Updated OPS-002 Section 4.7 | **CLOSED** |
+
+**Last Gap Review:** March 19, 2026 (AIM 2026 Compliance Audit)
 
 ---
 
@@ -299,7 +322,13 @@ Use this section to track identified gaps and resolution status.
 |:-------|:---------------|
 | GOV-001 | Master Program Index |
 | GOV-003 | Organizational Structure & Accountability |
+| GOV-005 | Safety Assurance Declarations |
 | SMS-001 | Safety Management System Manual |
+| OPS-004 | Crew Qualifications Policy |
+| OPS-005 | BVLOS Operations Policy |
+| OPS-007-PR | Pilot Training Procedure |
+| OPS-013-PR | EVLOS Operations Procedure |
+| TCP-001 | Training & Competency Program Manual |
 | ADM-007 | Management Review Template |
 
 ---

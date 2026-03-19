@@ -20,6 +20,7 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Clarified TC L1C Certificate requirement per CAR 901.76, updated pilot requirements section | Dustin Wales |
 
 ---
 
@@ -100,13 +101,18 @@ L1C Declaration limitations (verify against current declaration):
 
 ### 5.4 Pilot Requirements
 
-BVLOS PICs shall:
-1. Hold Pilot Certificate - Advanced Operations
-2. Complete Aeria BVLOS ground school
-3. Complete supervised BVLOS practical training
-4. Pass BVLOS competency assessment
-5. Hold written BVLOS authorization from Operations Manager
-6. Maintain BVLOS currency (1 flight per 90 days)
+BVLOS PICs shall hold the following **regulatory certifications** (TC-issued):
+1. **Pilot Certificate - Advanced Operations** (TC-issued)
+2. **Pilot Certificate - Level 1 Complex Operations** (TC-issued per CAR 901.76)
+
+And complete the following **company requirements**:
+3. Complete Aeria L1C ground training per Standard 922.67 curriculum (see OPS-004 Section 4.3.1)
+4. Complete minimum 5 supervised BVLOS practical training flights
+5. Pass BVLOS competency assessment with Operations Manager
+6. Hold written BVLOS authorization letter from Operations Manager
+7. Maintain BVLOS currency (1 flight per 90 days)
+
+**CRITICAL:** Both TC certificates (Advanced AND L1C) must be valid AND company authorization must be current before conducting any BVLOS operation. Verify both before each L1C operation.
 
 ### 5.5 Aircraft Requirements
 
@@ -211,8 +217,13 @@ Maintain for each BVLOS operation:
 
 | Doc ID | Document Title |
 |:-------|:---------------|
+| GOV-005 | Safety Assurance Declarations |
+| OPS-004 | Crew Qualifications Policy |
+| OPS-007-PR | Pilot Training Procedure |
 | OPS-009-PR | BVLOS Operations Procedure |
 | OPS-011-PR | Emergency Procedures (RPAS) |
+| OPS-013-PR | EVLOS Operations Procedure |
+| TCP-001 | Training & Competency Program Manual |
 | GUIDE-BVLOS | BVLOS Operations Guide |
 | FRM-SITESURVEY | Site Survey Form |
 | L1C Declaration | Current declaration document |

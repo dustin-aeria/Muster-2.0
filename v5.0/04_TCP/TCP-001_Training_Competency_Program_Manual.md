@@ -20,6 +20,7 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added Section 3.3 L1C Pilot training requirements per Standard 922.67 | Dustin Wales |
 
 ---
 
@@ -87,11 +88,48 @@ This program applies to:
 
 | Training | Initial | Recurrent |
 |:---------|:--------|:----------|
-| Pilot certificate (TC) | Required | Per TC requirements |
+| Pilot certificate (TC) | Required | Per TC requirements (24-month review) |
 | Company operations training | Yes | Annual |
 | Aircraft type training | Per type | As needed |
 | Emergency procedures | Yes | Annual |
-| BVLOS (if authorized) | Yes | Annual |
+| BVLOS/L1C (if authorized) | Yes | Annual |
+
+### 3.3 Level 1 Complex (L1C) Pilot
+
+In addition to RPAS Pilot requirements:
+
+| Training | Initial | Recurrent |
+|:---------|:--------|:----------|
+| **TC L1C Certificate** | Required (TC-issued per CAR 901.76) | 24-month review |
+| **L1C Ground Training** | 16 hours minimum per Standard 922.67 | Annual refresher |
+| **SORA Methodology** | Yes | As regulations change |
+| **ConOps Understanding** | Yes | Per operation type |
+| **L1C Practical Training** | 5 supervised flights minimum | Currency + annual |
+| **L1C Written Exam** | 80% minimum | Annual |
+| **Lost Link Procedures** | Yes | Annual |
+| **Declaration Compliance** | Yes | Annual |
+
+#### L1C Ground Training Curriculum (per Standard 922.67)
+
+| Topic | Hours |
+|:------|:------|
+| Regulatory Framework (CAR 901.67-901.76, Standard 922) | 1 |
+| SORA Methodology | 2 |
+| Ground Risk Assessment (GRC) | 1.5 |
+| Air Risk Assessment (ARC) | 1.5 |
+| SAIL and Operational Safety Objectives | 1 |
+| Concept of Operations (ConOps) | 1 |
+| Containment Requirements | 1 |
+| C2 Link Requirements | 1 |
+| Lost Link Procedures | 1.5 |
+| Telemetry Monitoring | 1 |
+| BVLOS Emergency Procedures | 1.5 |
+| Site Assessment | 1 |
+| BVLOS Flight Planning | 1 |
+| Declaration Compliance | 1 |
+| **Total** | **16 hours** |
+
+See OPS-007-PR Pilot Training Procedure for detailed curriculum and OPS-004 Section 4.3.1.
 
 ### 3.3 Visual Observer
 
@@ -293,12 +331,16 @@ Improve training based on:
 
 | Doc ID | Document Title |
 |:-------|:---------------|
+| GOV-005 | Safety Assurance Declarations |
 | TCP-001-PR | New Personnel Orientation Procedure |
 | TCP-002-PR | Training Delivery Procedure |
 | TCP-003-PR | Competency Assessment Procedure |
 | TCP-004-PR | Training Records Procedure |
+| OPS-004 | Crew Qualifications Policy |
+| OPS-005 | BVLOS Operations Policy |
 | OPS-007-PR | Pilot Training Procedure |
 | OPS-008-PR | Visual Observer Training Procedure |
+| OPS-013-PR | EVLOS Operations Procedure |
 | FRM-TREC | Training Record Form |
 
 ---

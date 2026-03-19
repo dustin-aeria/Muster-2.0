@@ -20,6 +20,7 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added L1C pilot requirements, L1C ground training curriculum, flight review details per CAR 901.63 | Dustin Wales |
 
 ---
 
@@ -68,11 +69,24 @@ This policy applies to:
 
 | Requirement | Description |
 |:------------|:------------|
-| **Certificate** | Pilot Certificate - Advanced Operations |
+| **Certificate** | Pilot Certificate - Advanced Operations (TC-issued) |
 | **Age** | Minimum 16 years |
 | **Knowledge** | Pass Small Advanced Examination |
 | **Flight Review** | Advanced flight review |
 | **Recency** | Review within 24 months |
+
+#### Level 1 Complex (L1C) Pilot
+
+| Requirement | Description |
+|:------------|:------------|
+| **Certificate** | Pilot Certificate - Level 1 Complex Operations (TC-issued) |
+| **Prerequisites** | Hold Pilot Certificate - Advanced Operations |
+| **Ground Training** | Complete TC-approved L1C ground training per Standard 922.67 |
+| **Flight Training** | Complete L1C practical flight training |
+| **Competency** | Pass L1C competency evaluation |
+| **Recency** | Review within 24 months |
+
+**Note:** The TC-issued L1C Certificate is a regulatory requirement separate from company BVLOS authorization. Pilots conducting L1C/BVLOS operations must hold BOTH the TC certificate AND company authorization.
 
 ### 4.2 Company Authorization Requirements
 
@@ -93,11 +107,31 @@ In addition to Advanced requirements:
 
 | Requirement | Description |
 |:------------|:------------|
-| **Ground School** | Complete BVLOS ground training |
-| **Practical Training** | Supervised BVLOS flights |
-| **Assessment** | Pass BVLOS competency check |
-| **Operations Manager Approval** | Written authorization for BVLOS |
+| **TC L1C Certificate** | Hold Pilot Certificate - Level 1 Complex Operations (TC-issued) |
+| **Ground School** | Complete L1C ground training per Standard 922.67 (see Section 4.3.1) |
+| **Practical Training** | Minimum 5 supervised BVLOS flights demonstrating all competencies |
+| **Assessment** | Pass BVLOS competency check with Operations Manager |
+| **Company Authorization** | Written BVLOS authorization letter from Operations Manager |
 | **Recency** | BVLOS flight within 90 days |
+
+#### 4.3.1 L1C Ground Training Curriculum (per Standard 922.67)
+
+L1C ground training shall cover:
+
+| Topic | Content |
+|:------|:--------|
+| **SORA Methodology** | Ground risk class, air risk class, SAIL determination |
+| **Concept of Operations (ConOps)** | Development and documentation requirements |
+| **Ground Risk Assessment** | Population density, infrastructure, mitigations |
+| **Air Risk Assessment** | Airspace, traffic, collision avoidance |
+| **Operational Safety Objectives** | OSOs applicable to L1C operations |
+| **Containment** | Geographic and altitude containment requirements |
+| **C2 Link Requirements** | Command and control, range, redundancy |
+| **Lost Link Procedures** | Programming, execution, recovery |
+| **Emergency Procedures** | BVLOS-specific emergency response |
+| **Regulatory Requirements** | CAR 901.67-901.76, Standard 922 |
+
+Training shall be delivered by Operations Manager or approved L1C instructor.
 
 ### 4.4 Visual Observer Requirements
 
@@ -162,6 +196,33 @@ Pilots shall not fly if:
 
 See HSE-013 Fit for Duty Policy.
 
+### 4.10 Flight Review Requirements (CAR 901.63)
+
+Per CAR 901.63, pilots must complete a flight review within 24 months to maintain certificate validity.
+
+#### Flight Review Components
+
+| Component | Requirements |
+|:----------|:-------------|
+| **Ground Review** | Self-paced or online ground school acceptable; must cover current regulations, procedures, and knowledge areas per TP 15263 |
+| **Flight Review** | Practical flight assessment with qualified person |
+| **Documentation** | Certificate of completion or signed record |
+
+#### Who May Conduct Flight Reviews
+
+- TC-approved flight reviewer
+- Holder of Flight Instructor Rating (RPAS)
+- Person approved under L1C Declaration for flight training
+- Other person acceptable to the Minister
+
+#### Review Standards by Certificate Level
+
+| Level | Review Requirements |
+|:------|:--------------------|
+| **Basic** | Knowledge of basic operations regulations; basic flight maneuvers; emergency procedures |
+| **Advanced** | All basic plus advanced regulations; complex scenario handling; near-people/structure operations |
+| **L1C** | All advanced plus BVLOS-specific procedures; SORA/ConOps understanding; lost link procedures |
+
 ---
 
 ## 5. Authorization Process
@@ -208,9 +269,12 @@ See HSE-013 Fit for Duty Policy.
 
 | Doc ID | Document Title |
 |:-------|:---------------|
+| GOV-005 | Safety Assurance Declarations |
 | TCP-001 | Training & Competency Program Manual |
+| OPS-005 | BVLOS Operations Policy |
 | OPS-007-PR | Pilot Training Procedure |
 | OPS-008-PR | Visual Observer Training Procedure |
+| OPS-013-PR | EVLOS Operations Procedure |
 | FRM-PILOTAUTH | Pilot Authorization Form |
 | HSE-013 | Fit for Duty Policy |
 

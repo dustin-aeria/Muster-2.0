@@ -20,6 +20,7 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added Section 4.7 Transponder and ADS-B Requirements | Dustin Wales |
 
 ---
 
@@ -122,7 +123,26 @@ Before any flight, verify:
 | Built-up areas | Per operation category |
 | Emergency scenes | Maintain safe distance; 5 NM minimum |
 
-### 4.7 Special Use Airspace
+### 4.7 Transponder and ADS-B Requirements
+
+Certain controlled airspace operations may require transponder or ADS-B equipment.
+
+| Situation | Requirement |
+|:----------|:------------|
+| **Standard RPAS operations** | Transponder not typically required |
+| **ATC coordination operations** | ATC may require transponder for traffic separation |
+| **Specific SFOC conditions** | May require transponder/ADS-B as condition |
+| **High-traffic controlled airspace** | Verify requirements with NAV CANADA |
+
+**If transponder/ADS-B required:**
+- Verify equipment compatibility with RPA
+- Confirm ATC can see transponder returns
+- Follow specific ATC instructions
+- Document equipment serial and mode in flight plan
+
+**Note:** Most small RPA cannot carry traditional transponders. If ATC requires transponder for the operation, alternative arrangements (reduced operation hours, different location, etc.) may be necessary. Coordinate with Operations Manager before accepting transponder-required operations.
+
+### 4.8 Special Use Airspace
 
 **Restricted Areas:**
 - Require permission from controlling authority
@@ -138,7 +158,7 @@ Before any flight, verify:
 - Coordinate with controlling authority
 - Be aware of military traffic
 
-### 4.8 NOTAM Requirements
+### 4.9 NOTAM Requirements
 
 Check NOTAMs for:
 - Temporary restricted airspace
@@ -152,7 +172,7 @@ Check NOTAMs:
 - Again before departure to site
 - Using NavCanada briefing or approved apps
 
-### 4.9 Documentation
+### 4.10 Documentation
 
 Retain documentation of:
 - Airspace authorization requests and approvals

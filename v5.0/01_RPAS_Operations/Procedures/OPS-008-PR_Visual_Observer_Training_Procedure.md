@@ -208,6 +208,7 @@ Personnel from client sites may act as supplementary VOs if:
 |:-------|:---------------|
 | OPS-004 | Crew Qualifications Policy |
 | OPS-003-PR | Flight Conduct Procedure |
+| OPS-013-PR | EVLOS Operations Procedure |
 | FRM-TREC | Training Record Form |
 | QRC-VO | Visual Observer Quick Reference Card |
 

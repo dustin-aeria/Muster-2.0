@@ -20,6 +20,7 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added L1C ground training curriculum per Standard 922.67, minimum training hours, competency requirements | Dustin Wales |
 
 ---
 
@@ -119,43 +120,79 @@ For each aircraft type:
 - Must demonstrate proficiency
 - Documented on FRM-COMPCHECK
 
-### 4.3 BVLOS Authorization Training
+### 4.3 Level 1 Complex (L1C) / BVLOS Authorization Training
 
-**Prerequisites:**
-- Pilot Certificate - Advanced Operations
+**Regulatory Prerequisites:**
+- Hold Pilot Certificate - Advanced Operations (TC-issued)
+- Hold Pilot Certificate - Level 1 Complex Operations (TC-issued per CAR 901.76)
+
+**Company Prerequisites:**
 - Company authorization on at least one aircraft type
 - Minimum 10 hours company flight time (recommended)
 
-#### Ground Training
-| Topic | Content |
-|:------|:--------|
-| Regulations | BVLOS requirements, L1C conditions |
-| Risk assessment | SORA methodology, ground/air risk |
-| Site assessment | BVLOS site requirements |
-| Lost link procedures | Programming, execution |
-| Emergency procedures | BVLOS-specific emergencies |
-| Telemetry monitoring | Interpretation, action items |
-| Flight planning | BVLOS flight planning |
+**Note:** The TC L1C Certificate is obtained through TC-approved training providers or the Aeria L1C Declaration flight school program. Company L1C training supplements but does not replace TC certification requirements.
+
+#### Ground Training - L1C Curriculum (per Standard 922.67)
+
+| Topic | Content | Duration |
+|:------|:--------|:---------|
+| **Regulatory Framework** | CAR 901.67-901.76, Standard 922, L1C Declaration requirements | 1 hour |
+| **SORA Methodology** | Specific Operations Risk Assessment process | 2 hours |
+| **Ground Risk Assessment** | GRC determination, population density, infrastructure analysis | 1.5 hours |
+| **Air Risk Assessment** | ARC determination, airspace, traffic density, collision avoidance | 1.5 hours |
+| **SAIL and OSOs** | Specific Assurance Levels, Operational Safety Objectives | 1 hour |
+| **Concept of Operations** | ConOps development, documentation requirements | 1 hour |
+| **Containment** | Geographic/altitude containment, contingency volumes | 1 hour |
+| **C2 Link Requirements** | Command and control specifications, range, redundancy | 1 hour |
+| **Lost Link Procedures** | Programming, execution, automatic responses | 1.5 hours |
+| **Telemetry Monitoring** | Data interpretation, anomaly detection, action items | 1 hour |
+| **Emergency Procedures** | BVLOS-specific emergencies, recovery procedures | 1.5 hours |
+| **Site Assessment** | BVLOS site requirements, survey procedures | 1 hour |
+| **Flight Planning** | BVLOS-specific planning, documentation | 1 hour |
+| **Declaration Compliance** | Operating within L1C parameters, deviation reporting | 1 hour |
+
+**Total Ground Training:** Minimum 16 hours
+
+#### Written Examination
+
+- Minimum passing score: 80%
+- Covers all ground training topics
+- Open book permitted for regulatory references
+- Administered by Operations Manager
 
 #### Practical Training
-- Minimum 3 supervised BVLOS flights
-- Demonstrate proficiency in:
-  - BVLOS pre-flight
-  - Transition to BVLOS
-  - BVLOS operations
-  - Lost link simulation
-  - Emergency response
-  - Return and landing
+
+**Minimum 5 supervised BVLOS flights** demonstrating proficiency in:
+
+| Competency | Assessment Criteria |
+|:-----------|:--------------------|
+| BVLOS pre-flight | Complete BVLOS checklist; verify C2/telemetry; confirm lost link programming |
+| Site assessment | Correctly assess site for L1C compliance |
+| Transition to BVLOS | Smooth transition; maintain situational awareness |
+| BVLOS navigation | Accurate waypoint following; position awareness |
+| Telemetry monitoring | Correct interpretation; appropriate responses |
+| Lost link simulation | Correct procedure execution; recovery |
+| Emergency response | Appropriate decision-making; correct procedures |
+| Return and landing | Safe RTH execution; controlled landing |
+| Documentation | Complete and accurate flight documentation |
 
 #### Assessment
-- Operations Manager assessment
-- Written test (minimum 80%)
-- Practical evaluation
+
+- Operations Manager conducts final assessment
+- Covers all practical competencies above
+- Written test must be passed before practical assessment
+- Documented on FRM-COMPCHECK
 
 #### Authorization
-- Operations Manager issues BVLOS authorization letter
-- Specifies authorized aircraft
-- Specifies any conditions
+
+Upon successful completion:
+- Operations Manager issues BVLOS Authorization Letter
+- Letter specifies:
+  - Authorized aircraft types
+  - Any operational limitations
+  - Effective date
+- Copy retained in training records
+- Added to pilot roster with L1C designation
 
 ### 4.4 Recurrent Training
 
@@ -221,7 +258,9 @@ Maintain for each pilot:
 
 | Doc ID | Document Title |
 |:-------|:---------------|
+| GOV-005 | Safety Assurance Declarations |
 | OPS-004 | Crew Qualifications Policy |
+| OPS-005 | BVLOS Operations Policy |
 | TCP-001 | Training & Competency Program Manual |
 | FRM-PILOTAUTH | Pilot Authorization Form |
 | FRM-COMPCHECK | Competency Check Form |
