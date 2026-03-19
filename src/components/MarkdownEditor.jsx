@@ -189,12 +189,13 @@ export function MarkdownPreview({ content }) {
     html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
       const trimmedCode = code.trim()
 
-      // Check if this is an ASCII box/flowchart (contains box-drawing characters)
-      const isFlowchart = /[┌┐└┘├┤┬┴┼─│]/.test(trimmedCode)
+      // Check if this is an ASCII box/flowchart (contains box-drawing characters U+2500-U+257F)
+      const isFlowchart = /[\u2500-\u257F]/.test(trimmedCode)
 
       if (isFlowchart) {
-        // Flowcharts need exact spacing preserved - use pre with no modifications
-        return `<pre style="background: #f0f4f8; border: 2px solid #132163; border-radius: 8px; padding: 20px; margin: 20px 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; line-height: 1.4; color: #132163; white-space: pre; overflow-x: auto;">${trimmedCode}</pre>`
+        // Flowcharts need exact spacing preserved - use pre with monospace font
+        // Using specific fonts known to render box-drawing characters well
+        return `<pre style="background: #f8fafc; border: 1px solid #d1d5db; border-radius: 8px; padding: 24px; margin: 20px 0; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.35; color: #1f2937; white-space: pre; overflow-x: auto; letter-spacing: 0;">${trimmedCode}</pre>`
       }
 
       // Check if this looks like a checklist/procedure (contains ☐ or checkbox-like content)
