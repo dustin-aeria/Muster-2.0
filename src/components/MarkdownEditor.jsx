@@ -190,16 +190,33 @@ export function MarkdownPreview({ content }) {
       const trimmedCode = code.trim()
 
       // Check if this is a flowchart, procedure, or structured content
-      // Includes: box-drawing (U+2500-U+257F), arrows (↓↑←→), checkboxes, call-response
+      // Unicode box-drawing (U+2500-U+257F)
       const hasBoxDrawing = /[\u2500-\u257F]/.test(trimmedCode)
+      // Unicode arrows
       const hasArrows = /[↓↑←→↔⇒⇐⇔]/.test(trimmedCode)
+      // ASCII flowchart patterns (boxes, lines, corners)
+      const hasAsciiFlowchart = /[\+\-]{3,}|^\s*[\|│]\s*$/m.test(trimmedCode) ||
+                                /[┌┐└┘├┤┬┴┼]/.test(trimmedCode) ||
+                                /\s+[\/\\]\s*$/.test(trimmedCode) ||
+                                /^\s*[\/\\]\s+/m.test(trimmedCode)
+      // Checkboxes
       const hasCheckboxes = trimmedCode.includes('☐') || trimmedCode.includes('[ ]')
-      const hasCallResponse = /^(PIC|VO|OPIC|IPIC|Step|Flow):/m.test(trimmedCode)
-      const hasNumberedSteps = /^\d+\.\s+\w/m.test(trimmedCode)
-      const hasBullets = /^[\-\•\*]\s/m.test(trimmedCode)
+      // Call-response patterns (PIC:, VO:, Step 1:, etc.)
+      const hasCallResponse = /^(PIC|VO|OPIC|IPIC|Step|Flow|Level|Phase)[\s:]|^\d+\s+[A-Z]/m.test(trimmedCode)
+      // Numbered steps or items
+      const hasNumberedSteps = /^\s*\d+[\.\)]\s+\w/m.test(trimmedCode)
+      // Bullet points
+      const hasBullets = /^[\s]*[\-\•\*]\s/m.test(trimmedCode)
+      // Multiple lines with alignment (typical of flowcharts/diagrams)
+      const hasAlignedContent = /^\s{2,}\S/m.test(trimmedCode) && trimmedCode.split('\n').length > 3
+      // Contains YES/NO decision points
+      const hasDecisionPoints = /\b(YES|NO|TRUE|FALSE|IF|THEN|ELSE)\b/i.test(trimmedCode)
+      // Contains common flowchart keywords
+      const hasFlowchartKeywords = /\b(Start|End|Begin|Stop|Return|Continue|Flow|Checklist|Response)\b/i.test(trimmedCode)
 
       // All procedure-like content gets light background for readability
-      if (hasBoxDrawing || hasArrows || hasCheckboxes || hasCallResponse || hasNumberedSteps || hasBullets) {
+      if (hasBoxDrawing || hasArrows || hasAsciiFlowchart || hasCheckboxes || hasCallResponse ||
+          hasNumberedSteps || hasBullets || hasAlignedContent || hasDecisionPoints || hasFlowchartKeywords) {
         // Format the content with highlighted elements
         let formattedCode = trimmedCode
           .replace(/☐/g, '<span style="color: #131CD0; font-weight: bold;">☐</span>')
