@@ -354,6 +354,129 @@ export const DJI_ENTERPRISE_DRONES = [
     ]
   },
 
+  {
+    id: 'matrice-400',
+    name: 'Matrice 400',
+    series: 'Matrice',
+    category: 'Heavy Lift / Industrial',
+    released: '2025',
+    status: 'Current',
+
+    mtow: 12000, // 12 kg
+    emptyWeight: 7800, // grams (with batteries)
+    maxPayload: 4200, // grams
+    diagonal: 1850, // mm (props unfolded)
+    foldedDimensions: '480 x 460 x 480 mm',
+    unfoldedDimensions: '890 x 720 x 480 mm',
+
+    maxFlightTime: 50, // minutes (no payload)
+    maxFlightTimeWithPayload: 38, // minutes (with payload)
+    maxWindResistance: 15, // m/s
+    maxSpeed: 23, // m/s
+    maxAscentSpeed: 6, // m/s
+    maxDescentSpeed: 5, // m/s
+    maxAltitude: 7000, // meters MSL
+
+    operatingTemp: '-20 to 50',
+    ipRating: 'IP55',
+
+    transmissionSystem: 'O4 Enterprise',
+    maxTransmissionRange: 25, // km (FCC, unobstructed)
+    videoTransmission: '1080p @ 60fps',
+
+    obstacleAvoidance: {
+      directions: 6,
+      description: 'Omnidirectional obstacle sensing with enhanced AI',
+      horizontal: 'Forward/Backward/Left/Right: 0.5-50m',
+      upward: '0.2-15m',
+      downward: '0.3-20m'
+    },
+
+    safetyFeatures: [
+      'Triple-redundant flight control system',
+      'Dual battery system with hot-swap capability',
+      'Triple RTK antennas',
+      'FPV camera with night vision',
+      'ADS-B In/Out',
+      'Remote ID compliant (broadcast + network)',
+      'Triple redundant IMU',
+      'Redundant barometer',
+      'Redundant compass',
+      'Integrated parachute system',
+      'Auto Return-to-Home',
+      'Low battery RTH',
+      'Failsafe RTH on signal loss',
+      'Advanced geofencing',
+      'Altitude limits',
+      'CSM radar compatible',
+      'DAA system ready'
+    ],
+
+    batteries: {
+      type: 'TB70 Intelligent Flight Battery',
+      capacity: '6200 mAh',
+      voltage: '52.8V',
+      chemistry: 'LiPo 14S',
+      chargingTime: '40-55 min (BS70 station)'
+    },
+
+    controller: 'DJI RC Plus 2',
+
+    compatiblePayloads: [
+      'Zenmuse H30',
+      'Zenmuse H30T',
+      'Zenmuse P1',
+      'Zenmuse L2',
+      'Zenmuse L2 Plus',
+      'Third-party via DJI Payload SDK 4.0'
+    ],
+
+    mandatoryActions: [
+      'Firmware update check before each flight day',
+      'Battery health check (cycle count, voltage, temperature)',
+      'Propeller inspection (damage, secure mount, wear)',
+      'RTK calibration verification',
+      'Obstacle avoidance sensor cleaning and test',
+      'Parachute system status check',
+      'Compass calibration if required',
+      'IMU calibration if required',
+      'Return-to-Home altitude setting',
+      'Geofence/flight boundary configuration',
+      'DAA system verification (if equipped)',
+      'Emergency procedures briefing'
+    ],
+
+    maintenanceSchedule: {
+      beforeFlight: [
+        'Visual inspection of airframe',
+        'Propeller condition check',
+        'Battery charge level and health',
+        'Sensor lens cleaning',
+        'Firmware version verification',
+        'Parachute deployment indicator'
+      ],
+      every50Hours: [
+        'Full propeller replacement',
+        'Landing gear inspection',
+        'Motor inspection',
+        'Gimbal calibration',
+        'Parachute repack inspection'
+      ],
+      every200Hours: [
+        'Factory inspection required',
+        'Battery replacement evaluation',
+        'Full systems diagnostic'
+      ]
+    },
+
+    certifications: [
+      'FCC', 'CE', 'SRRC', 'MIC', 'KC',
+      'Transport Canada compliant',
+      'Remote ID compliant',
+      'EASA compliant'
+    ]
+  },
+
   // ============================================
   // MAVIC ENTERPRISE SERIES
   // ============================================
@@ -693,6 +816,118 @@ export const DJI_ENTERPRISE_DRONES = [
     ]
   },
 
+  {
+    id: 'flycart-100',
+    name: 'FlyCart 100',
+    series: 'FlyCart',
+    category: 'Heavy Cargo / Delivery',
+    released: '2025',
+    status: 'Current',
+
+    mtow: 200000, // 200 kg
+    emptyWeight: 95000, // 95 kg
+    maxPayload: 100000, // 100 kg cargo (120 kg winch mode)
+
+    maxFlightTime: 28, // minutes (no payload, quad battery)
+    maxFlightTimeWithPayload: 16, // with 100 kg payload
+    maxWindResistance: 12,
+    maxSpeed: 18,
+    maxAscentSpeed: 4,
+    maxDescentSpeed: 4,
+    maxAltitude: 5000,
+
+    operatingTemp: '-20 to 45',
+    ipRating: 'IP55',
+
+    transmissionSystem: 'O4 Enterprise Long Range',
+    maxTransmissionRange: 30,
+    videoTransmission: '1080p @ 30fps dual-feed',
+
+    obstacleAvoidance: {
+      directions: 6,
+      description: 'Omnidirectional radar + visual sensing',
+      range: 'Up to 100m detection range'
+    },
+
+    safetyFeatures: [
+      'Quad-redundant battery system',
+      'Dual parachute system (integrated)',
+      'Octa-redundant propulsion (8 motors)',
+      'Triple-redundant flight controller',
+      'ADS-B In/Out',
+      'Remote ID compliant (broadcast + network)',
+      'DAA system (Detect and Avoid)',
+      'Anti-collision beacon lights (high intensity)',
+      'Emergency landing system with terrain assessment',
+      'Geofencing with dynamic updates',
+      'Failsafe RTH with obstacle avoidance',
+      'Ground-Air-Ground communication redundancy',
+      'Black box flight recorder',
+      'Real-time structural monitoring',
+      'Automatic cargo jettison capability'
+    ],
+
+    batteries: {
+      type: 'FC100 High-Capacity Flight Battery',
+      configuration: 'Quad battery system',
+      capacity: '35000 mAh per battery',
+      swappable: true,
+      hotSwap: false
+    },
+
+    controller: 'DJI RC Plus Industrial',
+
+    cargoModes: [
+      'Direct cargo mode (100 kg max)',
+      'Winch delivery mode (120 kg max)',
+      'Multi-drop container mode',
+      'Medical/emergency supply mode'
+    ],
+
+    cargoSystem: {
+      bayDimensions: '1200 x 800 x 600 mm',
+      attachmentPoints: 8,
+      quickRelease: true,
+      weightSensor: 'Integrated load cells'
+    },
+
+    mandatoryActions: [
+      'Full pre-flight inspection checklist (40+ items)',
+      'Weight and balance calculation/verification',
+      'Cargo secure check with load cell verification',
+      'Quad battery system verification (all 4)',
+      'Dual parachute system deployment check',
+      'DAA system calibration and test',
+      'ADS-B transponder verification',
+      'Flight path clearance with ATC if required',
+      'Weather assessment (wind, precipitation, visibility)',
+      'Emergency landing sites identified (minimum 3)',
+      'Ground crew briefing and positioning',
+      'Communication systems test (primary + backup)',
+      'NOTAMs check and filing',
+      'SFOC compliance verification',
+      'Real-time monitoring station setup',
+      'Medical/emergency services notification (if applicable)'
+    ],
+
+    operationalRequirements: [
+      'SFOC required for all Canadian operations',
+      'Minimum 2 pilots required (PIC + VO/Safety)',
+      'Ground crew minimum 2 personnel',
+      'Flight operations manual required',
+      'Insurance coverage verification',
+      'Designated landing/takeoff zones',
+      'Visual observers for BVLOS portions'
+    ],
+
+    certifications: [
+      'Transport Canada SFOC compliant',
+      'Remote ID compliant',
+      'EASA certified',
+      'FAA Part 107 waiver eligible'
+    ]
+  },
+
   // ============================================
   // AGRAS SERIES (Agricultural)
   // ============================================
@@ -873,6 +1108,13 @@ export const TC_COMPLIANCE = {
     remoteIdCompliant: true,
     saRequirements: ['922.04', '922.05', '922.06', '922.07', '922.08', '922.09', '922.10', '922.11']
   },
+  'matrice-400': {
+    category: 'Small RPAS (<25 kg)',
+    operationTypes: ['VLOS', 'BVLOS (L1C)', 'Advanced Operations'],
+    remoteIdCompliant: true,
+    saRequirements: ['922.04', '922.05', '922.06', '922.07', '922.08', '922.09', '922.10', '922.11', '922.12'],
+    notes: 'Enhanced DAA capability supports expanded BVLOS operations'
+  },
   'mavic-3-enterprise': {
     category: 'Small RPAS (<25 kg)',
     operationTypes: ['VLOS', 'Advanced Operations'],
@@ -897,6 +1139,13 @@ export const TC_COMPLIANCE = {
     remoteIdCompliant: true,
     saRequirements: ['922.04', '922.05', '922.06', '922.07', '922.08', '922.09', '922.10', '922.11', '922.12'],
     notes: 'Requires Special Flight Operations Certificate (SFOC) for cargo operations in Canada'
+  },
+  'flycart-100': {
+    category: 'Large RPAS (>25 kg)',
+    operationTypes: ['SFOC Required'],
+    remoteIdCompliant: true,
+    saRequirements: ['922.04', '922.05', '922.06', '922.07', '922.08', '922.09', '922.10', '922.11', '922.12'],
+    notes: 'Requires SFOC for all operations. Minimum 2 crew required. Additional insurance and operational requirements apply for 100kg+ cargo operations.'
   },
   'agras-t40': {
     category: 'Large RPAS (>25 kg)',
