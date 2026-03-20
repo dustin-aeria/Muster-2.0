@@ -201,13 +201,12 @@ export default function Layout({ children }) {
       <div className="lg:pl-64 relative min-h-screen">
         {/* Background watermark */}
         <div
-          className="fixed bottom-0 right-0 w-[500px] h-[500px] pointer-events-none z-0 opacity-[0.03]"
+          className="fixed bottom-8 right-8 w-[400px] h-[400px] pointer-events-none opacity-[0.06]"
           style={{
             backgroundImage: 'url(/aeria-icon.svg)',
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'bottom right',
-            transform: 'translate(15%, 15%)',
+            backgroundPosition: 'center',
           }}
         />
 
