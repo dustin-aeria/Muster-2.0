@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
-/* AERIA brand colors */
+/* AERIA brand colors - extracted from official logo */
 @theme {
-  --color-brand-50: #e8e9f4;
-  --color-brand-100: #d1d3e9;
-  --color-brand-200: #a3a7d3;
-  --color-brand-300: #757abd;
-  --color-brand-400: #474ea7;
-  --color-brand-500: #131CD0;
+  --color-brand-50: #eef1fc;
+  --color-brand-100: #dce3f9;
+  --color-brand-200: #b9c7f3;
+  --color-brand-300: #8aa4eb;
+  --color-brand-400: #365cf6;
+  --color-brand-500: #2247d0;
   --color-brand-600: #132163;
   --color-brand-700: #101a4f;
   --color-brand-800: #0c143b;
