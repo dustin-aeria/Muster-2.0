@@ -477,6 +477,127 @@ export const DJI_ENTERPRISE_DRONES = [
     ]
   },
 
+  {
+    id: 'matrice-4td',
+    name: 'Matrice 4TD',
+    series: 'Matrice',
+    category: 'Compact Industrial / Thermal',
+    released: '2025',
+    status: 'Current',
+
+    mtow: 1650, // grams
+    emptyWeight: 1550, // grams (with battery)
+    maxPayload: 0, // Integrated payload
+    foldedDimensions: '220 x 106 x 75 mm',
+    unfoldedDimensions: '367 x 320 x 107 mm',
+
+    maxFlightTime: 42, // minutes
+    maxWindResistance: 12, // m/s
+    maxSpeed: 21, // m/s
+    maxAscentSpeed: 8, // m/s
+    maxDescentSpeed: 6, // m/s
+    maxAltitude: 6000, // meters MSL
+
+    operatingTemp: '-20 to 50',
+    ipRating: 'IP55',
+
+    transmissionSystem: 'O4 Enterprise',
+    maxTransmissionRange: 20, // km
+    videoTransmission: '1080p @ 60fps',
+
+    integratedPayload: {
+      wideCamera: '1/1.3" CMOS, 48MP, 24mm equivalent, 84° FOV',
+      zoomCamera: '1/2" CMOS, 48MP, 70-324mm equivalent, 56x hybrid zoom',
+      thermalCamera: '640x512, 40° DFOV, 30Hz frame rate',
+      thermalSensitivity: 'NETD ≤30mK',
+      laserRangefinder: '3-1500m range, ±0.2m accuracy'
+    },
+
+    obstacleAvoidance: {
+      directions: 4,
+      description: 'APAS 6.0 - Forward/Backward/Downward/Upward',
+      forward: '0.5-52m',
+      backward: '0.5-30m',
+      upward: '0.2-10m',
+      downward: '0.3-25m',
+      nightVision: 'IR-assisted obstacle sensing'
+    },
+
+    safetyFeatures: [
+      'APAS 6.0 intelligent obstacle avoidance',
+      'ADS-B In receiver',
+      'Remote ID compliant (broadcast + network)',
+      'Redundant IMU',
+      'Redundant compass',
+      'Redundant barometer',
+      'Auto RTH with obstacle bypass',
+      'Low battery RTH',
+      'Failsafe RTH on signal loss',
+      'Geofencing with dynamic updates',
+      'Precision landing',
+      'Night flight lights',
+      'Dock 2 compatible'
+    ],
+
+    batteries: {
+      type: 'Matrice 4 Series Intelligent Battery',
+      capacity: '6000 mAh',
+      voltage: '17.6V',
+      chargingTime: '60 min (standard charger)'
+    },
+
+    controller: 'DJI RC Pro Enterprise 2',
+
+    flightModes: [
+      'Waypoint flight',
+      'Mapping mission',
+      'Oblique photography',
+      'Linear flight',
+      'Smart track',
+      'PinPoint',
+      'Smart oblique capture'
+    ],
+
+    mandatoryActions: [
+      'Firmware update check',
+      'Battery health verification (cycles, voltage)',
+      'Propeller inspection',
+      'Gimbal/camera calibration check',
+      'Thermal sensor NUC (if required)',
+      'Obstacle avoidance sensor cleaning',
+      'Compass calibration if flagged',
+      'RTH altitude configuration',
+      'Geofence/boundary setup',
+      'Night operation lights check (if applicable)',
+      'Airspace verification'
+    ],
+
+    maintenanceSchedule: {
+      beforeFlight: [
+        'Visual inspection of airframe',
+        'Propeller condition check',
+        'Battery charge level and health',
+        'Sensor/lens cleaning',
+        'Gimbal movement test'
+      ],
+      every100Hours: [
+        'Propeller replacement',
+        'Full gimbal calibration',
+        'Motor inspection'
+      ],
+      every300Hours: [
+        'Factory inspection recommended'
+      ]
+    },
+
+    certifications: [
+      'FCC', 'CE', 'SRRC', 'MIC', 'KC',
+      'Transport Canada compliant',
+      'Remote ID compliant',
+      'EASA Class C2'
+    ]
+  },
+
   // ============================================
   // MAVIC ENTERPRISE SERIES
   // ============================================
@@ -1114,6 +1235,13 @@ export const TC_COMPLIANCE = {
     remoteIdCompliant: true,
     saRequirements: ['922.04', '922.05', '922.06', '922.07', '922.08', '922.09', '922.10', '922.11', '922.12'],
     notes: 'Enhanced DAA capability supports expanded BVLOS operations'
+  },
+  'matrice-4td': {
+    category: 'Small RPAS (<25 kg)',
+    operationTypes: ['VLOS', 'BVLOS (L1C)', 'Advanced Operations'],
+    remoteIdCompliant: true,
+    saRequirements: ['922.04', '922.05', '922.06', '922.07', '922.08', '922.09', '922.10', '922.11'],
+    notes: 'Compact thermal platform, Dock 2 compatible for autonomous operations'
   },
   'mavic-3-enterprise': {
     category: 'Small RPAS (<25 kg)',
