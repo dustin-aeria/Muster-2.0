@@ -198,7 +198,19 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 relative min-h-screen">
+        {/* Background watermark */}
+        <div
+          className="fixed bottom-0 right-0 w-[500px] h-[500px] pointer-events-none z-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'url(/aeria-icon.svg)',
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'bottom right',
+            transform: 'translate(15%, 15%)',
+          }}
+        />
+
         {/* Top bar */}
         <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6">
           <button
@@ -217,7 +229,7 @@ export default function Layout({ children }) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">
+        <main className="p-4 lg:p-6 relative z-10">
           {children}
         </main>
       </div>
