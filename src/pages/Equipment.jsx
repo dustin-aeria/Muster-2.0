@@ -16,10 +16,21 @@ import {
   ChevronUp,
   CheckCircle,
   AlertCircle,
-  Calculator
+  Calculator,
+  BookOpen,
+  Info,
+  Wind,
+  Thermometer,
+  Shield,
+  Clock,
+  Weight,
+  Gauge,
+  Radio,
+  AlertTriangle
 } from 'lucide-react'
 import { getEquipment, createEquipment, updateEquipment, archiveEquipment, deleteEquipment, logAmendment } from '../lib/api'
 import { calculateEquipmentRates, calculateEquipmentDayRate } from '../lib/rateCalculator'
+import { DJI_ENTERPRISE_DRONES, TC_COMPLIANCE, SERIES_INFO, getSpecsSummary } from '../data/djiEnterpriseSpecs'
 
 const EQUIPMENT_TYPES = [
   { value: 'rpas_small', label: 'RPAS <25kg', icon: Plane },
@@ -446,6 +457,389 @@ function getEquipmentIcon(type) {
   return typeConfig?.icon || Package
 }
 
+// ============================================
+// RPAS REFERENCE LIBRARY COMPONENT
+// ============================================
+function RPASReferenceLibrary() {
+  const [search, setSearch] = useState('')
+  const [selectedSeries, setSelectedSeries] = useState('')
+  const [expandedDrone, setExpandedDrone] = useState(null)
+  const [selectedDrone, setSelectedDrone] = useState(null)
+
+  const filteredDrones = DJI_ENTERPRISE_DRONES.filter(drone => {
+    const matchesSearch = !search ||
+      drone.name.toLowerCase().includes(search.toLowerCase()) ||
+      drone.series.toLowerCase().includes(search.toLowerCase()) ||
+      drone.category.toLowerCase().includes(search.toLowerCase())
+    const matchesSeries = !selectedSeries || drone.series === selectedSeries
+    return matchesSearch && matchesSeries
+  })
+
+  const seriesList = [...new Set(DJI_ENTERPRISE_DRONES.map(d => d.series))]
+
+  const formatWeight = (grams) => {
+    if (!grams) return '—'
+    if (grams >= 1000) {
+      return `${(grams / 1000).toFixed(1)} kg`
+    }
+    return `${grams} g`
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-brand-600 to-brand-500 rounded-xl p-6 text-white">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">DJI Enterprise RPAS Reference Library</h2>
+            <p className="text-white/80 mt-1">
+              Complete specifications for all DJI Enterprise drones including MTOW, wind limits, safety systems, and mandatory actions
+            </p>
+          </div>
+          <div className="text-right text-sm text-white/70">
+            <p>Last Updated: March 2026</p>
+            <p>{DJI_ENTERPRISE_DRONES.length} aircraft in database</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search drones..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
+        <select
+          value={selectedSeries}
+          onChange={(e) => setSelectedSeries(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        >
+          <option value="">All Series</option>
+          {seriesList.map(series => (
+            <option key={series} value={series}>{series} Series</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Quick Reference Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Aircraft</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Series</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-1">
+                    <Weight className="w-4 h-4" />
+                    MTOW
+                  </div>
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-1">
+                    <Package className="w-4 h-4" />
+                    Payload
+                  </div>
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    Flight
+                  </div>
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-1">
+                    <Wind className="w-4 h-4" />
+                    Wind
+                  </div>
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-1">
+                    <Thermometer className="w-4 h-4" />
+                    Temp
+                  </div>
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">IP</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-1">
+                    <Shield className="w-4 h-4" />
+                    OA
+                  </div>
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-700">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredDrones.map((drone) => {
+                const isExpanded = expandedDrone === drone.id
+                const compliance = TC_COMPLIANCE[drone.id]
+                return (
+                  <>
+                    <tr
+                      key={drone.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setExpandedDrone(isExpanded ? null : drone.id)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-900">{drone.name}</p>
+                            <p className="text-xs text-gray-500">{drone.category}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="px-2 py-1 rounded text-xs font-medium text-white"
+                          style={{ backgroundColor: SERIES_INFO[drone.series]?.color || '#4a5568' }}
+                        >
+                          {drone.series}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center font-mono font-medium">
+                        {formatWeight(drone.mtow)}
+                      </td>
+                      <td className="px-4 py-3 text-center font-mono">
+                        {drone.maxPayload ? formatWeight(drone.maxPayload) :
+                          <span className="text-gray-400 text-xs">Integrated</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3 text-center font-mono">
+                        {drone.maxFlightTime} min
+                      </td>
+                      <td className="px-4 py-3 text-center font-mono">
+                        {drone.maxWindResistance} m/s
+                        <span className="text-gray-400 text-xs block">
+                          ({Math.round(drone.maxWindResistance * 3.6)} km/h)
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center font-mono text-xs">
+                        {drone.operatingTemp}°C
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          drone.ipRating?.includes('55') || drone.ipRating?.includes('67')
+                            ? 'bg-green-100 text-green-700'
+                            : drone.ipRating?.includes('45')
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {drone.ipRating || 'None'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {drone.obstacleAvoidance?.directions ? (
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                            {drone.obstacleAvoidance.directions}-way
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">N/A</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          drone.status === 'Current' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {drone.status}
+                        </span>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={10} className="bg-gray-50 px-4 py-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Safety Systems */}
+                            <div>
+                              <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                                <Shield className="w-4 h-4 text-green-600" />
+                                Safety Systems
+                              </h4>
+                              <ul className="space-y-1">
+                                {drone.safetyFeatures?.slice(0, 8).map((feature, idx) => (
+                                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
+                                    <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                                    {feature}
+                                  </li>
+                                ))}
+                                {drone.safetyFeatures?.length > 8 && (
+                                  <li className="text-sm text-brand-600 font-medium">
+                                    +{drone.safetyFeatures.length - 8} more...
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+
+                            {/* Mandatory Actions */}
+                            <div>
+                              <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                                Mandatory Pre-Flight Actions
+                              </h4>
+                              <ul className="space-y-1">
+                                {drone.mandatoryActions?.map((action, idx) => (
+                                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
+                                    <span className="w-4 h-4 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                      {idx + 1}
+                                    </span>
+                                    {action}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Technical Details */}
+                            <div>
+                              <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                                <Info className="w-4 h-4 text-blue-600" />
+                                Technical Details
+                              </h4>
+                              <div className="space-y-2 text-sm">
+                                {drone.transmissionSystem && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Transmission:</span>
+                                    <span className="font-medium">{drone.transmissionSystem}</span>
+                                  </div>
+                                )}
+                                {drone.maxTransmissionRange && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Range:</span>
+                                    <span className="font-medium">{drone.maxTransmissionRange} km</span>
+                                  </div>
+                                )}
+                                {drone.maxAltitude && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Max Altitude:</span>
+                                    <span className="font-medium">{drone.maxAltitude.toLocaleString()} m MSL</span>
+                                  </div>
+                                )}
+                                {drone.maxSpeed && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Max Speed:</span>
+                                    <span className="font-medium">{drone.maxSpeed} m/s ({Math.round(drone.maxSpeed * 3.6)} km/h)</span>
+                                  </div>
+                                )}
+                                {drone.batteries && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Battery:</span>
+                                    <span className="font-medium">{drone.batteries.type}</span>
+                                  </div>
+                                )}
+                                {drone.controller && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Controller:</span>
+                                    <span className="font-medium">{drone.controller}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* TC Compliance */}
+                              {compliance && (
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                  <h5 className="font-medium text-gray-700 mb-2">TC Compliance (Canada)</h5>
+                                  <div className="space-y-1 text-xs">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">Category:</span>
+                                      <span className="font-medium">{compliance.category}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-500">Operations:</span>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {compliance.operationTypes?.map((op, idx) => (
+                                          <span key={idx} className="px-1.5 py-0.5 bg-brand-100 text-brand-700 rounded text-xs">
+                                            {op}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {compliance.notes && (
+                                      <p className="text-orange-600 mt-2 font-medium">{compliance.notes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Payloads if available */}
+                          {drone.compatiblePayloads && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <h4 className="font-semibold text-gray-900 mb-2">Compatible Payloads</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {drone.compatiblePayloads.map((payload, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                                    {payload}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Integrated Payload specs */}
+                          {drone.integratedPayload && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <h4 className="font-semibold text-gray-900 mb-2">Integrated Payload</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                {Object.entries(drone.integratedPayload).map(([key, value]) => (
+                                  <div key={key}>
+                                    <span className="text-gray-500 text-xs">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                    <p className="font-medium text-gray-900">{value}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h4 className="font-semibold text-gray-700 mb-3">Legend</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <span className="font-medium text-gray-700">MTOW:</span>
+            <span className="text-gray-500 ml-1">Maximum Takeoff Weight</span>
+          </div>
+          <div>
+            <span className="font-medium text-gray-700">OA:</span>
+            <span className="text-gray-500 ml-1">Obstacle Avoidance directions</span>
+          </div>
+          <div>
+            <span className="font-medium text-gray-700">IP Rating:</span>
+            <span className="text-gray-500 ml-1">Ingress Protection (dust/water)</span>
+          </div>
+          <div>
+            <span className="font-medium text-gray-700">Wind:</span>
+            <span className="text-gray-500 ml-1">Max wind resistance</span>
+          </div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+          <strong>Note:</strong> All specifications from official DJI documentation. Always verify current specs and firmware requirements before operation.
+          For Transport Canada operations, ensure compliance with CARs Part IX and applicable Safety Assurance requirements.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function getStatusBadge(status) {
   switch (status) {
     case 'active':
@@ -460,6 +854,7 @@ function getStatusBadge(status) {
 }
 
 export default function Equipment() {
+  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' or 'reference'
   const [equipment, setEquipment] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -550,64 +945,103 @@ export default function Equipment() {
           <h1 className="text-2xl font-bold text-gray-900">Equipment</h1>
           <p className="text-gray-500">RPAS, sensors, vessels, and other equipment</p>
         </div>
-        <button
-          onClick={() => { setEditingEquipment(null); setModalOpen(true) }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
-        >
-          <Plus className="w-5 h-5" />
-          Add Equipment
-        </button>
+        {activeTab === 'inventory' && (
+          <button
+            onClick={() => { setEditingEquipment(null); setModalOpen(true) }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
+          >
+            <Plus className="w-5 h-5" />
+            Add Equipment
+          </button>
+        )}
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search equipment..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
-        </div>
-        <label className="inline-flex items-center gap-2 text-sm text-gray-600">
-          <input
-            type="checkbox"
-            checked={showArchived}
-            onChange={(e) => setShowArchived(e.target.checked)}
-            className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-          />
-          Show archived
-        </label>
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'inventory'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              My Equipment
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('reference')}
+            className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'reference'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              RPAS Reference Library
+            </div>
+          </button>
+        </nav>
       </div>
 
-      {/* List */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-        </div>
-      ) : filteredEquipment.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">
-            {search ? 'No equipment matches your search' : 'No equipment yet'}
-          </p>
-        </div>
+      {/* Tab Content */}
+      {activeTab === 'reference' ? (
+        <RPASReferenceLibrary />
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">Equipment</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden md:table-cell">Category</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden lg:table-cell">Day Rate</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden lg:table-cell">Declarations</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden md:table-cell">Status</th>
-                <th className="text-right px-4 py-3 text-sm font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+        <>
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search equipment..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              Show archived
+            </label>
+          </div>
+
+          {/* List */}
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+            </div>
+          ) : filteredEquipment.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">
+                {search ? 'No equipment matches your search' : 'No equipment yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">Equipment</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden md:table-cell">Category</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden lg:table-cell">Day Rate</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden lg:table-cell">Declarations</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-700 hidden md:table-cell">Status</th>
+                    <th className="text-right px-4 py-3 text-sm font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
               {filteredEquipment.map((item) => {
                 const Icon = getEquipmentIcon(item.type)
                 const { compliant, total } = countDeclarations(item.declarations)
@@ -809,13 +1243,15 @@ export default function Equipment() {
         </div>
       )}
 
-      {/* Modal */}
-      {modalOpen && (
-        <EquipmentModal
-          equipment={editingEquipment}
-          onClose={() => { setModalOpen(false); setEditingEquipment(null) }}
-          onSave={() => { setModalOpen(false); setEditingEquipment(null); loadEquipment() }}
-        />
+          {/* Modal */}
+          {modalOpen && (
+            <EquipmentModal
+              equipment={editingEquipment}
+              onClose={() => { setModalOpen(false); setEditingEquipment(null) }}
+              onSave={() => { setModalOpen(false); setEditingEquipment(null); loadEquipment() }}
+            />
+          )}
+        </>
       )}
     </div>
   )
