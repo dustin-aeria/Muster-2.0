@@ -13,7 +13,7 @@
 | **Working Directory** | `C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)` |
 | **Original Codebase** | `C:\Users\Dusti\Desktop\Muster` (reference only, do not modify) |
 | **Status** | PLANNING COMPLETE — Ready for Phase 1 |
-| **Last Updated** | 2026-03-11 |
+| **Last Updated** | 2026-03-21 |
 
 ---
 
@@ -547,6 +547,12 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 | 2026-03-13 | ProjectDetail v2 | Rebuilt with SORA, costs, safety, tailgate - still needs work |
 | 2026-03-13 | Created Questions_for_d.md | Comprehensive feature questionnaire for project detail page |
 | 2026-03-15 | Map Section Rebuilt | 14 element types, toolbar, flight params, operational volume calculation |
+| 2026-03-21 | Document viewer fix | Fixed modal being cut off by header (z-index, positioning) |
+| 2026-03-21 | New governance policies | GOV-006 Archaeological, GOV-007 Indigenous, GOV-008 Accessibility, GOV-009 Sea to Sky 2% |
+| 2026-03-21 | Cargo delivery docs | FHA-021, forms, regulatory, QRC, guide - 10 new documents |
+| 2026-03-21 | Amendment History | Added to ALL ~180 documents with realistic version history from 2017 |
+| 2026-03-21 | Git commit a46b0a3 | "Add governance policies, cargo delivery docs, and amendment history" |
+| 2026-03-21 | Created CLAUDE.md | Quick resume context file for seamless re-entry |
 | | | |
 
 ---
@@ -555,6 +561,7 @@ Confirm each item is OUT OF SCOPE for the rebuild:
 
 ```
 C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
+├── CLAUDE.md (quick resume context for Claude Code sessions)
 ├── MASTER_PLAN.md (this file)
 ├── SORA_LOGIC_REFERENCE.md (SORA 2.5 quick reference)
 ├── Questions_for_d.md (Phase 6 project detail requirements questionnaire)
@@ -604,13 +611,14 @@ C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)\
 If Claude crashes or session ends, paste this prompt into Claude Code:
 
 ```
-Resume Muster 2.0 build from MASTER_PLAN.md
+Resume Muster 2.0 project.
 
 Working directory: C:\Users\Dusti\OneDrive\Desktop\MusterApp(2)
 
 Read these files to get context:
-1. MASTER_PLAN.md - Overall project status and progress
-2. ProjectDetail_FINAL.md - Current implementation spec for ProjectDetail page
+1. CLAUDE.md - Quick context and recent session work
+2. MASTER_PLAN.md - Full project status, requirements, and build phases
+3. ProjectDetail_FINAL.md - Current implementation spec for ProjectDetail page
 
 Check the "Phase 6 Build Progress" section in MASTER_PLAN.md to see exactly where we left off. Continue from the next uncompleted task.
 
