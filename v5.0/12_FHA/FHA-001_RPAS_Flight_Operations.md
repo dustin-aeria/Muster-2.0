@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — updated risk ratings | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — added additional controls | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded hazard identification | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers general RPAS flight operations including pre-flight, flight, and post-flight activities for multirotor and fixed-wing aircraft.
@@ -149,15 +161,7 @@ This FHA covers general RPAS flight operations including pre-flight, flight, and
 
 ---
 
-## 7. Revision History
-
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v5.0 | March 11, 2026 | Complete rebuild | Dustin Wales |
-
----
-
-## 8. Signatures
+## 7. Signatures
 
 | Role | Name | Signature | Date |
 |:-----|:-----|:----------|:-----|

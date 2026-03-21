@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | August 15, 2018 | Initial release — thermal inspection capability established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated optimal conditions guidance | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — expanded electrical inspection protocols | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — added solar panel inspection procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers thermal/infrared inspection operations including building envelope surveys, solar panel inspection, electrical infrastructure inspection, and industrial asset thermal imaging.

@@ -15,6 +15,22 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | June 15, 2018 | Initial release — training delivery procedure established | Dustin Wales |
+| v2.0 | February 10, 2019 | Annual review — added practical training methods | Dustin Wales |
+| v2.1 | February 14, 2020 | Annual review — enhanced assessment requirements | Dustin Wales |
+| v3.0 | February 12, 2021 | Annual review — added online delivery methods | Dustin Wales |
+| v3.1 | February 18, 2022 | Annual review — updated documentation standards | Dustin Wales |
+| v3.2 | February 15, 2023 | Annual review — improved training planning process | Dustin Wales |
+| v3.3 | February 9, 2024 | Annual review — added feedback mechanisms | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex training requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This procedure describes how to plan, deliver, and evaluate training.

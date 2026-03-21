@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | March 20, 2019 | Initial release — BVLOS operations established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated DAA requirements | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — L1C declaration integration | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded communication protocols | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers Beyond Visual Line of Sight operations conducted under Level 1 Complex (L1C) Declaration conditions per CARs 901.53.1.

@@ -19,7 +19,11 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | October 20, 2018 | Initial release — night capability added | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated lighting requirements | Dustin Wales |
+| v3.0 | January 25, 2022 | Annual review — added thermal operations section | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex night operations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

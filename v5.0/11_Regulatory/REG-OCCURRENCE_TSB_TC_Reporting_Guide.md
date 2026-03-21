@@ -12,6 +12,16 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | September 10, 2018 | Initial release | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex/RPOC requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This guide outlines mandatory reporting requirements for aviation occurrences involving RPAS operations to the Transportation Safety Board (TSB) and Transport Canada (TC).

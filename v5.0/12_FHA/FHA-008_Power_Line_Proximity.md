@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | July 18, 2018 | Initial release — power line proximity capability established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated limits of approach | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — added line inspection procedures | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded EMI hazard controls | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS operations and ground activities conducted in proximity to overhead electrical power lines, transmission lines, and electrical infrastructure.

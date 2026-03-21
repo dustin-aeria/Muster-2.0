@@ -18,6 +18,17 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | April 22, 2020 | Initial release — marine operations capability established | Dustin Wales |
+| v2.0 | February 15, 2022 | Annual review — expanded cold water protocols | Dustin Wales |
+| v3.0 | February 8, 2024 | Annual review — added RPAS over water procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers operations conducted from vessels, shorelines, and any work activity on or near water including RPAS flights over water.

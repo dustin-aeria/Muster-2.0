@@ -19,7 +19,11 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | September 15, 2019 | Initial release — VO role formalized | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — added communication protocols | Dustin Wales |
+| v3.0 | January 28, 2022 | Annual review — expanded competency requirements | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex VO requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

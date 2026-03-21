@@ -15,6 +15,21 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | February 11, 2019 | Initial release | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — accuracy standards update | Dustin Wales |
+| v2.1 | February 8, 2021 | Annual review — PPE requirements updated | Dustin Wales |
+| v3.0 | February 14, 2022 | Annual review — working alone provisions | Dustin Wales |
+| v3.1 | February 13, 2023 | Annual review — quality requirements expansion | Dustin Wales |
+| v4.0 | February 12, 2024 | Annual review — equipment standards update | Dustin Wales |
+| v4.1 | February 10, 2025 | Annual review — site authorization procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This policy establishes requirements for land-based survey and data acquisition operations conducted by Aeria Solutions Ltd.

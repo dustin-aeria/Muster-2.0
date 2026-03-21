@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | September 20, 2018 | Initial release — construction site capability established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated crane coordination procedures | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — expanded site access requirements | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — added progress monitoring protocols | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS operations at active construction sites for progress documentation, surveying, inspection, and monitoring.

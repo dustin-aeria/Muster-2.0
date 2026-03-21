@@ -19,7 +19,15 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v1.1 | April 20, 2017 | Added fly-away response | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — expanded emergency types | Dustin Wales |
+| v2.1 | August 10, 2019 | Added BVLOS emergencies | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — added Air Traffic Conflict Scheme | Dustin Wales |
+| v3.1 | January 28, 2022 | Added DESCEND Protocol | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — restructured response protocols | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex emergency requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 | v5.1 | March 19, 2026 | Consolidated with OPS-018-PR (Advanced Emergency Protocols) | Dustin Wales |
 
 ---

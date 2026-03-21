@@ -15,6 +15,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | August 15, 2019 | Initial release — special operations framework | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — added BVLOS transitions | Dustin Wales |
+| v3.0 | January 25, 2022 | Annual review — added heavy lift protocols | Dustin Wales |
+| v4.0 | November 4, 2025 | Major update for Level 1 Complex operations | Dustin Wales |
+| v5.0 | March 18, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This procedure provides protocols for special RPAS operations including BVLOS transitions, high altitude operations, heavy lift, and restricted payload handling.

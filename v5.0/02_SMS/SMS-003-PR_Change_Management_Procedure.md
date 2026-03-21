@@ -19,7 +19,11 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release — change management framework established | Dustin Wales |
+| v2.0 | February 10, 2019 | Annual review — added emergency change provisions | Dustin Wales |
+| v3.0 | February 12, 2021 | Annual review — updated regulatory notification requirements | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

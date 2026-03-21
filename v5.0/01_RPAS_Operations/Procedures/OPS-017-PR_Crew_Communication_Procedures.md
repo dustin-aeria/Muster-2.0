@@ -15,6 +15,19 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | July 5, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added VO communication protocols | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — added CRM integration | Dustin Wales |
+| v3.1 | January 28, 2022 | Added BVLOS communication procedures | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex operations | Dustin Wales |
+| v5.0 | March 18, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This procedure establishes standardized communication protocols for RPAS operations, including call-response checklists, pilot handover procedures, and standard operating calls.

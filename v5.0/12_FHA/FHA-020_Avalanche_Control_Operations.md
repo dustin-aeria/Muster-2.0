@@ -18,6 +18,15 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | January 20, 2025 | Initial release — avalanche control operations established | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS-based avalanche control operations involving the delivery and deployment of explosives to trigger controlled avalanches for highway, ski resort, and backcountry applications.

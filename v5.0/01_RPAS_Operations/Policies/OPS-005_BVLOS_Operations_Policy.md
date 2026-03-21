@@ -19,8 +19,13 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
-| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Clarified TC L1C Certificate requirement per CAR 901.76, updated pilot requirements section | Dustin Wales |
+| v1.0 | August 15, 2019 | Initial release — BVLOS capability added | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated SFOC requirements | Dustin Wales |
+| v2.1 | January 25, 2022 | Added DAA system requirements | Dustin Wales |
+| v3.0 | February 5, 2024 | Annual review — expanded operational scenarios | Dustin Wales |
+| v4.0 | November 4, 2025 | Major update for Level 1 Complex declaration | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance — clarified L1C certificate requirements | Dustin Wales |
 
 ---
 

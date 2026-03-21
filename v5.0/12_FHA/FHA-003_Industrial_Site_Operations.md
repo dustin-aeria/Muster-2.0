@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | April 10, 2017 | Initial release — industrial site capability established | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — expanded PPE requirements | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — added EMI hazard controls | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — updated site access protocols | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS operations at industrial sites including oil and gas facilities, pipelines, construction sites, mining operations, and similar industrial environments.

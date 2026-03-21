@@ -15,6 +15,20 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | February 10, 2020 | Initial release — marine operations added | Dustin Wales |
+| v1.1 | February 8, 2021 | Annual review — float plan requirements | Dustin Wales |
+| v2.0 | February 14, 2022 | Annual review — RPAS from vessel procedures | Dustin Wales |
+| v2.1 | February 13, 2023 | Annual review — emergency procedures expansion | Dustin Wales |
+| v3.0 | February 12, 2024 | Annual review — cold water protocol emphasis | Dustin Wales |
+| v3.1 | February 10, 2025 | Annual review — communication schedule update | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This procedure describes how to conduct marine-based operations safely.

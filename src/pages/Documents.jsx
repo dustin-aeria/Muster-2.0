@@ -665,10 +665,14 @@ function DocumentViewer({ document, onClose, onEdit }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] overflow-y-auto">
-      <div className="min-h-full flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-          {/* Header with logo */}
+    <div className="fixed top-0 left-0 right-0 bottom-0 z-[9999]" style={{ isolation: 'isolate' }}>
+      {/* Full screen dark overlay */}
+      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
+
+      {/* Modal container - full screen */}
+      <div className="absolute top-0 left-0 right-0 bottom-0 flex flex-col overflow-hidden">
+        <div className="flex flex-col h-full w-full max-w-4xl mx-auto bg-white shadow-2xl">
+          {/* Header with logo - at the very top */}
           <div className="flex-shrink-0 bg-[#132163] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={aeriaIconWhite} alt="AERIA" className="h-10 w-auto" />

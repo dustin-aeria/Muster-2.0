@@ -15,6 +15,16 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | March 15, 2019 | Initial release | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex/RPOC requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Declaration
 
 Aeria Solutions Ltd (RPOC #930355) declares that the following BVLOS operation meets all conditions specified in CAR 901.53.1 and TP 15263E for Level 1 Complex (L1C) operations.

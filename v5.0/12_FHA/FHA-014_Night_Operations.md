@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | May 8, 2019 | Initial release — night operations capability established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated aircraft lighting requirements | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — expanded CRM protocols for night ops | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — added ground lighting procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS operations conducted during night (after sunset, before sunrise) which require Special Flight Operations Certificate (SFOC) authorization.

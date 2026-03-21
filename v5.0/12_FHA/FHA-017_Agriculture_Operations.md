@@ -18,6 +18,17 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | May 12, 2020 | Initial release — agriculture operations capability established | Dustin Wales |
+| v2.0 | February 15, 2022 | Annual review — expanded livestock awareness protocols | Dustin Wales |
+| v3.0 | February 8, 2024 | Annual review — added chemical exposure prevention | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS operations on agricultural land including crop mapping, field surveys, precision agriculture, and livestock monitoring.

@@ -3,6 +3,23 @@
 
 ---
 
+| **QRC Number** | QRC-EMERGENCY-FULL |
+|:---------------|:-------------------|
+| **Version** | v5.0 |
+
+---
+
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | February 15, 2018 | Initial release | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated quick reference items | Dustin Wales |
+| v3.0 | November 4, 2025 | Updated for Level 1 Complex operations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## EMERGENCY PRIORITY ORDER
 
 ```

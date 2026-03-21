@@ -19,7 +19,15 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v1.1 | June 10, 2017 | Added airspace checklist | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added NOTAM verification | Dustin Wales |
+| v2.1 | August 15, 2019 | Added BVLOS planning section | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated risk assessment integration | Dustin Wales |
+| v3.1 | January 25, 2022 | Added digital planning tools | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — restructured for RPOC alignment | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex planning requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

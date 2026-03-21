@@ -13,6 +13,16 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 10, 2020 | Updated form fields | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## PURPOSE
 
 The IMSAFE checklist is a personal fitness-for-duty self-assessment tool used by pilots and flight crew before conducting RPAS operations. This checklist ensures crew members are physically and mentally fit to safely perform their duties.

@@ -19,7 +19,10 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | February 5, 2018 | Initial release — established review process | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — added trend analysis requirements | Dustin Wales |
+| v3.0 | February 8, 2024 | Annual review — enhanced quality review criteria | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

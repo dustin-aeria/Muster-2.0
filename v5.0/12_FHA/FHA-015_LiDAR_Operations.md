@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | July 15, 2019 | Initial release — LiDAR operations capability established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated laser safety protocols | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — expanded payload management procedures | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — added data quality controls | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers aerial LiDAR scanning operations using RPAS platforms, including sensor operation, data collection, and associated ground activities.

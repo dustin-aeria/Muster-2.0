@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | March 1, 2017 | Initial release — survey operations established | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — updated GCP placement procedures | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — added RPAS mapping hazards | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded data quality controls | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers survey and mapping operations including ground control point (GCP) placement, GNSS surveys, terrestrial scanning, and associated RPAS photogrammetry/LiDAR missions.

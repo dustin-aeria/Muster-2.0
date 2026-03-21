@@ -10,7 +10,16 @@
 
 ---
 
-## DJI FLYCART 30 QUICK SPECS
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | November 4, 2025 | Initial release for Level 1 Complex/RPOC operations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
+## DJI FLYCART 30 QUICK SPECS (Medium RPAS - 95 kg MTOW)
 
 | Parameter | Dual Battery | Single Battery |
 |:----------|:-------------|:---------------|
@@ -20,6 +29,17 @@
 | Max speed | 20 m/s | 20 m/s |
 | Max wind | 12 m/s | 12 m/s |
 | Temp range | -20°C to +45°C | -20°C to +45°C |
+
+---
+
+## FLYCART 100 - SEE QRC-FLYCART100
+
+**For Heavy RPAS (>150 kg MTOW) operations using the DJI FlyCart 100:**
+- See **QRC-FLYCART100** for specifications and procedures
+- **220 kg MTOW** - Heavy RPAS classification
+- **65 kg max payload**
+- **Minimum 4 crew required**
+- **SFOC mandatory**
 
 ---
 
@@ -204,6 +224,20 @@ When flying with heavy cargo:
 | Operations Manager | [INSERT] |
 | Base/Dispatch | [INSERT] |
 | Emergency | 911 |
+
+---
+
+---
+
+## RELATED DOCUMENTS
+
+| Doc ID | Title |
+|:-------|:------|
+| **QRC-FLYCART100** | **FlyCart 100 Heavy RPAS Operations** |
+| OPS-013 | Cargo Delivery Operations Policy |
+| OPS-013-PR | Cargo Delivery Procedure |
+| FRM-CARGO-PREFLIGHT-FC30 | FlyCart 30 Pre-Flight Checklist |
+| FRM-CARGO-WB | Weight & Balance Calculator |
 
 ---
 

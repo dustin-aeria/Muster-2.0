@@ -19,7 +19,8 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | January 20, 2017 | Initial release per BC OHS requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Format update for web platform | Dustin Wales |
 
 ---
 

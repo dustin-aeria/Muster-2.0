@@ -15,6 +15,17 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | February 20, 2023 | Initial release — TDG compliance framework | Dustin Wales |
+| v2.0 | January 15, 2024 | Annual review — added avalanche control specifics | Dustin Wales |
+| v3.0 | November 4, 2025 | Updated for RPOC dangerous goods authorization | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This policy establishes requirements for the transport of dangerous goods by RPAS in compliance with the Transportation of Dangerous Goods Act and Regulations.

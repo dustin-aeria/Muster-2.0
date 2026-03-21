@@ -18,19 +18,43 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | June 18, 2024 | Initial release — medium RPAS cargo delivery operations established | Dustin Wales |
+| v2.0 | November 5, 2024 | Updated delivery zone procedures and sector-specific controls | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
-This FHA covers cargo delivery operations using medium RPAS (25-150 kg) such as the DJI FlyCart 30 for equipment delivery in energy, mining, infrastructure, and general cargo applications.
+This FHA covers cargo delivery operations using medium RPAS (25-150 kg MTOW) such as the DJI FlyCart 30 for equipment delivery in energy, mining, infrastructure, and general cargo applications.
+
+**Note:** For Heavy RPAS operations (>150 kg MTOW) using aircraft such as the DJI FlyCart 100, see **FHA-021: Heavy Cargo Operations**.
 
 ---
 
 ## 2. Aircraft Reference
 
-**DJI FlyCart 30:**
-- MTOW: ~95 kg (with payload)
-- Max payload: 30-40 kg
-- Max range: 28 km (no load) / 16 km (full load)
-- Max wind: 12 m/s
+**DJI FlyCart 30 (Medium RPAS):**
+
+| Parameter | Value |
+|:----------|:------|
+| MTOW | 95 kg |
+| Empty Weight | 55 kg |
+| Max Payload (dual battery) | 30 kg |
+| Max Payload (single battery) | 40 kg |
+| Max Flight Time (no load) | 28 minutes |
+| Max Range (no load) | 16 km |
+| Max Range (30 kg load) | 5.8 km |
+| Max Wind | 12 m/s |
+| Operating Temperature | -20°C to +45°C |
+| IP Rating | IP55 |
+| Safety Systems | Redundant battery, integrated parachute |
+
+**For Heavy RPAS (FlyCart 100, 220 kg MTOW):** See FHA-021
 
 ---
 
@@ -155,6 +179,19 @@ This FHA covers cargo delivery operations using medium RPAS (25-150 kg) such as 
 | Assessed By | | | |
 | Reviewed By | | | |
 | Approved By | Dustin Wales | | |
+
+---
+
+## 8. Related Documents
+
+| Doc ID | Title |
+|:-------|:------|
+| **FHA-021** | **Heavy Cargo Operations (>150 kg MTOW)** |
+| OPS-013 | Cargo Delivery Operations Policy |
+| OPS-013-PR | Cargo Delivery Procedure |
+| FRM-CARGO-PREFLIGHT-FC30 | FlyCart 30 Pre-Flight Checklist |
+| FRM-CARGO-WB | Weight & Balance Calculator |
+| QRC-DELIVERY | Cargo Delivery Quick Reference |
 
 ---
 

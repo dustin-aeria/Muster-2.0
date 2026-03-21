@@ -19,8 +19,13 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
-| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added Section 4.7 Transponder and ADS-B Requirements | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added NAV CANADA coordination | Dustin Wales |
+| v3.0 | February 15, 2020 | Annual review — updated controlled airspace procedures | Dustin Wales |
+| v3.1 | January 22, 2022 | Added NOTAM monitoring requirements | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance — added transponder and ADS-B requirements | Dustin Wales |
 
 ---
 

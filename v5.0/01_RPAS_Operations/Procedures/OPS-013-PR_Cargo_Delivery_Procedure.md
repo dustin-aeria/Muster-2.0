@@ -15,9 +15,19 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | March 15, 2024 | Initial release — cargo delivery capability | Dustin Wales |
+| v2.0 | November 4, 2025 | Updated for medium RPAS requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — added Heavy RPAS (FlyCart 100) | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
-This procedure describes how to conduct cargo delivery operations using RPAS delivery aircraft such as the DJI FlyCart 30.
+This procedure describes how to conduct cargo delivery operations using RPAS delivery aircraft including the DJI FlyCart 30 (Medium RPAS) and DJI FlyCart 100 (Heavy RPAS).
 
 ---
 
@@ -49,7 +59,7 @@ This procedure applies to all cargo delivery operations.
 
 ### 3.2 Aircraft Preparation
 
-**DJI FlyCart 30 Specifications Reference:**
+**DJI FlyCart 30 Specifications Reference (Medium RPAS - 95 kg MTOW):**
 
 | Parameter | Dual Battery | Single Battery |
 |:----------|:-------------|:---------------|
@@ -58,6 +68,21 @@ This procedure applies to all cargo delivery operations.
 | Max range (full payload) | 16 km | 8 km |
 | Max speed | 20 m/s | 20 m/s |
 | Operating temp | -20°C to +45°C | -20°C to +45°C |
+
+**DJI FlyCart 100 Specifications Reference (Heavy RPAS - 220 kg MTOW):**
+
+| Parameter | Quad Battery |
+|:----------|:-------------|
+| **MTOW** | **220 kg** |
+| **Max payload** | **65 kg** |
+| Max range (no payload) | 20 km |
+| Max range (full payload) | 7.5 km |
+| Max flight time (no payload) | 32 min |
+| Max flight time (65 kg) | 12 min |
+| Max speed | 18 m/s |
+| Max wind | 15 m/s |
+| Operating temp | -20°C to +45°C |
+| **Minimum crew** | **4 (PIC + Safety + 2 Ground)** |
 
 **Pre-flight preparation:**
 1. Select appropriate battery configuration
@@ -96,15 +121,28 @@ This procedure applies to all cargo delivery operations.
 
 ### 3.4 Pre-Flight
 
-**Standard pre-flight plus:**
+**Standard pre-flight plus (All Aircraft):**
 - [ ] Cargo secured and verified
-- [ ] Total weight confirmed
+- [ ] Total weight confirmed (scale weighed)
 - [ ] CG verified
 - [ ] Delivery location programmed
 - [ ] Alternate sites identified
 - [ ] Ground contact confirmed
 - [ ] Weather current and acceptable
-- [ ] Battery capacity adequate for mission + reserve
+- [ ] Battery capacity adequate for mission + 30% reserve
+
+**FlyCart 100 Additional Pre-Flight (Heavy RPAS):**
+- [ ] SFOC on-site and valid
+- [ ] SFOC conditions reviewed with crew
+- [ ] Insurance verified current
+- [ ] All 4 crew members present and briefed
+- [ ] Quad battery system verified (all 4 batteries >98%)
+- [ ] Dual parachute systems verified GREEN
+- [ ] DAA system calibrated and operational
+- [ ] 50m exclusion zones established
+- [ ] Emergency jettison zones identified
+- [ ] Ground crew positioned and equipped
+- [ ] FRM-CARGO-PREFLIGHT-FC100 completed
 
 ### 3.5 Takeoff
 
@@ -265,7 +303,14 @@ Complete for each delivery:
 |:-------|:---------------|
 | OPS-013 | Cargo Delivery Operations Policy |
 | FRM-CARGO | Cargo Manifest Form |
-| FHA-019 | Cargo Delivery Operations |
+| FRM-CARGO-PREFLIGHT-FC30 | FlyCart 30 Pre-Flight Checklist |
+| FRM-CARGO-PREFLIGHT-FC100 | FlyCart 100 Pre-Flight Checklist |
+| FRM-CARGO-WB | Weight & Balance Calculator |
+| FRM-CARGO-ENDURANCE | Payload vs Flight Time Reference |
+| FHA-019 | Cargo Delivery Operations (Medium RPAS) |
+| FHA-021 | Heavy Cargo Operations (>150 kg) |
+| QRC-DELIVERY | Cargo Delivery Quick Reference |
+| QRC-FLYCART100 | FlyCart 100 Quick Reference |
 | MCM-001 | Maintenance Control Manual |
 
 ---

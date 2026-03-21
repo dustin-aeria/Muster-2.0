@@ -15,6 +15,20 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | February 10, 2020 | Initial release — marine operations added | Dustin Wales |
+| v1.1 | February 8, 2021 | Annual review — BC water conditions guidance | Dustin Wales |
+| v2.0 | February 14, 2022 | Annual review — emergency procedures expansion | Dustin Wales |
+| v2.1 | February 13, 2023 | Annual review — PFD requirements update | Dustin Wales |
+| v3.0 | February 12, 2024 | Annual review — weather limits refinement | Dustin Wales |
+| v3.1 | February 10, 2025 | Annual review — cold water awareness emphasis | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This policy establishes requirements for marine-based operations and RPAS flights conducted from or near water.

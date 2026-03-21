@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | May 15, 2017 | Initial release — remote operations capability established | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — enhanced wildlife awareness protocols | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated satellite communication requirements | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded working alone procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS and survey operations in remote or backcountry locations where access to emergency services, communications, or support is limited.

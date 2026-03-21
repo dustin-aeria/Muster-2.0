@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | June 12, 2018 | Initial release — elevated work capability established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated fall protection hierarchy | Dustin Wales |
+| v3.0 | February 15, 2022 | Annual review — expanded rescue planning | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — enhanced ladder safety protocols | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers work activities conducted at heights including rooftop operations, elevated platforms, ladders, scaffolding, and terrain with fall exposure.

@@ -15,6 +15,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added payload inspection requirements | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated system check procedures | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded checklist for new aircraft types | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This procedure describes the pre-flight inspection requirements to verify aircraft airworthiness before each flight.

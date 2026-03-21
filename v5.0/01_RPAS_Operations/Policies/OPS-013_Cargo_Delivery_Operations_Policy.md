@@ -15,9 +15,19 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | March 15, 2024 | Initial release — cargo delivery capability added | Dustin Wales |
+| v2.0 | November 4, 2025 | Updated for medium RPAS regulatory requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — added Heavy RPAS (FlyCart 100) | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
-This policy establishes requirements for RPAS-based cargo and equipment delivery operations using medium-sized delivery aircraft such as the DJI FlyCart 30.
+This policy establishes requirements for RPAS-based cargo and equipment delivery operations using medium and heavy cargo delivery aircraft, including the DJI FlyCart 30 (Medium RPAS) and DJI FlyCart 100 (Heavy RPAS).
 
 ---
 
@@ -27,7 +37,8 @@ This policy applies to:
 - All cargo delivery operations using RPAS
 - Equipment delivery for energy, mining, and infrastructure sectors
 - Urban and rural delivery operations
-- Operations with medium RPAS (25-150 kg)
+- Operations with medium RPAS (25-150 kg MTOW)
+- **Operations with Heavy RPAS (>150 kg MTOW)**
 
 ---
 
@@ -53,18 +64,27 @@ Aeria Solutions is committed to conducting cargo delivery operations safely, in 
 
 ### 5.1 Approved Delivery Aircraft
 
-| Aircraft | Max Payload | Configuration |
-|:---------|:------------|:--------------|
-| DJI FlyCart 30 | 30 kg (dual battery) / 40 kg (single battery) | Cargo box or winch |
-| Other approved aircraft | Per manufacturer specifications | Per approval |
+| Aircraft | MTOW | Category | Max Payload | Configuration |
+|:---------|:-----|:---------|:------------|:--------------|
+| DJI FlyCart 30 | 95 kg | Medium RPAS | 30 kg (dual) / 40 kg (single) | Cargo box or winch |
+| **DJI FlyCart 100** | **220 kg** | **Heavy RPAS** | **65 kg** | **Cargo box or winch** |
+| Other approved aircraft | Per specs | Per category | Per specs | Per approval |
 
 ### 5.2 Aircraft Classification
 
-Medium RPAS (25-150 kg MTOW):
+**Medium RPAS (25-150 kg MTOW):**
 - Must be on Transport Canada Safety Assurance Declaration list
 - Requires Advanced pilot certificate
-- May operate VLOS without SFOC under specific conditions
+- SFOC required for cargo operations
 - BVLOS requires additional authorization
+
+**Heavy RPAS (>150 kg MTOW):**
+- **SFOC mandatory for all operations**
+- **Direct Transport Canada engagement required**
+- Requires Advanced pilot certificate with Heavy RPAS training
+- **Minimum crew: PIC + Safety Pilot + 2 Ground Crew**
+- Enhanced insurance requirements ($100,000+ minimum)
+- See FHA-021 for Heavy RPAS hazard assessment
 
 ### 5.3 Aircraft Configuration
 
@@ -89,13 +109,14 @@ All cargo delivery operations must:
 
 ### 6.2 Pilot Qualifications
 
-| Requirement | Standard |
-|:------------|:---------|
-| Certificate | Advanced RPAS certificate |
-| Medium RPAS endorsement | Required for 25-150 kg |
-| Company authorization | Cargo delivery specific |
-| Currency | Per company requirements |
-| Training | Delivery aircraft type training |
+| Requirement | Medium RPAS (FC30) | Heavy RPAS (FC100) |
+|:------------|:-------------------|:-------------------|
+| Certificate | Advanced RPAS | Advanced RPAS |
+| Company authorization | Cargo delivery | Cargo + Heavy RPAS |
+| Type training | FlyCart 30 | FlyCart 100 |
+| Heavy RPAS training | Not required | **Required** |
+| Currency | Per company | Per company |
+| **Minimum crew** | PIC + VO (recommended) | **PIC + Safety Pilot + 2 Ground** |
 
 ### 6.3 Payload Requirements
 
@@ -230,8 +251,18 @@ Requires additional authorization:
 | OPS-013-PR | Cargo Delivery Procedure |
 | OPS-014 | Dangerous Goods Transport Policy |
 | OPS-005 | BVLOS Operations Policy |
-| FHA-019 | Cargo Delivery Operations |
+| FHA-019 | Cargo Delivery Operations (Medium RPAS) |
+| **FHA-021** | **Heavy Cargo Operations (>150 kg)** |
 | MCM-001 | Maintenance Control Manual |
+| REG-SFOC-CARGO | SFOC Application Template - Cargo |
+| REG-CONOPS-CARGO | Concept of Operations - Cargo |
+| REG-SORA-CARGO | SORA Assessment - Cargo |
+| QRC-DELIVERY | Cargo Delivery Quick Reference |
+| **QRC-FLYCART100** | **FlyCart 100 Quick Reference** |
+| FRM-CARGO-PREFLIGHT-FC30 | FlyCart 30 Pre-Flight Checklist |
+| **FRM-CARGO-PREFLIGHT-FC100** | **FlyCart 100 Pre-Flight Checklist** |
+| FRM-CARGO-WB | Weight & Balance Calculator |
+| GUIDE-CARGO | Cargo Delivery Training Guide |
 
 ---
 

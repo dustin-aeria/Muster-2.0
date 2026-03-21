@@ -10,6 +10,15 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | November 4, 2025 | Initial release for Level 1 Complex/RPOC operations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## L1C DECLARATION CONDITIONS
 
 All conditions must be met for L1C BVLOS:

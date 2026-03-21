@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | October 5, 2017 | Initial release — winter operations capability established | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — updated cold injury recognition | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — expanded battery cold weather protocols | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — updated temperature limits | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS and field operations conducted in cold weather conditions including snow, ice, and temperatures below 5°C.

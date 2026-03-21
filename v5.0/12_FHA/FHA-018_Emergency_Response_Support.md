@@ -18,6 +18,17 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | August 10, 2021 | Initial release — emergency response support capability established | Dustin Wales |
+| v2.0 | February 15, 2022 | Annual review — updated wildfire support protocols | Dustin Wales |
+| v3.0 | February 8, 2024 | Annual review — expanded SAR coordination procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers RPAS operations conducted in support of emergency response including search and rescue, disaster assessment, wildfire support, and incident documentation.

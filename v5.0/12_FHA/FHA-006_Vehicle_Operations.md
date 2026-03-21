@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — updated journey management | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — added off-road driving hazards | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — expanded fatigue management | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers operation of company and personal vehicles used for work purposes, including highway driving, off-road access, and travel to/from work sites.

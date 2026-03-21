@@ -15,6 +15,16 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — clarified progressive discipline steps | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This policy establishes a fair and consistent approach to addressing conduct and performance issues while maintaining a safe and professional work environment.

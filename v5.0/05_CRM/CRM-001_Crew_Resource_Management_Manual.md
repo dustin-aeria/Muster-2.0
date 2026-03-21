@@ -19,7 +19,15 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | February 15, 2018 | Initial release | Dustin Wales |
+| v2.0 | February 12, 2019 | Annual review and update | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — enhanced communication protocols | Dustin Wales |
+| v3.1 | February 8, 2021 | Annual review — updated human factors section | Dustin Wales |
+| v4.0 | February 14, 2022 | Annual review — expanded error management | Dustin Wales |
+| v4.1 | February 13, 2023 | Annual review — CRM training updates | Dustin Wales |
+| v4.2 | February 12, 2024 | Annual review — situational awareness enhancements | Dustin Wales |
+| v4.3 | February 10, 2025 | Annual review — teamwork section expansion | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

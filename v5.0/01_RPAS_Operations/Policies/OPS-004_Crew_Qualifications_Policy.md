@@ -19,8 +19,15 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
-| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added L1C pilot requirements, L1C ground training curriculum, flight review details per CAR 901.63 | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added Advanced certificate requirements | Dustin Wales |
+| v2.1 | September 15, 2019 | Added visual observer qualifications | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated currency requirements | Dustin Wales |
+| v3.1 | January 28, 2022 | Added BVLOS pilot endorsement | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — restructured for RPOC alignment | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance — added L1C pilot requirements and flight review details | Dustin Wales |
 
 ---
 

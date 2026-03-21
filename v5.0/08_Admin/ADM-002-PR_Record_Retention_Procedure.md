@@ -15,6 +15,16 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — updated disposal procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This procedure describes how to manage records through their lifecycle from creation to disposal.

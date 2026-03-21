@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | June 5, 2017 | Initial release — forestry operations capability established | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — updated resource road safety | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — expanded wildfire awareness protocols | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — added logging coordination procedures | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers operations in forestry areas including cutblocks, resource roads, reforestation sites, and forest inventory surveys.

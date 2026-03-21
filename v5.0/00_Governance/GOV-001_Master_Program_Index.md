@@ -21,7 +21,12 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild — consolidated HSE, CRM, RPAS | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release — company founding documentation | Dustin Wales |
+| v2.0 | February 8, 2019 | Annual review — added BVLOS and expanded services | Dustin Wales |
+| v3.0 | January 20, 2021 | Annual review — restructured document categories | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — updated key personnel, added marine ops | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — consolidated HSE, CRM, RPAS for web platform | Dustin Wales |
 
 ---
 

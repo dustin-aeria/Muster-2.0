@@ -19,8 +19,14 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
-| v5.0.1 | March 19, 2026 | AIM 2026 compliance - Added L1C ground training curriculum per Standard 922.67, minimum training hours, competency requirements | Dustin Wales |
+| v1.0 | June 15, 2018 | Initial release — training program established | Dustin Wales |
+| v2.0 | February 10, 2019 | Annual review — added Advanced certificate pathway | Dustin Wales |
+| v2.1 | September 5, 2020 | Added BVLOS training module | Dustin Wales |
+| v3.0 | January 28, 2022 | Annual review — updated competency standards | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — restructured training levels | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex pilot requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance — added L1C ground training curriculum | Dustin Wales |
 
 ---
 

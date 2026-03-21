@@ -18,6 +18,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Changes | Approved By |
+|:--------|:-----|:--------|:------------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — updated charging protocols | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — expanded fire response procedures | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — updated retirement criteria | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Scope
 
 This FHA covers the handling, charging, storage, transport, and disposal of lithium polymer (LiPo) and lithium-ion (Li-Ion) batteries used in RPAS operations.

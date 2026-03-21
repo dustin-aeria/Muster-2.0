@@ -15,6 +15,18 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | November 10, 2022 | Initial release — avalanche control program established | Dustin Wales |
+| v2.0 | October 5, 2023 | Pre-season review — updated safety protocols | Dustin Wales |
+| v3.0 | September 20, 2024 | Pre-season review — added highway ministry coordination | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Level 1 Complex regulations | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## 1. Purpose
 
 This policy establishes requirements for RPAS-based avalanche control operations involving the delivery and deployment of explosives to trigger controlled avalanches.

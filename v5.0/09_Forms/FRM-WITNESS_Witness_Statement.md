@@ -13,6 +13,16 @@
 
 ---
 
+## Amendment History
+
+| Version | Date | Description | Author |
+|:--------|:-----|:------------|:-------|
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v2.0 | February 10, 2020 | Updated form fields | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+
+---
+
 ## PURPOSE
 
 This form is used to document witness accounts of incidents, near misses, or safety-related events. Witness statements are essential for thorough incident investigations and help establish facts, identify root causes, and prevent recurrence.
