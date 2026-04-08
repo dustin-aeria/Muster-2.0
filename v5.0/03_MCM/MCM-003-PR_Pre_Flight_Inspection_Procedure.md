@@ -21,8 +21,13 @@
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — added payload inspection requirements | Dustin Wales |
-| v3.0 | February 10, 2020 | Annual review — updated system check procedures | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — expanded checklist for new aircraft types | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added propeller inspection steps | Dustin Wales |
+| v3.0 | February 18, 2020 | Annual review — updated system check procedures | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added visual inspection criteria | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — updated battery verification | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added compass calibration checks | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — expanded checklist for new aircraft types | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for cargo aircraft pre-flight | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

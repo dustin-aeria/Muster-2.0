@@ -20,9 +20,12 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | June 15, 2018 | Initial release — training program established | Dustin Wales |
-| v2.0 | February 10, 2019 | Annual review — added Advanced certificate curriculum | Dustin Wales |
-| v2.1 | September 5, 2020 | Added BVLOS training module | Dustin Wales |
-| v3.0 | January 28, 2022 | Annual review — updated instructor requirements | Dustin Wales |
+| v2.0 | February 11, 2019 | Annual review — added Advanced certificate curriculum | Dustin Wales |
+| v2.1 | February 18, 2020 | Annual review — added BVLOS training module | Dustin Wales |
+| v2.2 | February 22, 2021 | Annual review — updated practical assessment criteria | Dustin Wales |
+| v3.0 | February 14, 2022 | Annual review — updated instructor requirements | Dustin Wales |
+| v3.1 | February 20, 2023 | Annual review — added competency tracking | Dustin Wales |
+| v3.2 | February 5, 2024 | Annual review — updated curriculum for regulatory changes | Dustin Wales |
 | v4.0 | November 4, 2025 | Major update for L1C flight training declaration | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 

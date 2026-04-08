@@ -21,8 +21,13 @@
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — added specific emergency type procedures | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced RPAS incident response | Dustin Wales |
 | v3.0 | February 10, 2020 | Annual review — added remote location requirements | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — updated communication protocols | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — added satellite communicator procedures | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — improved drill documentation | Dustin Wales |
 | v4.0 | February 8, 2024 | Annual review — updated emergency equipment list | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex emergency scenarios | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

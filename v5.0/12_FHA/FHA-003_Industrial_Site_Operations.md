@@ -20,12 +20,17 @@
 
 ## Amendment History
 
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v1.0 | April 10, 2017 | Initial release — industrial site capability established | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — industrial site operations FHA | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — expanded PPE requirements | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added H2S awareness protocols | Dustin Wales |
 | v3.0 | February 10, 2020 | Annual review — added EMI hazard controls | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — expanded hot work permit integration | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved site orientation requirements | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added confined space awareness | Dustin Wales |
 | v4.0 | February 8, 2024 | Annual review — updated site access protocols | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for SECOR certification requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

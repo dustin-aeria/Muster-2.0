@@ -15,10 +15,17 @@
 
 ## Amendment History
 
-| Version | Date | Description | Author |
-|:--------|:-----|:------------|:-------|
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
-| v2.0 | February 10, 2020 | Updated form fields | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added COR/SECOR verification section | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced worker certification tracking | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated form fields | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added environmental compliance requirements | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved orientation checklist format | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added re-orientation tracking section | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — aligned with BC OHS Reg 3.23 and SECOR Element E | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex contractor orientation requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

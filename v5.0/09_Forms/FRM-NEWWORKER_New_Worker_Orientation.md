@@ -15,10 +15,17 @@
 
 ## Amendment History
 
-| Version | Date | Description | Author |
-|:--------|:-----|:------------|:-------|
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
-| v2.0 | February 10, 2020 | Updated form fields | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added WHMIS section | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced rights and responsibilities coverage | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated form fields | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added RPAS-specific hazards section | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved emergency procedures section | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added 30-day check-in requirement | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — aligned with BC OHS 3.22-3.25 requirements | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex new worker orientation | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

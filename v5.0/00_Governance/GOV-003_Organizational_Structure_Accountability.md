@@ -21,7 +21,12 @@
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release — company founding | Dustin Wales |
 | v2.0 | March 5, 2018 | Added Operations Manager role | Dustin Wales |
-| v3.0 | February 10, 2020 | Updated for RPOC requirements | Dustin Wales |
+| v2.1 | February 8, 2019 | Annual review — updated contact information | Dustin Wales |
+| v3.0 | February 18, 2020 | Annual review — updated for RPOC requirements | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added maintenance responsibility designation | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — updated org chart | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added CRM responsibilities | Dustin Wales |
+| v3.4 | February 5, 2024 | Annual review — updated personnel contacts | Dustin Wales |
 | v4.0 | November 4, 2025 | Updated for Level 1 Complex regulatory structure | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 

@@ -530,15 +530,40 @@ async function importDocuments() {
 
     console.log(`Importing: ${doc.doc_number || 'N/A'} - ${doc.title} (${doc.doc_type})`)
 
-    const { error } = await supabase
+    // Check if document already exists by title and doc_type
+    const { data: existing } = await supabase
       .from('documents')
-      .insert(doc)
+      .select('id')
+      .eq('title', doc.title)
+      .eq('doc_type', doc.doc_type)
+      .single()
 
-    if (error) {
-      console.error(`  ERROR: ${error.message}`)
-      failed++
+    if (existing) {
+      // Update existing document
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update(doc)
+        .eq('id', existing.id)
+
+      if (updateError) {
+        console.error(`  ERROR: ${updateError.message}`)
+        failed++
+      } else {
+        console.log(`  Updated existing`)
+        success++
+      }
     } else {
-      success++
+      // Insert new document
+      const { error: insertError } = await supabase
+        .from('documents')
+        .insert(doc)
+
+      if (insertError) {
+        console.error(`  ERROR: ${insertError.message}`)
+        failed++
+      } else {
+        success++
+      }
     }
   }
 

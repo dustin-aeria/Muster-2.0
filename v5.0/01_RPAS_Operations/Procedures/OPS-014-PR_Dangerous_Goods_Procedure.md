@@ -20,8 +20,9 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | February 20, 2023 | Initial release — TDG procedures established | Dustin Wales |
-| v2.0 | January 15, 2024 | Annual review — added avalanche explosives handling | Dustin Wales |
+| v2.0 | February 5, 2024 | Annual review — added avalanche explosives handling | Dustin Wales |
 | v3.0 | November 4, 2025 | Updated for RPOC dangerous goods authorization | Dustin Wales |
+| v3.1 | February 10, 2026 | Annual review — updated Class 1 handling procedures | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

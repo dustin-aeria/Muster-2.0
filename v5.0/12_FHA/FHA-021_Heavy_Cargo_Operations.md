@@ -20,9 +20,17 @@
 
 ## Amendment History
 
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v1.0 | February 15, 2025 | Initial release — heavy RPAS cargo operations established (FlyCart 100) | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — heavy cargo operations FHA | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added heavy lift procedures | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced exclusion zone requirements | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated crew role definitions | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — expanded emergency response protocols | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved parachute system verification | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added cargo jettison procedures | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — FlyCart 100 Heavy RPAS integration | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for TC Heavy RPAS direct engagement requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

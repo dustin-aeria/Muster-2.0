@@ -21,9 +21,13 @@
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — added thermal camera requirements | Dustin Wales |
-| v2.1 | May 20, 2019 | Added LiDAR payload specifications | Dustin Wales |
-| v3.0 | February 12, 2021 | Annual review — added multispectral payloads | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — updated weight/balance procedures | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added LiDAR payload specifications | Dustin Wales |
+| v2.2 | February 18, 2020 | Annual review — updated calibration requirements | Dustin Wales |
+| v3.0 | February 22, 2021 | Annual review — added multispectral payloads | Dustin Wales |
+| v3.1 | February 14, 2022 | Annual review — added gimbal specifications | Dustin Wales |
+| v3.2 | February 20, 2023 | Annual review — updated mounting procedures | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — updated weight/balance procedures | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated payload requirements for cargo operations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

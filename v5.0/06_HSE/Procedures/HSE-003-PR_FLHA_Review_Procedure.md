@@ -20,8 +20,13 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | February 5, 2018 | Initial release — established review process | Dustin Wales |
+| v1.1 | February 11, 2019 | Annual review — added feedback loop to workers | Dustin Wales |
 | v2.0 | February 10, 2020 | Annual review — added trend analysis requirements | Dustin Wales |
+| v2.1 | February 22, 2021 | Annual review — enhanced quality metrics | Dustin Wales |
+| v2.2 | February 14, 2022 | Annual review — improved corrective action tracking | Dustin Wales |
+| v2.3 | February 20, 2023 | Annual review — added FHA update triggers | Dustin Wales |
 | v3.0 | February 8, 2024 | Annual review — enhanced quality review criteria | Dustin Wales |
+| v3.1 | November 4, 2025 | Updated for Level 1 Complex FLHA reviews | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

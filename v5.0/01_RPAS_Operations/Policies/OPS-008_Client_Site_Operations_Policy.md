@@ -21,10 +21,13 @@
 |:--------|:-----|:------------|:------------|
 | v1.0 | March 15, 2017 | Initial release | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — added industrial site requirements | Dustin Wales |
-| v2.1 | July 10, 2019 | Added energy sector coordination | Dustin Wales |
-| v3.0 | February 10, 2020 | Annual review — added mining sector protocols | Dustin Wales |
-| v3.1 | January 28, 2022 | Added SECOR alignment requirements | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — expanded sector-specific sections | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added energy sector coordination | Dustin Wales |
+| v3.0 | February 18, 2020 | Annual review — added mining sector protocols | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — updated site access procedures | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — added SECOR alignment requirements | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added forestry sector protocols | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — expanded sector-specific sections | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for L1C client site operations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

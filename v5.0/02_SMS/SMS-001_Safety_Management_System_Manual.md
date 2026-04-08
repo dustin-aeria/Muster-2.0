@@ -20,8 +20,13 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release — SMS framework established | Dustin Wales |
-| v2.0 | February 10, 2019 | Annual review — updated safety objectives and metrics | Dustin Wales |
-| v3.0 | February 12, 2021 | Annual review — added BVLOS operations to scope | Dustin Wales |
+| v1.1 | February 5, 2018 | Annual review — added safety performance indicators | Dustin Wales |
+| v2.0 | February 11, 2019 | Annual review — updated safety objectives and metrics | Dustin Wales |
+| v2.1 | February 18, 2020 | Annual review — enhanced hazard identification process | Dustin Wales |
+| v3.0 | February 22, 2021 | Annual review — added BVLOS operations to scope | Dustin Wales |
+| v3.1 | February 14, 2022 | Annual review — updated safety assurance processes | Dustin Wales |
+| v3.2 | February 20, 2023 | Annual review — added safety culture assessment | Dustin Wales |
+| v3.3 | February 5, 2024 | Annual review — updated management review process | Dustin Wales |
 | v4.0 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 

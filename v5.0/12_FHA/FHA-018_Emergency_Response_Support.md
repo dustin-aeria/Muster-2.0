@@ -20,11 +20,17 @@
 
 ## Amendment History
 
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v1.0 | August 10, 2021 | Initial release — emergency response support capability established | Dustin Wales |
-| v2.0 | February 15, 2022 | Annual review — updated wildfire support protocols | Dustin Wales |
-| v3.0 | February 8, 2024 | Annual review — expanded SAR coordination procedures | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — emergency response support FHA | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added incident command integration | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced TFR awareness protocols | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated wildfire support procedures | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — expanded SAR coordination protocols | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved disaster assessment procedures | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added flood response operations | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — enhanced agency coordination procedures | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for BC Emergency Management requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

@@ -20,12 +20,17 @@
 
 ## Amendment History
 
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v1.0 | May 15, 2017 | Initial release — remote operations capability established | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — remote location operations FHA | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — enhanced wildlife awareness protocols | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added bear safety requirements | Dustin Wales |
 | v3.0 | February 10, 2020 | Annual review — updated satellite communication requirements | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — expanded emergency response planning | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved check-in protocols | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added terrain hazard assessment | Dustin Wales |
 | v4.0 | February 8, 2024 | Annual review — expanded working alone procedures | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for BC OHS working alone regulations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

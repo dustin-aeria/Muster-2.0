@@ -20,8 +20,14 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
-| v2.0 | February 12, 2019 | Annual review — added digital distribution requirements | Dustin Wales |
-| v3.0 | January 28, 2022 | Annual review — updated retention periods | Dustin Wales |
+| v1.1 | February 12, 2018 | Annual review — clarified version numbering convention | Dustin Wales |
+| v2.0 | February 8, 2019 | Annual review — added digital distribution requirements | Dustin Wales |
+| v2.1 | February 18, 2020 | Annual review — added cloud storage provisions | Dustin Wales |
+| v2.2 | February 22, 2021 | Annual review — updated approval workflow | Dustin Wales |
+| v3.0 | February 14, 2022 | Annual review — updated retention periods | Dustin Wales |
+| v3.1 | February 20, 2023 | Annual review — added amendment history requirements | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — standardized document templates | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for L1C documentation requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

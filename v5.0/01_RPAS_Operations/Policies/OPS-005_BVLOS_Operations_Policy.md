@@ -20,8 +20,10 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | August 15, 2019 | Initial release — BVLOS capability added | Dustin Wales |
-| v2.0 | February 10, 2020 | Annual review — updated SFOC requirements | Dustin Wales |
-| v2.1 | January 25, 2022 | Added DAA system requirements | Dustin Wales |
+| v2.0 | February 18, 2020 | Annual review — updated SFOC requirements | Dustin Wales |
+| v2.1 | February 22, 2021 | Annual review — added risk mitigation procedures | Dustin Wales |
+| v2.2 | February 14, 2022 | Annual review — added DAA system requirements | Dustin Wales |
+| v2.3 | February 20, 2023 | Annual review — updated communication protocols | Dustin Wales |
 | v3.0 | February 5, 2024 | Annual review — expanded operational scenarios | Dustin Wales |
 | v4.0 | November 4, 2025 | Major update for Level 1 Complex declaration | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |

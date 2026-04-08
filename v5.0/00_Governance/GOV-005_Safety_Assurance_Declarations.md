@@ -19,7 +19,10 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 19, 2026 | Initial release - AIM 2026 compliance update | Dustin Wales |
+| v1.0 | February 5, 2024 | Initial release — SFOC declaration processes | Dustin Wales |
+| v2.0 | November 4, 2025 | Major update for Level 1 Complex declaration requirements | Dustin Wales |
+| v2.1 | February 10, 2026 | Annual review — added declaration maintenance procedures | Dustin Wales |
+| v5.0 | March 19, 2026 | Complete program rebuild — AIM 2026 compliance, web platform integration | Dustin Wales |
 
 ---
 

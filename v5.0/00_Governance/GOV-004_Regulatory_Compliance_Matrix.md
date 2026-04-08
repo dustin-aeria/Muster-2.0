@@ -19,8 +19,14 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
-| v5.0.1 | March 19, 2026 | AIM 2026 compliance update - Added SA Declaration requirements, L1C certificate requirements, EVLOS procedures, updated pilot certification sections | Dustin Wales |
+| v1.0 | February 18, 2020 | Initial release — created compliance tracking matrix | Dustin Wales |
+| v1.1 | February 22, 2021 | Annual review — added SECOR element mapping | Dustin Wales |
+| v2.0 | February 14, 2022 | Annual review — expanded TC regulatory references | Dustin Wales |
+| v2.1 | February 20, 2023 | Annual review — added WorkSafeBC cross-references | Dustin Wales |
+| v3.0 | February 5, 2024 | Annual review — restructured for audit readiness | Dustin Wales |
+| v3.1 | November 4, 2025 | Updated for L1C and RPOC regulatory requirements | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
+| v5.0.1 | March 19, 2026 | AIM 2026 compliance update — added SA Declaration requirements, L1C certificate requirements, EVLOS procedures | Dustin Wales |
 
 ---
 

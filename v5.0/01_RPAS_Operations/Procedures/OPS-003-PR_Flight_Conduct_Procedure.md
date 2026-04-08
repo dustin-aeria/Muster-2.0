@@ -22,10 +22,12 @@
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
 | v1.1 | July 5, 2017 | Added VO communication protocols | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — expanded in-flight procedures | Dustin Wales |
-| v2.1 | September 10, 2019 | Added BVLOS conduct section | Dustin Wales |
-| v3.0 | February 10, 2020 | Annual review — updated abort criteria | Dustin Wales |
-| v3.1 | January 25, 2022 | Added CRM integration | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — expanded crew coordination | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added BVLOS conduct section | Dustin Wales |
+| v3.0 | February 18, 2020 | Annual review — updated abort criteria | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added altitude management | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — added CRM integration | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — updated emergency responses | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — expanded crew coordination | Dustin Wales |
 | v4.1 | November 4, 2025 | Updated for Level 1 Complex operations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 

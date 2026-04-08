@@ -19,7 +19,16 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 11, 2026 | Complete program rebuild | Dustin Wales |
+| v1.0 | January 15, 2017 | Initial release | Dustin Wales |
+| v1.1 | February 12, 2018 | Annual review — added step-by-step approval process | Dustin Wales |
+| v2.0 | February 8, 2019 | Annual review — aligned with GOV-002 digital requirements | Dustin Wales |
+| v2.1 | February 18, 2020 | Annual review — added cloud backup procedures | Dustin Wales |
+| v2.2 | February 22, 2021 | Annual review — updated distribution checklist | Dustin Wales |
+| v3.0 | February 14, 2022 | Annual review — revised archival procedures | Dustin Wales |
+| v3.1 | February 20, 2023 | Annual review — added amendment tracking steps | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — updated template references | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for L1C documentation workflow | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 

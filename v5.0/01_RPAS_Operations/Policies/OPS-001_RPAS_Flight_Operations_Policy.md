@@ -22,10 +22,12 @@
 | v1.0 | January 15, 2017 | Initial release — company founding | Dustin Wales |
 | v1.1 | June 20, 2017 | Added emergency procedures reference | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — expanded flight categories | Dustin Wales |
-| v2.1 | August 12, 2019 | Added BVLOS operations section | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added BVLOS operations section | Dustin Wales |
 | v3.0 | February 10, 2020 | Annual review — updated for SFOC changes | Dustin Wales |
-| v3.1 | January 25, 2022 | Annual review — added payload operations | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — restructured for RPOC alignment | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — updated crew coordination requirements | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — added payload operations | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — updated flight planning requirements | Dustin Wales |
+| v4.0 | February 5, 2024 | Annual review — restructured for RPOC alignment | Dustin Wales |
 | v4.1 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 

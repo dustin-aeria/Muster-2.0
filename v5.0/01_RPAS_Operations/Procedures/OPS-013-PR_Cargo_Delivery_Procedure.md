@@ -19,8 +19,9 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v1.0 | March 15, 2024 | Initial release — cargo delivery capability | Dustin Wales |
+| v1.0 | March 15, 2024 | Initial release — cargo delivery capability (FlyCart 30) | Dustin Wales |
 | v2.0 | November 4, 2025 | Updated for medium RPAS requirements | Dustin Wales |
+| v2.1 | February 10, 2026 | Annual review — added load securing procedures | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — added Heavy RPAS (FlyCart 100) | Dustin Wales |
 
 ---

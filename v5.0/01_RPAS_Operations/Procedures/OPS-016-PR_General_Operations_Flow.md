@@ -19,7 +19,13 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 18, 2026 | Initial release - Operations Excellence | Dustin Wales |
+| v1.0 | February 18, 2020 | Initial release — operational workflows documented | Dustin Wales |
+| v1.1 | February 22, 2021 | Annual review — added mobilization checklist | Dustin Wales |
+| v2.0 | February 14, 2022 | Annual review — restructured flow diagrams | Dustin Wales |
+| v2.1 | February 20, 2023 | Annual review — added demobilization steps | Dustin Wales |
+| v3.0 | February 5, 2024 | Annual review — integrated with project management | Dustin Wales |
+| v3.1 | November 4, 2025 | Updated for L1C operational workflows | Dustin Wales |
+| v5.0 | March 18, 2026 | Complete program rebuild — Operations Excellence initiative | Dustin Wales |
 
 ---
 

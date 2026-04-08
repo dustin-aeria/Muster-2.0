@@ -20,8 +20,13 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release — risk matrix established | Dustin Wales |
-| v2.0 | February 10, 2019 | Annual review — added residual risk assessment guidance | Dustin Wales |
-| v3.0 | February 12, 2021 | Annual review — enhanced control hierarchy examples | Dustin Wales |
+| v1.1 | February 5, 2018 | Annual review — added likelihood definitions | Dustin Wales |
+| v2.0 | February 11, 2019 | Annual review — added residual risk assessment guidance | Dustin Wales |
+| v2.1 | February 18, 2020 | Annual review — updated consequence categories | Dustin Wales |
+| v3.0 | February 22, 2021 | Annual review — enhanced control hierarchy examples | Dustin Wales |
+| v3.1 | February 14, 2022 | Annual review — added SORA risk integration | Dustin Wales |
+| v3.2 | February 20, 2023 | Annual review — updated risk acceptance criteria | Dustin Wales |
+| v3.3 | February 5, 2024 | Annual review — added operational risk examples | Dustin Wales |
 | v4.0 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 

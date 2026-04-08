@@ -16,10 +16,17 @@
 
 ## Amendment History
 
-| Version | Date | Description | Author |
-|:--------|:-----|:------------|:-------|
-| v1.0 | October 15, 2019 | Initial release | Dustin Wales |
-| v4.0 | November 4, 2025 | Updated for Level 1 Complex/RPOC requirements | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — cargo operations SFOC template | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added payload specifications section | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced crew requirements tables | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated application checklist fields | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added weather limitations section | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved safety documentation checklist | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added FlyCart 30 specifications | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — added Heavy RPAS (FC100) requirements | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex/RPOC cargo operations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

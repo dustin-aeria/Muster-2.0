@@ -20,9 +20,12 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | November 10, 2022 | Initial release — avalanche control program | Dustin Wales |
+| v1.1 | February 20, 2023 | Post-season review — updated lessons learned | Dustin Wales |
 | v2.0 | October 5, 2023 | Pre-season review — updated deployment procedures | Dustin Wales |
+| v2.1 | February 5, 2024 | Post-season review — added weather decision criteria | Dustin Wales |
 | v3.0 | September 20, 2024 | Pre-season review — added highway coordination | Dustin Wales |
 | v4.0 | November 4, 2025 | Updated for Level 1 Complex regulations | Dustin Wales |
+| v4.1 | February 10, 2026 | Post-season review — updated explosive arming procedures | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

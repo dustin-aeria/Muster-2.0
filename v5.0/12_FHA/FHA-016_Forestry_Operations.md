@@ -20,12 +20,17 @@
 
 ## Amendment History
 
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v1.0 | June 5, 2017 | Initial release — forestry operations capability established | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — forestry operations FHA | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — updated resource road safety | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added falling hazard awareness | Dustin Wales |
 | v3.0 | February 10, 2020 | Annual review — expanded wildfire awareness protocols | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — added logging coordination procedures | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added logging equipment coordination | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved radio communication protocols | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added reforestation site hazards | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — enhanced logging coordination procedures | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for BC Forest Safety Council requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

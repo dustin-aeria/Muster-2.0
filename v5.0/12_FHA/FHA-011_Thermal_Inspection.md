@@ -20,12 +20,17 @@
 
 ## Amendment History
 
-| Version | Date | Changes | Approved By |
-|:--------|:-----|:--------|:------------|
-| v1.0 | August 15, 2018 | Initial release — thermal inspection capability established | Dustin Wales |
-| v2.0 | February 10, 2020 | Annual review — updated optimal conditions guidance | Dustin Wales |
-| v3.0 | February 15, 2022 | Annual review — expanded electrical inspection protocols | Dustin Wales |
-| v4.0 | February 8, 2024 | Annual review — added solar panel inspection procedures | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — thermal inspection operations FHA | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added optimal conditions guidance | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced calibration requirements | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated building inspection protocols | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — expanded electrical inspection procedures | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved solar panel inspection methods | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added rooftop thermal survey protocols | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — enhanced industrial asset inspection | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex thermal operations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

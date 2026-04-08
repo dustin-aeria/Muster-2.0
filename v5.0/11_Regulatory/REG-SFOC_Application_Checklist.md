@@ -16,10 +16,17 @@
 
 ## Amendment History
 
-| Version | Date | Description | Author |
-|:--------|:-----|:------------|:-------|
-| v1.0 | June 20, 2018 | Initial release | Dustin Wales |
-| v4.0 | November 4, 2025 | Updated for Level 1 Complex/RPOC requirements | Dustin Wales |
+| Version | Date | Description | Approved By |
+|:--------|:-----|:------------|:------------|
+| v1.0 | January 15, 2017 | Initial release — SFOC application guidance | Dustin Wales |
+| v2.0 | February 5, 2018 | Annual review — added application timing guidelines | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — enhanced supporting documents section | Dustin Wales |
+| v3.0 | February 10, 2020 | Annual review — updated checklist form fields | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — added post-submission tracking | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — improved insurance verification | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — added internal approval workflow | Dustin Wales |
+| v4.0 | February 8, 2024 | Annual review — aligned with TC RPAS application updates | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex/RPOC requirements | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

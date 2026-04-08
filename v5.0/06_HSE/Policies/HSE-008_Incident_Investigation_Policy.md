@@ -21,8 +21,13 @@
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release | Dustin Wales |
 | v2.0 | February 5, 2018 | Annual review — added root cause analysis requirements | Dustin Wales |
+| v2.1 | February 11, 2019 | Annual review — added near-miss reporting emphasis | Dustin Wales |
 | v3.0 | February 10, 2020 | Annual review — integrated with SMS occurrence reporting | Dustin Wales |
+| v3.1 | February 22, 2021 | Annual review — enhanced corrective action tracking | Dustin Wales |
+| v3.2 | February 14, 2022 | Annual review — added trending and analysis requirements | Dustin Wales |
+| v3.3 | February 20, 2023 | Annual review — improved investigation documentation | Dustin Wales |
 | v4.0 | February 8, 2024 | Annual review — updated investigation levels | Dustin Wales |
+| v4.1 | November 4, 2025 | Updated for Level 1 Complex incident protocols | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---

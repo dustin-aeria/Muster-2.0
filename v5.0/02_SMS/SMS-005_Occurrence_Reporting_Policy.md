@@ -20,8 +20,13 @@
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
 | v1.0 | January 15, 2017 | Initial release — occurrence reporting requirements established | Dustin Wales |
-| v2.0 | February 10, 2019 | Annual review — updated Transport Canada reporting methods | Dustin Wales |
-| v3.0 | February 12, 2021 | Annual review — added TSB notification requirements | Dustin Wales |
+| v1.1 | February 5, 2018 | Annual review — added reportable occurrence definitions | Dustin Wales |
+| v2.0 | February 11, 2019 | Annual review — updated Transport Canada reporting methods | Dustin Wales |
+| v2.1 | February 18, 2020 | Annual review — updated reporting timelines | Dustin Wales |
+| v3.0 | February 22, 2021 | Annual review — added TSB notification requirements | Dustin Wales |
+| v3.1 | February 14, 2022 | Annual review — updated CADORS references | Dustin Wales |
+| v3.2 | February 20, 2023 | Annual review — added RPAS-specific occurrence types | Dustin Wales |
+| v3.3 | February 5, 2024 | Annual review — updated contact information | Dustin Wales |
 | v4.0 | November 4, 2025 | Updated for Level 1 Complex and RPOC regulations | Dustin Wales |
 | v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
