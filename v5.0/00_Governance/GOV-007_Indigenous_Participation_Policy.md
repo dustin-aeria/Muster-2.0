@@ -8,8 +8,8 @@
 |:------|:------|
 | **Document Number** | GOV-007 |
 | **Version** | v5.0 |
-| **Effective Date** | March 20, 2026 |
-| **Review Date** | March 20, 2027 |
+| **Effective Date** | March 11, 2026 |
+| **Review Date** | March 11, 2027 |
 | **Document Owner** | Accountable Executive |
 | **Approved By** | Dustin Wales, Accountable Executive |
 
@@ -19,7 +19,14 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 20, 2026 | Initial release | Dustin Wales |
+| v1.0 | February 11, 2019 | Initial release — Indigenous engagement framework established | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — added FPIC principles | Dustin Wales |
+| v2.1 | February 22, 2021 | Annual review — enhanced data sovereignty section | Dustin Wales |
+| v3.0 | February 14, 2022 | Annual review — added capacity building commitments | Dustin Wales |
+| v3.1 | February 20, 2023 | Annual review — expanded training pathways section | Dustin Wales |
+| v3.2 | February 8, 2024 | Annual review — added territory-specific protocols | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for TRC alignment and enhanced engagement protocols | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 
@@ -179,7 +186,7 @@ This policy represents our genuine commitment to respectful engagement and recon
 
 | Role | Name | Signature | Date |
 |:-----|:-----|:----------|:-----|
-| Author | — | — | March 20, 2026 |
+| Author | — | — | March 11, 2026 |
 | Approved By | Dustin Wales | _________________ | _________________ |
 
 ---

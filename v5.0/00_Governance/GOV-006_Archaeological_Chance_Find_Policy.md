@@ -8,8 +8,8 @@
 |:------|:------|
 | **Document Number** | GOV-006 |
 | **Version** | v5.0 |
-| **Effective Date** | March 20, 2026 |
-| **Review Date** | March 20, 2027 |
+| **Effective Date** | March 11, 2026 |
+| **Review Date** | March 11, 2027 |
 | **Document Owner** | Accountable Executive |
 | **Approved By** | Dustin Wales, Accountable Executive |
 
@@ -19,7 +19,15 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 20, 2026 | Initial release | Dustin Wales |
+| v1.0 | June 15, 2018 | Initial release — chance find protocol established | Dustin Wales |
+| v1.1 | February 11, 2019 | Annual review — added culturally modified trees guidance | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — enhanced human remains protocol | Dustin Wales |
+| v2.1 | February 22, 2021 | Annual review — added pre-work briefing requirements | Dustin Wales |
+| v2.2 | February 14, 2022 | Annual review — updated reporting chain procedures | Dustin Wales |
+| v3.0 | February 20, 2023 | Annual review — strengthened confidentiality requirements | Dustin Wales |
+| v3.1 | February 8, 2024 | Annual review — added rock art and petroglyphs guidance | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Indigenous engagement integration | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 
@@ -163,7 +171,7 @@ All field personnel shall be briefed on this policy:
 
 | Role | Name | Signature | Date |
 |:-----|:-----|:----------|:-----|
-| Author | — | — | March 20, 2026 |
+| Author | — | — | March 11, 2026 |
 | Approved By | Dustin Wales | _________________ | _________________ |
 
 ---

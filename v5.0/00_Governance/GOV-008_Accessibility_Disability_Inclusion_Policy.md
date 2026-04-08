@@ -8,8 +8,8 @@
 |:------|:------|
 | **Document Number** | GOV-008 |
 | **Version** | v5.0 |
-| **Effective Date** | March 20, 2026 |
-| **Review Date** | March 20, 2027 |
+| **Effective Date** | March 11, 2026 |
+| **Review Date** | March 11, 2027 |
 | **Document Owner** | Accountable Executive |
 | **Approved By** | Dustin Wales, Accountable Executive |
 
@@ -19,7 +19,14 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | March 20, 2026 | Initial release | Dustin Wales |
+| v1.0 | September 15, 2019 | Initial release — accessibility commitment established | Dustin Wales |
+| v1.1 | February 10, 2020 | Annual review — added training accessibility provisions | Dustin Wales |
+| v2.0 | February 22, 2021 | Annual review — added Squamish Adaptive partnership | Dustin Wales |
+| v2.1 | February 14, 2022 | Annual review — enhanced accommodation procedures | Dustin Wales |
+| v2.2 | February 20, 2023 | Annual review — added employment pathways section | Dustin Wales |
+| v3.0 | February 8, 2024 | Annual review — expanded cost accommodation guidance | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for enhanced inclusion practices | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 
@@ -170,7 +177,7 @@ We will:
 
 | Role | Name | Signature | Date |
 |:-----|:-----|:----------|:-----|
-| Author | — | — | March 20, 2026 |
+| Author | — | — | March 11, 2026 |
 | Approved By | Dustin Wales | _________________ | _________________ |
 
 ---

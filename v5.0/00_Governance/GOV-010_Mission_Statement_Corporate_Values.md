@@ -8,8 +8,8 @@
 |:------|:------|
 | **Document Number** | GOV-010 |
 | **Version** | v5.0 |
-| **Effective Date** | April 8, 2026 |
-| **Review Date** | April 8, 2027 |
+| **Effective Date** | March 11, 2026 |
+| **Review Date** | March 11, 2027 |
 | **Document Owner** | Accountable Executive |
 | **Approved By** | Dustin Wales, Accountable Executive |
 
@@ -19,7 +19,15 @@
 
 | Version | Date | Description | Approved By |
 |:--------|:-----|:------------|:------------|
-| v5.0 | April 8, 2026 | Initial release | Dustin Wales |
+| v1.0 | January 15, 2018 | Initial release — corporate values established | Dustin Wales |
+| v1.1 | February 11, 2019 | Annual review — added operational discipline value | Dustin Wales |
+| v2.0 | February 10, 2020 | Annual review — expanded safety culture section | Dustin Wales |
+| v2.1 | February 22, 2021 | Annual review — added community investment value | Dustin Wales |
+| v3.0 | February 14, 2022 | Annual review — added respect and collaboration value | Dustin Wales |
+| v3.1 | February 20, 2023 | Annual review — enhanced decision-making framework | Dustin Wales |
+| v3.2 | February 8, 2024 | Annual review — updated mission statement language | Dustin Wales |
+| v4.0 | November 4, 2025 | Updated for Indigenous engagement and TRC alignment | Dustin Wales |
+| v5.0 | March 11, 2026 | Complete program rebuild — web platform integration | Dustin Wales |
 
 ---
 
@@ -168,7 +176,7 @@ When values appear to conflict, safety takes precedence. A safe operation that's
 
 | Role | Name | Signature | Date |
 |:-----|:-----|:----------|:-----|
-| Author | — | — | April 8, 2026 |
+| Author | — | — | March 11, 2026 |
 | Approved By | Dustin Wales | _________________ | _________________ |
 
 ---
