@@ -827,53 +827,57 @@ function DocumentViewer({ document, onClose, onEdit }) {
       <div className="absolute inset-0 bg-black/80 cursor-pointer" onClick={onClose} />
 
       {/* Modal container - centered, not full width, z-10 ensures it's above overlay */}
-      <div className="relative z-10 flex flex-col h-full w-full max-w-4xl mx-4 my-4 bg-white shadow-2xl rounded-lg overflow-hidden">
-        {/* Header with logo - at the very top */}
-        <div className="flex-shrink-0 bg-[#132163] px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src={aeriaIconWhite} alt="AERIA" className="h-10 w-auto" />
-            <div className={`px-2 py-1 rounded text-xs font-medium ${document.status === 'active' ? 'bg-green-400/20 text-green-100' : document.status === 'draft' ? 'bg-gray-400/20 text-gray-100' : 'bg-yellow-400/20 text-yellow-100'}`}>
-              {statusConfig?.label || document.status}
+      <div className="relative z-10 flex flex-col max-h-[90vh] w-full max-w-4xl mx-4 bg-white shadow-2xl rounded-lg overflow-hidden">
+        {/* Document Header with action buttons */}
+        <div className="flex-shrink-0 px-6 pt-4 pb-4 bg-white border-b border-gray-200">
+          {/* Action buttons row */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {document.doc_number && (
+                <span className="text-sm font-bold text-[#131CD0] tracking-wide">{document.doc_number}</span>
+              )}
+              <span className={`px-2 py-1 rounded text-xs font-medium ${document.status === 'active' ? 'bg-green-100 text-green-700' : document.status === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                {statusConfig?.label || document.status}
+              </span>
+              <span className="text-sm text-gray-500">v{document.version}</span>
             </div>
-            <span className="text-sm text-white/80">v{document.version}</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleDownload}
+                className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 transition-colors"
+                title="Download HTML"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handlePrint}
+                className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 transition-colors"
+                title="Print / Save as PDF"
+              >
+                <Printer className="w-5 h-5" />
+              </button>
+              <button
+                onClick={onEdit}
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#131CD0] text-white rounded-lg hover:bg-[#1020a0] text-sm font-medium transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 transition-colors ml-2"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDownload}
-              className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors"
-              title="Download"
-            >
-              <Download className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handlePrint}
-              className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors"
-              title="Print"
-            >
-              <Printer className="w-5 h-5" />
-            </button>
-            <button
-              onClick={onEdit}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#131CD0] text-white rounded-lg hover:bg-[#1020a0] font-medium transition-colors"
-            >
-              <Edit2 className="w-4 h-4" />
-              Edit
-            </button>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors" title="Close">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
 
-        {/* Document Header with full logo */}
-        <div className="flex-shrink-0 px-8 pt-6 pb-6 bg-white border-b border-gray-200">
+          {/* Document title and info */}
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
-              {document.doc_number && (
-                <p className="text-sm font-bold text-[#131CD0] mb-2 tracking-wide">{document.doc_number}</p>
-              )}
               <h1 className="text-2xl font-bold text-[#132163] mb-3">{document.title}</h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                 <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#132163]/10 text-[#132163] rounded-full font-medium">
                   {typeConfig?.label || document.doc_type}
                 </span>
@@ -890,7 +894,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
                 )}
               </div>
               {document.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {document.tags.map(tag => (
                     <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-medium">
                       {tag}
@@ -899,7 +903,7 @@ function DocumentViewer({ document, onClose, onEdit }) {
                 </div>
               )}
             </div>
-            <img src={aeriaLogoFull} alt="AERIA Solutions Ltd." className="h-14 w-auto hidden sm:block" />
+            <img src={aeriaLogoFull} alt="AERIA Solutions Ltd." className="h-12 w-auto hidden sm:block" />
           </div>
         </div>
 
