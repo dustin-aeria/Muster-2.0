@@ -666,11 +666,18 @@ function DocumentViewer({ document, onClose, onEdit }) {
   }
 
   const handleDownload = () => {
-    // Generate the same HTML content as print
-    let content = document.content.replace(/\r\n/g, '\n')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
+    try {
+      // Guard against missing content
+      if (!document || !document.content) {
+        alert('No document content to download')
+        return
+      }
+
+      // Generate the same HTML content as print
+      let content = (document.content || '').replace(/\r\n/g, '\n')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
 
     // Process tables
     const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
@@ -793,13 +800,25 @@ function DocumentViewer({ document, onClose, onEdit }) {
 
     const blob = new Blob([html], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
+    const filename = `${document.doc_number || document.title.replace(/[^a-zA-Z0-9]/g, '_')}.html`
+
+    // Create download link and trigger
     const a = window.document.createElement('a')
     a.href = url
-    a.download = `${document.doc_number || document.title.replace(/[^a-zA-Z0-9]/g, '_')}.html`
+    a.download = filename
+    a.style.display = 'none'
     window.document.body.appendChild(a)
     a.click()
-    window.document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+
+    // Cleanup after a brief delay
+    setTimeout(() => {
+      window.document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+    } catch (err) {
+      console.error('Download error:', err)
+      alert('Failed to download document. Please try the Print option and save as PDF instead.')
+    }
   }
 
   return (
@@ -807,8 +826,8 @@ function DocumentViewer({ document, onClose, onEdit }) {
       {/* Full screen dark overlay - clickable to close */}
       <div className="absolute inset-0 bg-black/80 cursor-pointer" onClick={onClose} />
 
-      {/* Modal container - centered, not full width */}
-      <div className="relative flex flex-col h-full w-full max-w-4xl mx-4 my-4 bg-white shadow-2xl rounded-lg overflow-hidden">
+      {/* Modal container - centered, not full width, z-10 ensures it's above overlay */}
+      <div className="relative z-10 flex flex-col h-full w-full max-w-4xl mx-4 my-4 bg-white shadow-2xl rounded-lg overflow-hidden">
         {/* Header with logo - at the very top */}
         <div className="flex-shrink-0 bg-[#132163] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
