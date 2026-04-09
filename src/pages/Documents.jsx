@@ -15,6 +15,7 @@ import {
   Calendar,
   Eye,
   Printer,
+  Download,
   FileSearch,
   ChevronDown,
   ChevronUp
@@ -664,6 +665,143 @@ function DocumentViewer({ document, onClose, onEdit }) {
     setTimeout(() => printWindow.print(), 250)
   }
 
+  const handleDownload = () => {
+    // Generate the same HTML content as print
+    let content = document.content.replace(/\r\n/g, '\n')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+
+    // Process tables
+    const tableRegex = /\|(.+)\|\n\|[\s]*[:\-]+[\s\-:|]+\|\n((?:\|.+\|\n?)+)/g
+    content = content.replace(tableRegex, (match, headerRow, bodyRows) => {
+      const headers = headerRow.split('|').filter(h => h.trim())
+      const rows = bodyRows.trim().split('\n').map(row => row.split('|').filter(c => c.trim()))
+      let table = '<table><thead><tr>'
+      headers.forEach(h => { table += '<th>' + h.trim() + '</th>' })
+      table += '</tr></thead><tbody>'
+      rows.forEach(row => {
+        table += '<tr>'
+        row.forEach(cell => { table += '<td>' + cell.trim() + '</td>' })
+        table += '</tr>'
+      })
+      table += '</tbody></table>'
+      return table
+    })
+
+    // Process markdown
+    content = content
+      .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+      .replace(/^---$/gm, '<hr />')
+      .replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>')
+
+    // Process lists
+    const lines = content.split('\n')
+    let result = []
+    let inUl = false
+    let inOl = false
+
+    for (const line of lines) {
+      if (line.trim().startsWith('<table') || line.trim().startsWith('<tr') || line.trim().startsWith('<td') || line.trim().startsWith('<th') || line.trim().startsWith('</')) {
+        if (inUl) { result.push('</ul>'); inUl = false }
+        if (inOl) { result.push('</ol>'); inOl = false }
+        result.push(line)
+        continue
+      }
+
+      const ulMatch = line.match(/^[\-\*]\s+(.+)$/)
+      const olMatch = line.match(/^\d+\.\s+(.+)$/)
+
+      if (ulMatch) {
+        if (inOl) { result.push('</ol>'); inOl = false }
+        if (!inUl) { result.push('<ul>'); inUl = true }
+        result.push('<li>' + ulMatch[1] + '</li>')
+      } else if (olMatch) {
+        if (inUl) { result.push('</ul>'); inUl = false }
+        if (!inOl) { result.push('<ol>'); inOl = true }
+        result.push('<li>' + olMatch[1] + '</li>')
+      } else {
+        if (inUl) { result.push('</ul>'); inUl = false }
+        if (inOl) { result.push('</ol>'); inOl = false }
+        if (line.trim() && !line.trim().startsWith('<')) {
+          result.push('<p>' + line + '</p>')
+        } else {
+          result.push(line)
+        }
+      }
+    }
+    if (inUl) result.push('</ul>')
+    if (inOl) result.push('</ol>')
+
+    const finalContent = result.join('\n')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${document.title}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; line-height: 1.7; color: #1f2937; }
+    .doc-header { padding-bottom: 24px; border-bottom: 3px solid #131CD0; margin-bottom: 32px; }
+    .doc-number { color: #131CD0; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .doc-title { font-size: 26px; font-weight: 700; color: #132163; margin-bottom: 8px; }
+    .doc-meta { color: #6b7280; font-size: 13px; display: flex; flex-wrap: wrap; gap: 16px; }
+    h1 { font-size: 24px; font-weight: 700; color: #132163; margin: 32px 0 16px; padding-bottom: 12px; border-bottom: 3px solid #131CD0; }
+    h2 { font-size: 20px; font-weight: 700; color: #132163; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #131CD0; }
+    h3 { font-size: 17px; font-weight: 600; color: #132163; margin: 24px 0 10px; }
+    h4 { font-size: 15px; font-weight: 600; color: #132163; margin: 20px 0 8px; }
+    p { margin: 12px 0; color: #374151; }
+    ul, ol { margin: 16px 0; padding-left: 24px; }
+    li { margin: 8px 0; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+    th { background: #132163; color: white; padding: 12px 16px; text-align: left; font-weight: 600; }
+    td { border: 1px solid #e2e8f0; padding: 10px 16px; color: #374151; }
+    tr:nth-child(even) { background: #f8fafc; }
+    hr { border: none; height: 1px; background: #e5e7eb; margin: 32px 0; }
+    blockquote { border-left: 3px solid #131CD0; padding-left: 16px; margin: 20px 0; color: #4b5563; font-style: italic; }
+    code { background: #f1f5f9; color: #132163; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    pre { background: #1a1a2e; color: #e2e8f0; padding: 16px; border-radius: 6px; overflow-x: auto; margin: 20px 0; }
+    pre code { background: none; color: inherit; padding: 0; }
+    .doc-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="doc-header">
+    ${document.doc_number ? `<div class="doc-number">${document.doc_number}</div>` : ''}
+    <div class="doc-title">${document.title}</div>
+    <div class="doc-meta">
+      <span><strong>Type:</strong> ${typeConfig?.label || document.doc_type}</span>
+      <span><strong>Version:</strong> ${document.version}</span>
+      ${document.category ? `<span><strong>Category:</strong> ${document.category}</span>` : ''}
+      ${document.effective_date ? `<span><strong>Effective:</strong> ${document.effective_date}</span>` : ''}
+    </div>
+  </div>
+  <div id="content">${finalContent}</div>
+  <div class="doc-footer">AERIA Solutions Ltd. | Document generated ${new Date().toLocaleDateString()}</div>
+</body>
+</html>`
+
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = window.document.createElement('a')
+    a.href = url
+    a.download = `${document.doc_number || document.title.replace(/[^a-zA-Z0-9]/g, '_')}.html`
+    window.document.body.appendChild(a)
+    a.click()
+    window.document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ isolation: 'isolate' }}>
       {/* Full screen dark overlay - clickable to close */}
@@ -682,9 +820,16 @@ function DocumentViewer({ document, onClose, onEdit }) {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={handleDownload}
+              className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors"
+              title="Download"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            <button
               onClick={handlePrint}
               className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors"
-              title="Print / Save as PDF"
+              title="Print"
             >
               <Printer className="w-5 h-5" />
             </button>
